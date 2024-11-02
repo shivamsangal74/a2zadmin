@@ -1,0 +1,82 @@
+/* PinInput.css */
+.backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .pin-container {
+    width: 100%;
+    height: 40%;
+    background-color: #fff;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    
+    padding: 20px;
+  }
+
+  .con{
+    display: flex;
+    height: 100%;
+  }
+
+  .inputCon{
+    height: 64%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 43%;
+    justify-content: center;
+  }
+  
+  .pin-container h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .pin-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .pin-input {
+    width: 100px;
+    height: 90px;
+    font-size: 24px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+  
+  .pin-input:focus {
+    border-color: #007bff;
+  }
+  
+  .forgot-pin {
+    font-size: 16px;
+    color: #007bff;
+    cursor: pointer;
+  }
+
+  .pin-input.error {
+    border-color: red; /* Red border on error */
+  }
+  
+  @media (min-width: 768px) {
+    .pin-input {
+        width: 100px;
+        height: 90px;
+    
+    }
+  }
+  

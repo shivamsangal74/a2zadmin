@@ -1,0 +1,132 @@
+.ticket-container {
+    padding: 0px;
+}
+
+.ticket-layout {
+    display: flex;
+    justify-content: space-between;
+}
+
+.left-section {
+    width: 46%;
+    display: flex;
+    flex-direction: column;
+}
+
+.ticket-info-box, .assets-box {
+    background-color: #f9fafc;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.ticket-info-box h6 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.ticket-detail {
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.ticket-images {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.ticket-image {
+    width: 150px;
+    height: 100px;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.assets-box ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.assets-box ul li {
+    margin-bottom: 10px;
+}
+
+.assets-box ul li a {
+    color: #1890ff;
+    text-decoration: none;
+}
+
+.right-section {
+    width: 52%;
+}
+
+.chat-history-box {
+    background-color: #f1f3f5;
+    padding: 20px;
+    border-radius: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+    box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px;
+
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 80%;
+    overflow-y: auto;
+}
+
+.chat-bubble {
+    display: flex;
+    margin-bottom: 15px;
+}
+.chat-bubble.agent{
+    justify-content: flex-end;
+}
+
+.chat-bubble.user{
+    justify-content: flex-start;
+}
+.chat-bubble.agent .chat-content {
+    background-color: #f1b0b9;
+    border-radius: 10px 10px 10px 0;
+}
+
+.chat-bubble.user .chat-content {
+    background-color: #b6d0e4;
+    color: white;
+    border-radius: 10px 10px 0 10px;
+    align-self: flex-end;
+    
+}
+
+.chat-content {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    max-width: 75%;
+}
+
+.chat-content .message {
+    margin-left: 10px;
+}
+
+.chat-content .message p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #000;
+    font-weight: 500;
+}
+
+.chat-content .message .time {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 5px;
+}

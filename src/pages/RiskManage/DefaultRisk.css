@@ -1,0 +1,53 @@
+.default-risk-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  
+  .left-pane {
+    width: 100%;
+  }
+  
+  .right-pane {
+    width: 100%;
+  }
+  
+  .plan-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+  
+  .plan-item {
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .plan-item:hover {
+    background-color: #c3c4f4;
+  }
+  
+  .selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  
+  /* Media Queries for Responsive Design */
+  @media (min-width: 768px) {
+    .left-pane {
+      width: 20%;
+    }
+  
+    .right-pane {
+      width: 80%;
+    }
+  }
+  
