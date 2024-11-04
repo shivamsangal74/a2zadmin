@@ -192,6 +192,23 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     } finally {
     }
   }
+
+  async function handleStatusChange(value: any, params: any) {
+    try {
+      let tranxId = params.row.original.refid;
+      const response = await api.get(`/common/manual-status`, {
+        params: { tranxId, value },
+        withCredentials: true,
+      });
+      toast.warn("Recharge Status Updated");
+      return response.data;
+    } catch (error: any) {
+      toast.error(error.message);
+      console.error(error);
+      throw error;
+    } finally {
+    }
+  }
   async function handleResendRequest(params: any) {
     try {
       let tranx = params.row.original.refid;
