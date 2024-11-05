@@ -189,7 +189,7 @@ const AddVendor = () => {
       receiverUser,
       totalAmount,
       commissionType,
-      OperatorId: opraterID || Math.floor(1000 + Math.random() * 9000),
+      OperatorId: Math.floor(1000 + Math.random() * 9000),
       remarks: remarks,
       userLapus: filteredLapus,
       cashAmounts: cashAmounts,
@@ -211,6 +211,7 @@ const AddVendor = () => {
       await addStockServices(addStock);
       toast.success("stock added successfully.");
       paymentsRefetch();
+      ledgerRefetch();
       reset();
     } catch (error) {
       toast.error(`${error}`);
@@ -722,7 +723,7 @@ const AddVendor = () => {
     refetchOnWindowFocus: false,
   });
 
-  const { data } = useQuery({
+  const { refetch: ledgerRefetch } = useQuery({
     queryKey: ["oprators"],
     queryFn: async () => {
       try {
@@ -1395,14 +1396,14 @@ const AddVendor = () => {
             </>
           )}
 
-          <div>
+          {/* <div>
             <TextInput
               label="OpraterID"
               onChange={setOpraterID}
               value={opraterID}
               name={"OpraterID"}
             />
-          </div>
+          </div> */}
           <div>
             <TextInput
               label="Remarks"
