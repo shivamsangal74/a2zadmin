@@ -406,7 +406,7 @@ const Commission = () => {
       if (opratersData.length > 0) {
         opratersData.forEach((op: any) => {
           _dataCat.push({
-            showvalue: `${op?.name} (${op.amountMinRange} - ${op.amountMaxRange})`,
+            showvalue: `${op?.name} (${op.amountMinRange} - ${op.amountMaxRange}) - ${op.operatorCode}`,
             value: op?.id,
           });
         });
@@ -471,7 +471,7 @@ const Commission = () => {
       if (opratersData.length > 0) {
         opratersData.forEach((op: any) => {
           _dataCat.push({
-            showvalue: `${op?.name} (${op.amountMinRange}-${op.amountMaxRange})`,
+            showvalue: `${op?.name} (${op.amountMinRange}-${op.amountMaxRange}) -${op.operatorCode}`,
             value: op?.id,
           });
         });
