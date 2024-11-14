@@ -298,6 +298,10 @@ const AddVendor = () => {
       accessorKey: "lappuId",
     },
     {
+      header: "Lappu Name",
+      accessorKey: "lappuName",
+    },
+    {
       header: "Operator",
       accessorKey: "operator",
     },
@@ -790,7 +794,7 @@ const AddVendor = () => {
         );
 
         setUserLapus(filteredLappus);
-        setOpenInputLapu(true);
+        if (filteredLappus.length > 0) setOpenInputLapu(true);
       }
       const bankResponse = await getVendorBanks(value);
       let formattedBank: any = [];
@@ -981,7 +985,12 @@ const AddVendor = () => {
       (acc, lapu) => acc + parseFloat(lapu.amount || 0),
       0
     );
+    const ref = userLapus.reduce(
+      (acc, lapu) => acc + ` ${lapu.RefrenceNo || ""}`,
+      ""
+    );
     setAmount(total);
+    setOpraterID(ref);
     setOpenInputLapu(false);
   };
   async function handleStockApi(value: any) {
@@ -1395,15 +1404,16 @@ const AddVendor = () => {
               </div>
             </>
           )}
-
-          {/* <div>
-            <TextInput
-              label="OpraterID"
-              onChange={setOpraterID}
-              value={opraterID}
-              name={"OpraterID"}
-            />
-          </div> */}
+          {receiverPaymentType != "PAYOUT" && (
+            <div>
+              <TextInput
+                label="OpraterID"
+                onChange={setOpraterID}
+                value={opraterID}
+                name={"OpraterID"}
+              />
+            </div>
+          )}
           <div>
             <TextInput
               label="Remarks"
@@ -1678,6 +1688,9 @@ const AddVendor = () => {
               <th style={{ border: "1px solid black", padding: "8px" }}>
                 Amount
               </th>
+              <th style={{ border: "1px solid black", padding: "8px" }}>
+                Refrence No
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -1698,6 +1711,21 @@ const AddVendor = () => {
                     name="amount"
                     placeholder="Amount"
                     value={lapu.amount || ""}
+                    onChange={(event) => handleLappuChange(index, event)}
+                    style={{ width: "100%", border: "1px solid black" }}
+                  />
+                </td>
+                <td
+                  style={{
+                    border: "1px solid black",
+                    padding: "8px",
+                  }}
+                >
+                  <input
+                    type="text"
+                    name="RefrenceNo"
+                    placeholder="RefrenceNo"
+                    value={lapu.RefrenceNo || ""}
                     onChange={(event) => handleLappuChange(index, event)}
                     style={{ width: "100%", border: "1px solid black" }}
                   />
