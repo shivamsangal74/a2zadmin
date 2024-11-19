@@ -99,33 +99,29 @@ const userPermissions = {
   supportTickets: true,
 };
 
-
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const [userPermissions,setUserPermissions] = useState([]);
-  const token = localStorage.getItem("token")
-  debugger
-  const decoded = jwtDecode(token)
-  const [isLoading,setIsLoading] = useState(false)
-  useEffect(()=>{
-
-      async function getRole() {
-        setIsLoading(true)
-        try {
-          const role = await api.get(`/permissions/getrole/${decoded.role}`)
-          setUserPermissions(JSON.parse(role.data.Role.permissions))
-        } catch (error) {
-          console.log(error);
-          
-        } finally {
-        setIsLoading(false)
-          
-        }
+  const [userPermissions, setUserPermissions] = useState([]);
+  const token = localStorage.getItem("token");
+  debugger;
+  const decoded = jwtDecode(token);
+  const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    async function getRole() {
+      setIsLoading(true);
+      try {
+        const role = await api.get(`/permissions/getrole/${decoded.role}`);
+        setUserPermissions(JSON.parse(role.data.Role.permissions));
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
       }
+    }
 
-      getRole()
-  },[decoded.role])
+    getRole();
+  }, [decoded.role]);
 
   const items = [
     getItem(
@@ -296,6 +292,13 @@ const Sidebar: React.FC = () => {
             "/report/lappu-ledger",
             <AccountBalanceWalletOutlinedIcon style={{ fontSize: 18 }} />
           ),
+        userPermissions?.reports?.lappuStatusReport &&
+          getItem(
+            "Lappu History Report",
+            "35",
+            "/report/lappu-history",
+            <AccountBalanceWalletOutlinedIcon style={{ fontSize: 18 }} />
+          ),
         userPermissions?.reports?.rechargeReport &&
           getItem(
             "Recharge Report",
@@ -426,10 +429,8 @@ const Sidebar: React.FC = () => {
       "/support-ticket",
       <PersonAddAltOutlinedIcon style={{ fontSize: 19 }} />
     ),
-    
   ];
- 
-  
+
   const pathToKey: { [key: string]: string } = items.reduce(
     (acc, item) => {
       acc[item.path] = item.key;
@@ -449,7 +450,6 @@ const Sidebar: React.FC = () => {
         token: { colorPrimary: "#6d44e5", colorBgTextHover: "#6d44e5" },
       }}
     >
-
       <Layout>
         <Sider
           style={{ minHeight: "100vh" }}
@@ -472,11 +472,8 @@ const Sidebar: React.FC = () => {
             selectedKeys={[pathToKey[location.pathname]]}
             items={items}
           />
-        
-        
-      </Sider>
-
-    </Layout>
+        </Sider>
+      </Layout>
     </ConfigProvider>
   );
 };

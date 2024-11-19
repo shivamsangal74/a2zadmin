@@ -114,10 +114,10 @@ function App() {
                   <Route path="/user-bank" element={<UserBank />} />
                   <Route path="/roles" element={<Permissions />} />
                   <Route path="/create-role" element={<UserPermissions />} />
-                  <Route path="/edit-role/:id" element={<EditUserPermissions />} />
-
-
-
+                  <Route
+                    path="/edit-role/:id"
+                    element={<EditUserPermissions />}
+                  />
                 </Routes>
               </>
             }
@@ -156,6 +156,14 @@ function App() {
                     path="/lappu-ledger"
                     element={
                       <Reports entity={"Transaction"} report_id={"2_2"} />
+                    }
+                  />
+                </Routes>
+                <Routes>
+                  <Route
+                    path="/lappu-history"
+                    element={
+                      <Reports entity={"Transaction"} report_id={"3_1"} />
                     }
                   />
                 </Routes>
