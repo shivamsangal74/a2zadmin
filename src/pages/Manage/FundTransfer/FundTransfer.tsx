@@ -317,8 +317,10 @@ const ManageFundTransfer = () => {
       paymentType: selectedPaymentType,
       openingBalance: Number(wallet?.wallet) || 0,
       closingBalance:
-        type === "Received" || type === "CreditReceived"
+        type === "Received"
           ? Number(wallet?.wallet || 0) - totalAmount
+          : type === "CreditReceived"
+          ? Number(wallet?.wallet) || 0
           : Number(wallet?.wallet || 0) + totalAmount,
       totalAmount: totalAmount,
       tranxType: tranxType,
