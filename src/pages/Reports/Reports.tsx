@@ -646,6 +646,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         filter={["status"]}
         isSeachable={true}
         isReport={true}
+        report_id={report_id}
       />
     </DefaultLayout>
   );

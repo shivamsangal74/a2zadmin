@@ -18,7 +18,7 @@ import DisplaySettingsOutlinedIcon from "@mui/icons-material/DisplaySettingsOutl
 import SmsOutlinedIcon from "@mui/icons-material/SmsOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import { BsBank } from "react-icons/bs";
+import { BsBank, BsServer } from "react-icons/bs";
 import { SecurityOutlined } from "@mui/icons-material";
 import { jwtDecode } from "jwt-decode";
 import api from "../../Services/Axios/api";
@@ -429,6 +429,13 @@ const Sidebar: React.FC = () => {
       "/support-ticket",
       <PersonAddAltOutlinedIcon style={{ fontSize: 19 }} />
     ),
+    getItem(
+      "Server Logs",
+      "26",
+      "/logs/",
+      <BsServer style={{ fontSize: 19 }} />
+    ),
+    
   ];
 
   const pathToKey: { [key: string]: string } = items.reduce(
