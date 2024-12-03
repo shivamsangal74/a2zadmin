@@ -31,6 +31,7 @@ interface BasicTableProps {
   filter?: string[];
   isSeachable?: boolean;
   isReport?: Boolean;
+  report_id?: string
 }
 
 const BasicTable: React.FC<BasicTableProps> = ({
@@ -41,6 +42,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
   filter = [],
   isSeachable = true,
   isReport = false,
+  report_id
 }) => {
   const [sorting, setSorting] = useState([]);
   const [columnFilter, setColumnFilter] = useState([]);
@@ -422,11 +424,8 @@ const BasicTable: React.FC<BasicTableProps> = ({
               {table.getRowModel().rows.map((row) => (
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => {
-                    const isFundType = cell.column.id === "comm_sur";
-                    const cellValue = String(cell.getValue()).toLowerCase();
-                    let isDebit = cellValue === "debit";
-
-                    let isCredit = cellValue === "credit";
+                    console.log(row.original.status)
+                    
 
                     return (
                       <td
@@ -435,14 +434,9 @@ const BasicTable: React.FC<BasicTableProps> = ({
                           minWidth: cell.column.getSize(),
                           fontSize: "0.8rem",
                           textAlign: "center",
+                          color: `${ (row?.original?.status?.toString()?.toLowerCase()  == "success" && report_id !="1_3") ? "green" : (row?.original?.status?.toString()?.toLowerCase()  == "failed" && report_id !="1_3")  ? "red" :(row?.original?.status?.toString()?.toLowerCase()  == "pending" && report_id !="1_3") ? "orange" :  ""}`
                         }}
-                        className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark  ${
-                          isFundType && (isDebit || isCredit)
-                            ? isDebit
-                              ? "red"
-                              : "green"
-                            : ""
-                        }`}
+                        className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark `}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

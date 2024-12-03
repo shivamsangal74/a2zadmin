@@ -4,18 +4,24 @@ import Logo from "../../images/logo/logo.png";
 import { useNavigate } from "react-router-dom";
 import { validateUser } from "../../Services/AuthServices";
 import { toast } from "react-toastify";
+import api from "../../Services/Axios/api";
+import PinInput from "../../components/VerifyPin/VerifyPin";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const history = useNavigate();
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const [openOtp,setOpenOtp] = useState(false)
+  const identifier = navigator.userAgent;
+  const platform = "WEB";
+  const handleSubmit = async (otp:string) => {
+ 
     try {
-      const response = await validateUser(email, password);
-      if (response.status === 200 && response.token.token) {
+      const response = await validateUser(email, otp,platform,
+        identifier);
+        if (response.token && response.userType == "admin") {
         // document.cookie = `token=${response.token.token}; path=/`;
-        localStorage.setItem("token", response.token.token);
+        localStorage.setItem('token', response.token);
         toast.success("Successfully Login.");
         history("/chart");
       } else {
@@ -23,8 +29,40 @@ const Login: React.FC = () => {
       }
     } catch (error) {
       toast.error("Invalid credentials !");
+    }finally{
+      setOpenOtp(false)
     }
   };
+
+  async function generateLoginOtp(event:any){
+    event.preventDefault()
+
+    try {
+      if (!email || !password) return toast.error("Username and password is required.")
+      const resp = await api.post("/users/generateLoginOtp", {
+        email,
+        password,
+        platform,
+        identifier,
+      })
+      if (resp.data.isOtpRequired) {
+        toast.success(resp.data.message || "OTP send.")
+        setOpenOtp(true)
+      } else {
+        if (resp.data.token) {
+          localStorage.setItem('token', resp.data.token);
+          toast.success("Successfully Login.");
+          history("/chart");
+        } else {
+          alert("Invalid credentials !");
+        }
+      }
+
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Invalid credentials !")
+    }
+  } 
+
   return (
     <>
       <div className="h-screen  rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -45,7 +83,7 @@ const Login: React.FC = () => {
                 Sign In
               </h2>
 
-              <form onSubmit={handleSubmit}>
+              <form >
                 <div className="mb-4">
                   <label className="mb-2.5 block font-medium text-black dark:text-white">
                     Email
@@ -54,10 +92,10 @@ const Login: React.FC = () => {
                     <input
                       id="email-address"
                       name="email"
-                      type="email"
+                      type="text"
                       autoComplete="email"
                       required
-                      placeholder="Email address"
+                      placeholder="Email address or mobile number"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
@@ -129,6 +167,7 @@ const Login: React.FC = () => {
                     type="submit"
                     value="Sign In"
                     className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                    onClick={generateLoginOtp}
                   />
                 </div>
               </form>
@@ -136,6 +175,7 @@ const Login: React.FC = () => {
           </div>
         </div>
       </div>
+      {openOtp && <PinInput length={6} onComplete={handleSubmit} isOtp={true} />}
     </>
   );
 };

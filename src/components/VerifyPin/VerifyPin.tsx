@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./VerifyPin.css";
 import img from "../../images/lockscreen.jpeg";
-const PinInput = ({ length = 4, onComplete }) => {
+const PinInput = ({ length = 4, onComplete,isOtp=false }) => {
   const [pin, setPin] = useState(Array(length).fill(""));
   const [isError, setIsError] = useState(false);
 
@@ -24,7 +24,9 @@ const PinInput = ({ length = 4, onComplete }) => {
       const enteredPin = newPin.join("");
       const isMatched = enteredPin === "2211";
 
-      if (isMatched) {
+      if(isOtp){
+        onComplete(enteredPin);
+      }else if (isMatched) {
         console.log("matched");
         onComplete(enteredPin);
       } else {
@@ -43,7 +45,7 @@ const PinInput = ({ length = 4, onComplete }) => {
   return (
     <div className="backdrop">
       <div className="pin-container">
-        <h2 className="font-bold">Enter your 4-digit iPIN to confirm</h2>
+        <h2 className="font-bold">{isOtp ? `Enter ${length || 6} otp send to your mobile number.`  : "Enter your 4-digit PIN to confirm"}</h2>
 
       <div className="con">
 

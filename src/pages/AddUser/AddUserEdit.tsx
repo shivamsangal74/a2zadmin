@@ -67,6 +67,7 @@ const schema = z
       .email("Invalid email address")
       .optional(),
     panNo: panSchema.nullable().optional(),
+    profile: z.string().nullable().optional(),
     dob: z.coerce
       .date()
       .min(new Date(1920, 0, 1), {
@@ -192,6 +193,10 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
   }, [errors]);
   const onSubmit: SubmitHandler<FormFields> = async (userdata) => {
     try {
+      if (data?.aadharNo) {
+        userdata.aadharNo = userdata?.aadharNo.replace(/\s/g, "");
+        //userdata.profile = profile;
+      }
       await UpdateUserInfo(userdata, userid);
       reset(undefined, { keepErrors: false });
       toast.success("User updated successfully.");
@@ -205,12 +210,12 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
   const isFormCompleted = (errors: any) => {
     return Object.values(errors).every((error) => !error);
   };
-
+  const userTypeValue = watch("userType");
   const { isLoading, error, data } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       try {
-        const response = await getUser();
+        const response = await getUser(userTypeValue);
         let stateData = await getState();
         let riskData = await getDefaultRisk();
         let _dataRisk: any = [];
@@ -319,6 +324,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
         pinCode: response.data.zip,
         city: response.data.address.po,
         state: response.data.address.state,
+        DOB: response.data.dob,
       };
 
       if (response.status == "error") {
@@ -329,10 +335,13 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           setValue("ekycStatus", 1);
           Object.entries(aadharData).forEach(([key, value]) => {
             setValue(key, value);
-          });
+          })
+          setValue('profile',response.data.profile_image)
+          setValue("dob", dayjs(aadharData.DOB));
         } else {
           setValue("ekycStatus", 0);
         }
+
         setOpenAuth(false);
       }
     } catch (err: any) {
@@ -415,10 +424,10 @@ const [roleData,setRoleData] = useState([])
     <div className="w-full flex flex-col sm:flex-row flex-grow overflow-hidden">
       <div className="sm:w-1/4 md:1/4 w-full flex-shrink flex-grow-0 p-8">
         <div className="sticky top-0 px-1 w-full">
-          {userInfo.profile && (
+          {profile && (
             <div className="ml-5 mb-5">
               <img
-                src={`data:image/jpeg;base64,${userInfo.profile}`}
+                src={`data:image/jpeg;base64,${profile}`}
                 alt="Base64"
                 height={"100%"}
                 width={"50%"}

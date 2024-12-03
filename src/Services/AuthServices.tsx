@@ -12,13 +12,16 @@ export async function generateOTP(aadharNo: string) {
   }
 }
 
-export async function validateUser(email: string, password: string) {
+export async function validateUser(email: string, otp: string ,platform:string,
+  identifier:string) {
   try {
     const response = await api.post(
       "/users/login",
       {
         email: email,
-        password: password,
+        otp: otp,
+        platform : platform,
+        identifier : identifier
       },
       {
         withCredentials: true,

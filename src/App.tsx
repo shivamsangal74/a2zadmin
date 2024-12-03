@@ -45,6 +45,7 @@ import TicketInfo from "./pages/Support/TicketInfo";
 import UserPermissions from "./pages/UserPermissions/UserPermissions";
 import Permissions from "./pages/UserPermissions/Permissions";
 import EditUserPermissions from "./pages/UserPermissions/EditRole";
+import { ServerLogs } from "./pages/ServerLogs";
 
 const queryClient = new QueryClient();
 function App() {
@@ -292,6 +293,17 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Service />} />
                   <Route path="/default-risk" element={<DefaultRisk />} />
+                </Routes>
+              </>
+            }
+          />
+
+<Route
+            path="/logs/*"
+            element={
+              <>
+                <Routes>
+                  <Route path="/" element={<ServerLogs />} />
                 </Routes>
               </>
             }
