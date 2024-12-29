@@ -6,7 +6,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import React, { useState } from "react";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import DropMenu from "../DropMenu/DropMenu";
 import TextInput from "../Input/TextInput";
@@ -176,6 +176,32 @@ const BasicTable: React.FC<BasicTableProps> = ({
     { length: table.getPageCount() },
     (_, index) => index + 1
   );
+
+  const generatePagination = () => {
+    const totalPages = table.getPageCount();
+    const currentPage = table.getState().pagination.pageIndex + 1;
+    const delta = 5; // Number of pages before/after current to show
+  
+    if (totalPages <= 1) return [];
+  
+    const pagination = new Set<number>();
+  
+    // Always show the first page
+    pagination.add(1);
+  
+    // Pages before and after the current page
+    for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+      if (i > 1 && i < totalPages) {
+        pagination.add(i);
+      }
+    }
+  
+    // Always show the last page
+    pagination.add(totalPages);
+  
+    return Array.from(pagination).sort((a, b) => a - b);
+  };
+  
 
   async function exportExcel2(
     table: Table<any>,
@@ -454,34 +480,39 @@ const BasicTable: React.FC<BasicTableProps> = ({
         {data.length > 10 && (
           <div className="flex justify-between items-center p-5">
             <div className="flex space-x-2">
-              <button
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </button>
-              {pageNumbers.map((page) => (
-                <button
-                  key={page}
-                  className={`px-4 py-2 rounded ${
-                    table.getState().pagination.pageIndex === page - 1
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                  onClick={() => table.setPageIndex(page - 1)}
-                >
-                  {page}
-                </button>
-              ))}
-              <button
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </button>
-            </div>
+  <button
+    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+    onClick={() => table.previousPage()}
+    disabled={!table.getCanPreviousPage()}
+  >
+    Previous
+  </button>
+
+  {generatePagination().map((page, index, arr) => (
+    <React.Fragment key={page}>
+      {index > 0 && page !== arr[index - 1] + 1 && <span>...</span>}
+      <button
+        className={`px-4 py-2 rounded ${
+          table.getState().pagination.pageIndex === page - 1
+            ? "bg-blue-500 text-white"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        }`}
+        onClick={() => table.setPageIndex(page - 1)}
+      >
+        {page}
+      </button>
+    </React.Fragment>
+  ))}
+
+  <button
+    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+    onClick={() => table.nextPage()}
+    disabled={!table.getCanNextPage()}
+  >
+    Next
+  </button>
+</div>
+
             <div className="flex items-center space-x-2">
               <label htmlFor="pageSizeSelect" className="text-gray-700">
                 Page Size:
@@ -496,7 +527,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 }}
                 className="px-2 py-1 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {[5, 10, 20, 50].map((size) => (
+                {[5, 10, 20, 50,100].map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>

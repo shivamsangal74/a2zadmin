@@ -39,14 +39,13 @@ interface reportsProps {
   report_id: string;
 }
 
-const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
+const LiveReports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [reportData, setReportData] = useState([]);
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
   const [searchCondition, setSearchCondition] = useState("");
   const [searchValue, setSearchValue] = useState("");
-  const [isVisible, setIsVisible] = useState(false);
 
   const last30Days = () => {
     const startDate = dayjs().subtract(1, "day").startOf("day");
@@ -57,29 +56,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     return { startDate, endDate, value };
   };
 
-  function formatDateString(dateString: any) {
-    if(report_id == "1_3"){
-      return dateString
-    }
-    const date = new Date(dateString);
 
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    const formattedHours = String(hours).padStart(2, "0");
-
-    const formattedDate = `${day}-${month}-${year}`;
-    const formattedTime = `${formattedHours}:${minutes}:${seconds} ${ampm}`;
-
-    return `${formattedDate} ${formattedTime}`;
-  }
   const { startDate, endDate, value: last30DaysDateRange } = last30Days();
 
   const [dateRange, setDateRange] = useState(last30DaysDateRange);
@@ -351,21 +328,13 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     return isNaN(value) ? value : Number(value);
   }
 
-  const maskAadhaar = async (aadhaar:string) => {
-    
-    const maskedAadhaar =
-      aadhaar.slice(0, 8).replace(/\d/g, "*") + aadhaar.slice(8);
-  
-    return maskedAadhaar;
-  };
-
   const columns = reportData.Report.DisplayColumns.map((col) => {
     let columnConfig = {
       header: col.name,
       accessorKey: col.prop,
       size: 190,
     };
-    if (col.prop == "createdDate" ) {
+    if (col.prop == "createdDate") {
       columnConfig.size = 120;
       columnConfig.cell = (info) => (
         <div
@@ -373,24 +342,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             textAlign: "center",
           }}
         >
-          <div>{formatDateString(info.getValue())}</div>
-        </div>
-      );
-    }
-    if (col.prop == "aadhar" ) {
-      columnConfig.size = 120;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          <div>{info.row.original.aadhar.slice(0, 8).replace(/\d/g, "*") + info.row.original.aadhar.slice(8)}</div>
+          <div>{info.getValue()}</div>
         </div>
       );
     }
 
- 
     if (col.prop == "pltform") {
       columnConfig.size = 50;
       columnConfig.cell = (info) => (
@@ -552,26 +508,13 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
 
     if (col.prop == "message") {
-      console.log(col)
-      columnConfig.size = 250;
-      columnConfig.cell = (row) => (
-        <div style={{ textAlign: "center" }}>
-  {(() => {
-    const response = row.row.original.response;
-    if (!response) return response;
-   
-
-    try {
-      const parsedResponse = JSON.parse(response);
-      
-      return parsedResponse?.message ||parsedResponse?.status || parsedResponse?.response_description || parsedResponse?.message || response;
-    } catch (e) {
-
-      return response;
-    }
-  })()}
-</div>
-
+      columnConfig.size = 100;
+      columnConfig.cell = (info) => (
+        <div
+          style={{
+            textAlign: "center",
+          }}
+        ></div>
       );
     }
 
@@ -580,6 +523,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       col.prop == "amount" ||
       col.prop == "gst" ||
       col.prop == "tds" ||
+      col.prop == "aadhar" ||
       col.prop == "apiBal" ||
       col.prop == "reportType"
     ) {
@@ -701,4 +645,4 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   );
 };
 
-export default Reports;
+export default LiveReports;
