@@ -435,7 +435,6 @@ const Sidebar: React.FC = () => {
       "/logs/",
       <BsServer style={{ fontSize: 19 }} />
     ),
-    
   ];
 
   const pathToKey: { [key: string]: string } = items.reduce(

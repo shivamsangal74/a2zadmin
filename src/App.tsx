@@ -204,7 +204,7 @@ function App() {
                   <Route
                     path="/buisness-report"
                     element={
-                      <Reports entity={"Transaction"} report_id={"2_8"} />
+                      <Reports entity={"Transaction"} report_id={"2_15"} />
                     }
                   />
                 </Routes>
@@ -229,6 +229,14 @@ function App() {
                     path="/settlement-report"
                     element={
                       <Reports entity={"Transaction"} report_id={"2_14"} />
+                    }
+                  />
+                </Routes>
+                <Routes>
+                  <Route
+                    path="/business-report"
+                    element={
+                      <Reports entity={"Transaction"} report_id={"2_15"} />
                     }
                   />
                 </Routes>
@@ -298,7 +306,7 @@ function App() {
             }
           />
 
-<Route
+          <Route
             path="/logs/*"
             element={
               <>
