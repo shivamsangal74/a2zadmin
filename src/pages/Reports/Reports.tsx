@@ -5,7 +5,7 @@ import BasicTable from "../../components/BasicTable/BasicTable";
 import { DropSearch } from "../../components/DropDown/DropSearch";
 import { ButtonLabel } from "../../components/Button/Button";
 import Loader from "../../common/Loader";
-import type { TimeRangePickerProps } from "antd";
+import type { DatePickerProps, TimeRangePickerProps } from "antd";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import moment from "moment";
@@ -49,7 +49,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const last30Days = () => {
-    const startDate = dayjs().subtract(1, "day").startOf("day");
+
+    let startDate = dayjs().subtract(1, "day").startOf("day");
+    if(report_id == '2_15'){
+      startDate = dayjs().startOf("month");
+    }
     const endDate = dayjs().endOf("day");
     const value = `createdDate between '${startDate.format(
       "YYYY-MM-DD HH:mm:ss"
@@ -58,8 +62,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   };
 
   function formatDateString(dateString: any) {
-    if(report_id == "1_3"){
-      return dateString
+    if (report_id == "1_3") {
+      return dateString;
     }
     const date = new Date(dateString);
 
@@ -94,31 +98,38 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   ];
 
   const handleLast30DaysDateRange = () => {
-     // Get the start of the current day (00:00:00)
-     const startDate = moment().startOf("day");
-  
-     // Get the end of the current day (23:59:59)
-     const endDate = moment().endOf("day");
-   
-     // Format the value as a date range string
-     const value = `createdDate between '${startDate.format("YYYY-MM-DD HH:mm:ss")}' and '${endDate.format("YYYY-MM-DD HH:mm:ss")}'`;
-   
-     return value;
+    // Get the start of the current day (00:00:00)
+    let startDate = moment().startOf("day");;
+    if(report_id == '2_15'){
+      startDate = moment().startOf("month");
+    }
+
+
+    // Get the end of the current day (23:59:59)
+    const endDate = moment().endOf("day");
+
+    // Format the value as a date range string
+    const value = `createdDate between '${startDate.format(
+      "YYYY-MM-DD HH:mm:ss"
+    )}' and '${endDate.format("YYYY-MM-DD HH:mm:ss")}'`;
+
+    return value;
   };
 
   const handleCurrentDayDateRange = () => {
     // Get the start of the current day (00:00:00)
     const startDate = moment().startOf("day");
-  
+
     // Get the end of the current day (23:59:59)
     const endDate = moment().endOf("day");
-  
+
     // Format the value as a date range string
-    const value = `createdDate between '${startDate.format("YYYY-MM-DD HH:mm:ss")}' and '${endDate.format("YYYY-MM-DD HH:mm:ss")}'`;
-  
+    const value = `createdDate between '${startDate.format(
+      "YYYY-MM-DD HH:mm:ss"
+    )}' and '${endDate.format("YYYY-MM-DD HH:mm:ss")}'`;
+
     return value;
   };
-  
 
   useEffect(() => {
     // Fetch report data from the API
@@ -259,6 +270,57 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
+  async function handleCheckStatusMoney(params: any) {
+    setLoading(true)
+    debugger
+    try {
+      let tranx = params.row.original.refId;
+      let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD")
+      debugger
+      const response = await api.post(`/money/checkinstantpaystatus`, {externalRef:tranx , transactionDate : Date},{
+        withCredentials: true
+      });
+      let resp = response.data;
+      if(resp.status == "Success"){
+        await moneyStatusChange("Success",params );
+        await handleGetReportData()
+        toast.success(resp.response);
+      }else if(resp.status == "Pending"){
+        toast.warn(resp.response);
+      } else if(resp.status == "Failed"){
+        await moneyStatusChange("Failed",params );
+        await handleGetReportData()
+        toast.error(resp.response);
+      }
+      
+      
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
+      console.error(error);
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function moneyStatusChange(value: any, params: any) {
+    debugger
+    try {
+      let tranxId = params.row.original.refId;
+      const response = await api.post(`/money/manual-money`, {
+        tranxId: tranxId,
+        value: value,
+      });
+      toast.warn("Money transfer Status Updated");
+      return response.data;
+    } catch (error: any) {
+      toast.error(error.message);
+      console.error(error);
+      throw error;
+    } finally {
+    }
+  }
+
+
   async function handleGetReportData() {
     try {
       let search;
@@ -289,36 +351,36 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     );
   }
   const renderStatus = (status: any) => {
-    switch (status) {
-      case "Success":
+    switch (status.toLowerCase()) {
+      case "success":
         return (
           <div className="flex items-center gap-2 text-green-600">
             <CheckCircle />
             <span>Success</span>
           </div>
         );
-      case "Pending":
+      case "pending":
         return (
           <div className="flex items-center gap-2 text-yellow-500">
             <HourglassEmpty />
             <span>Pending</span>
           </div>
         );
-      case "Failed":
+      case "failed":
         return (
           <div className="flex items-center gap-2 text-red-600">
             <Error />
             <span>Failed</span>
           </div>
         );
-      case "Reverse":
+      case "reverse":
         return (
           <div className="flex items-center gap-2 text-blue-600">
             <Refresh />
             <span>Reverse</span>
           </div>
         );
-      case "Transfer":
+      case "transfer":
         return (
           <div className="flex items-center gap-2 text-green-600">
             <TransferWithinAStation />
@@ -351,11 +413,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     return isNaN(value) ? value : Number(value);
   }
 
-  const maskAadhaar = async (aadhaar:string) => {
-    
+  const maskAadhaar = async (aadhaar: string) => {
     const maskedAadhaar =
       aadhaar.slice(0, 8).replace(/\d/g, "*") + aadhaar.slice(8);
-  
+
     return maskedAadhaar;
   };
 
@@ -365,32 +426,32 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       accessorKey: col.prop,
       size: 190,
     };
-    if (col.prop == "createdDate" ) {
+    if (col.prop == "createdDate") {
       columnConfig.size = 120;
       columnConfig.cell = (info) => (
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           <div>{formatDateString(info.getValue())}</div>
         </div>
       );
     }
-    if (col.prop == "aadhar" ) {
+    if (col.prop == "aadhar") {
       columnConfig.size = 120;
       columnConfig.cell = (info) => (
         <div
           style={{
             textAlign: "center",
-          }}
-        >
-          <div>{info.row.original.aadhar.slice(0, 8).replace(/\d/g, "*") + info.row.original.aadhar.slice(8)}</div>
+          }}>
+          <div>
+            {info.row.original.aadhar.slice(0, 8).replace(/\d/g, "*") +
+              info.row.original.aadhar.slice(8)}
+          </div>
         </div>
       );
     }
 
- 
     if (col.prop == "pltform") {
       columnConfig.size = 50;
       columnConfig.cell = (info) => (
@@ -399,8 +460,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}
-        >
+          }}>
           {info.row.original.pltform == "Web" ? <BsGlobe /> : info.getValue()}
         </div>
       );
@@ -412,8 +472,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           {info.getValue()}
         </div>
       );
@@ -424,8 +483,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           <CheckBox
             titleAccess="Success"
             onClick={() => {
@@ -464,8 +522,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           <CheckBox
             titleAccess="Success"
             onClick={() => {
@@ -504,8 +561,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           <div className="flex gap-2 items-center">
             {/* Info section */}
             {/* <div className="info text-base">{info.getValue()}</div> */}
@@ -520,24 +576,37 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               <div className="action flex gap-3 items-center">
                 <button
                   onClick={() => handleResendRequest(info)}
-                  className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300"
-                >
+                  className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300">
                   <Refresh titleAccess="Resend Status" /> {/* Resend Icon */}
                 </button>
 
                 {info.row.original.status === "Pending" && (
                   <button
                     onClick={() => handleCheckStatus(info)}
-                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                  >
+                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300">
                     <CompareArrows titleAccess="Check Status" />{" "}
                     {/* Check Status Icon */}
                   </button>
                 )}
               </div>
             )}
+
           </div>
 
+          {report_id === "2_5" && info.row.original.status == "Pending" && (
+              <div className="action flex gap-3 items-center">
+               
+
+                {info.row.original.status === "Pending" && (
+                  <button
+                  onClick={()=> handleCheckStatusMoney(info)}
+                  className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300">
+                    <CompareArrows titleAccess="Check Status" />{" "}
+                    {/* Check Status Icon */}
+                  </button>
+                )}
+              </div>
+            )}
           {/* <div className="flex gap-2">
             <div className="info">{info.getValue()}</div>
             {info.row.original.status !== "Success" && (
@@ -552,26 +621,70 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
 
     if (col.prop == "message") {
-      console.log(col)
+      console.log(col);
       columnConfig.size = 250;
       columnConfig.cell = (row) => (
         <div style={{ textAlign: "center" }}>
-  {(() => {
-    const response = row.row.original.response;
-    if (!response) return response;
-   
+          {(() => {
+            const response = row.row.original.response;
+            if (!response) return response;
 
-    try {
-      const parsedResponse = JSON.parse(response);
-      
-      return parsedResponse?.message ||parsedResponse?.status || parsedResponse?.response_description || parsedResponse?.message || response;
-    } catch (e) {
+            try {
+              const parsedResponse = JSON.parse(response);
 
-      return response;
+              return (
+                parsedResponse?.message ||
+                parsedResponse?.status ||
+                parsedResponse?.response_description ||
+                parsedResponse?.message ||
+                response
+              );
+            } catch (e) {
+              return response;
+            }
+          })()}
+        </div>
+      );
     }
-  })()}
-</div>
 
+    if (col.prop == "money_manual") {
+      columnConfig.size = 150;
+      columnConfig.cell = (info) => (
+        <div
+          style={{
+            textAlign: "center",
+          }}
+        >
+          <CheckBox
+            titleAccess="Success"
+            onClick={() => {
+              if (info.row.original.status !== "Success") {
+                moneyStatusChange("Success", info);
+              }
+            }}
+            style={{
+              cursor:
+                info.row.original.status === "Success"
+                  ? "not-allowed"
+                  : "pointer",
+            }}
+          />
+          <Close
+            titleAccess="Failed"
+            onClick={() => {
+              if (info.row.original.status !== "Failed") {
+                moneyStatusChange("Failed", info);
+              }
+            }}
+            style={{
+              marginLeft: "10px",
+              cursor:
+                info.row.original.status === "Failed"
+                  ? "not-allowed"
+                  : "pointer",
+            }}
+          />
+        </div>
       );
     }
 
@@ -588,8 +701,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           {info.getValue()}
         </div>
       );
@@ -613,41 +725,94 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
     return isNaN(value) ? value : Number(value);
   }
+
+  const onChangeMonth: DatePickerProps["onChange"] = (
+    dateModel: any,
+    selectedDate: any
+  ) => {
+    debugger;
+    const startOfMonth = moment(selectedDate.$d)
+      .startOf("month")
+      .format("YYYY-MM-DD HH:mm:ss");
+    const endOfMonth = moment(selectedDate.$d)
+      .endOf("month")
+      .format("YYYY-MM-DD HH:mm:ss");
+
+    const value = `${dateModel} between '${startOfMonth}' and '${endOfMonth}'`;
+    console.log(value);
+    setDateRange(value);
+  };
+
+  const servicesTotal = (report_id == '2_15' && tableData.length > 0) && tableData.reduce(
+    (acc, curr) => {
+      acc.Money += curr?.Money;
+      acc.Recharge += curr?.Recharge;
+      acc.Apes += curr?.Apes;
+      acc.Settlement += curr?.Settlement;
+      acc.Upi += curr?.upi;
+      acc.SubTotal += curr?.SubTotal;
+      return acc;
+    },
+    {
+      Money: 0,
+      Recharge: 0,
+      Apes: 0,
+      Settlement: 0,
+      Upi: 0,
+      SubTotal: 0,
+    }
+  );
+
   return (
     <DefaultLayout isList>
       <div className="flex-1">
         <h1 className="text-dark-400">{reportData.Report.ReportName}</h1>
       </div>
-      <div className="flex gap-5 w-full justify-between items-center mt-4">
+      <div className="flex gap-5 w-full justify-between items-center mt-4 mb-2">
         <div className="flex gap-5 flex-wrap" style={{ flex: 2 }}>
-          <div className="mb-2">
-            <RangePicker
-              style={{ height: "45px" }}
-              presets={[
-                {
-                  label: (
-                    <span aria-label="Current Time to End of Day">Today</span>
-                  ),
-                  value: () => [dayjs(), dayjs().endOf("day")],
-                },
-                ...rangePresets,
-              ]}
-              onChange={(val) => {
-                if (val) {
-                  const startDate = val[0];
-                  const endDate = val[1];
-                  handleDateRange(DateModel, startDate, endDate);
-                }
-              }}
-              defaultValue={[startDate, endDate]}
-            />
-          </div>
+          {report_id != "2_15" && (
+            <div className="mb-2">
+              <RangePicker
+                style={{ height: "45px" }}
+                presets={[
+                  {
+                    label: (
+                      <span aria-label="Current Time to End of Day">Today</span>
+                    ),
+                    value: () => [dayjs(), dayjs().endOf("day")],
+                  },
+                  ...rangePresets,
+                ]}
+                onChange={(val) => {
+                  if (val) {
+                    const startDate = val[0];
+                    const endDate = val[1];
+                    handleDateRange(DateModel, startDate, endDate);
+                  }
+                }}
+                defaultValue={[startDate, endDate]}
+              />
+            </div>
+          )}
+          {report_id == "2_15" && (
+            <div>
+              <DatePicker
+                style={{ height: "45px" }}
+                onChange={(val) => {
+                  if (val) {
+                    onChangeMonth(DateModel, val);
+                  }
+                }}
+                picker="month"
+                defaultValue={[startDate]}
+              />
+            </div>
+          )}
           {filterableColumns.map((filterName, index) => (
             <div
               key={filterName}
               className="mb-2"
-              style={{ width: filterName.includes("userId") ? "35%" : "18%" }}
-            >
+              style={{ width: filterName.includes("userId") ? "35%" : "18%" }}>
               {filterName == "tm.paymentType" || filterName == "tm.status" ? (
                 <DropDownCheakBox
                   label={filterableDisplayColumns[index]}
@@ -688,14 +853,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         </div>
       </div>
 
+      
+     
       <BasicTable
         data={tableData}
         columns={columns}
         isFilters={true}
-        filter={["status"]}
+        filter={["status", "sponsorId"]}
         isSeachable={true}
         isReport={true}
         report_id={report_id}
+        isShowSeq={report_id == '2_15' ?  true : false}
       />
     </DefaultLayout>
   );

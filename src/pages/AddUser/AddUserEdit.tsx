@@ -32,7 +32,9 @@ import DropDownCheakBox from "../../components/DropDown/DropDownCheakBox";
 import Risk from "../RiskManage/Risk";
 import { getDefaultRisk } from "../../Services/riskService";
 import api from "../../Services/Axios/api";
-
+import { Modal } from "antd";
+import MapSelector from "../../components/LocationMap"
+import map from "../../images/maps.svg"
 const panSchema = z.string().refine((value) => {
   if (value.length !== 10) return false;
 
@@ -110,8 +112,8 @@ const schema = z
     gstNo: z.string().nullable().optional(),
     adharUdyog: z.string().nullable().optional(),
     shopOwnership: z.string().nullable().optional(),
-    optional1: z.string().nullable().optional(),
-    optional2: z.string().nullable().optional(),
+    optional1: z.number().nullable().optional(),
+    optional2: z.number().nullable().optional(),
     optional3: z.string().nullable().optional(),
     optional4: z.string().nullable().optional(),
     selfVideo: z.string().nullable().optional(),
@@ -170,6 +172,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
   const [commissionData, setCommissionData] = useState<any[]>([]);
   const [stateData, setStateData] = useState<any[]>([]);
   const [profile, setProfile] = useState("");
+  const [openLocation, setOpenLocation] = useState(false);
   const { currentStep, goToStep, goToNextStep, goToPrevStep, isActiveStep } =
     useStepCount(5);
   const navigate = useNavigate();
@@ -419,6 +422,12 @@ const [roleData,setRoleData] = useState([])
     refetchOnWindowFocus: false,
   });
   if (roleLoading) return <Loader />;
+
+  const onLocationSelect = (location:any) => {
+    setValue("optional1", location.lat);
+    setValue("optional2", location.lng);
+  };
+ 
 
   return (
     <div className="w-full flex flex-col sm:flex-row flex-grow overflow-hidden">
@@ -848,23 +857,28 @@ const [roleData,setRoleData] = useState([])
                   isModel={false}
                   controlProp={control}
                   disabledProp={edit}
-                  label="Optional Field 1"
+                  label="Latitude"
                   name="optional1"
                   registerAction={{ ...register("optional1") }}
-                  placeholder="Enter Optional Field 1"
+                  placeholder="Enter Latitude"
                   error={errors.optional1?.message}
                 />
 
+                <div className="flex gap-3">
+                <div className="w-100">
                 <RHFInput
                   isModel={false}
                   controlProp={control}
                   disabledProp={edit}
-                  label="Optional Field 2"
+                  label="Longitute"
                   name="optional2"
                   registerAction={{ ...register("optional2") }}
-                  placeholder="Enter Optional Field 2"
+                  placeholder="Enter Longitute"
                   error={errors.optional2?.message}
                 />
+                </div>
+                <img src={map} alt="" height={30} width={30} onClick={()=> setOpenLocation(true)}  />
+                </div>
 
                 <RHFInput
                   isModel={false}
@@ -1041,6 +1055,17 @@ const [roleData,setRoleData] = useState([])
             <div className="text-red-500">{errors.root.message}</div>
           )}
         </form>
+        <Modal
+        title={<p>Location</p>}
+        width={1200}
+        
+        open={openLocation}
+        onCancel={() => setOpenLocation(false)}
+        onOk={() => setOpenLocation(false)}
+      >
+             <MapSelector onLocationSelect={onLocationSelect} />
+
+      </Modal>
         <AuthModel
           open={openAuth}
           validateOtp={valiadateOTP}

@@ -5,6 +5,7 @@ import { Button, message, Popconfirm } from 'antd';
 import UserOne from '../../images/user/user-01.png';
 import ConfirmBox from '../Confirmation/ConfirmBox';
 import Popup from '../Model/Model';
+import { jwtDecode } from 'jwt-decode';
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -13,7 +14,7 @@ const DropdownUser = () => {
   const dropdown = useRef<any>(null);
 
   const navigate = useNavigate()
-
+  const decode = jwtDecode(localStorage.getItem("token"))
   // close on click outside
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
@@ -60,10 +61,10 @@ const cancel: PopconfirmProps['onCancel'] = (e) => {
         to="#"
       >
         <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-black dark:text-white">
-            Mayank Goswami
+          <span className="block text-sm font-medium text-black dark:text-white text-cap text-transform: capitalize">
+           {decode ? decode.fullName : ""}
           </span>
-          <span className="block text-xs">Developer</span>
+          <span className="block text-xs">{decode ? decode.userType : ""}</span>
         </span>
 
         <span className="h-12 w-12 rounded-full">

@@ -23,8 +23,10 @@
     "@mui/icons-material": "^5.15.14",
     "@mui/material": "^5.15.14",
     "@mui/x-date-pickers": "^7.1.0",
+    "@react-google-maps/api": "^2.20.5",
     "@tanstack/react-query": "^5.29.0",
     "@tanstack/react-table": "^8.15.3",
+    "@vis.gl/react-google-maps": "^1.5.0",
     "antd": "^5.17.2",
     "apexcharts": "^3.41.0",
     "axios": "^1.6.8",
@@ -63,6 +65,7 @@
     "reactstrap": "^9.2.2",
     "socket.io-client": "^4.8.0",
     "sort-by": "^0.0.2",
+    "use-places-autocomplete": "^4.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {

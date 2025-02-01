@@ -6,7 +6,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import DropMenu from "../DropMenu/DropMenu";
 import TextInput from "../Input/TextInput";
@@ -31,7 +31,8 @@ interface BasicTableProps {
   filter?: string[];
   isSeachable?: boolean;
   isReport?: Boolean;
-  report_id?: string
+  report_id?: string;
+  isShowSeq?: boolean;
 }
 
 const BasicTable: React.FC<BasicTableProps> = ({
@@ -42,7 +43,8 @@ const BasicTable: React.FC<BasicTableProps> = ({
   filter = [],
   isSeachable = true,
   isReport = false,
-  report_id
+  report_id,
+  isShowSeq = false
 }) => {
   const [sorting, setSorting] = useState([]);
   const [columnFilter, setColumnFilter] = useState([]);
@@ -81,6 +83,18 @@ const BasicTable: React.FC<BasicTableProps> = ({
       cell: (row: any) => (
         <div className="flex justify-center">
           <DropMenu actions={actions} dataProp={row} />
+        </div>
+      ),
+    });
+  }
+
+  if(isShowSeq){
+    extendedColumns.unshift({
+      id: "S_No.",
+      header: "S_No.",
+      cell: (row: any) => (
+        <div className="flex justify-center">
+          {JSON.stringify(row.row.index + 1)}
         </div>
       ),
     });
@@ -153,7 +167,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
             Toggle All
           </label>
         </div>
-        {table.getAllLeafColumns().map((column: any) => {
+        {table.getAllLeafColumns().map((column: any, i:any) => {
           return (
             <div key={column.id} className="px-5">
               <label>
@@ -247,7 +261,63 @@ const BasicTable: React.FC<BasicTableProps> = ({
     saveAs(new Blob([buf]), `${filename}.xlsx`);
   }
 
+// Inside the BasicTable component
+const servicesTotal = useMemo(() => {
+  if (report_id === "2_15" && table.getFilteredRowModel().rows.length > 0) {
+    return table.getFilteredRowModel().rows.reduce(
+      (acc, row) => {
+        const curr = row.original;
+        acc.Recharge += curr?.Recharge || 0;
+        acc.Money += curr?.Money || 0;
+        acc.Apes += curr?.Apes || 0;
+        acc.Upi += curr?.upi || 0;
+        acc.Total += curr?.Total || 0;
+        acc.Settlement += curr?.Settlement || 0;
+        acc.SubTotal += curr?.SubTotal || 0;
+        return acc;
+      },
+      {
+        Recharge: 0,
+        Money: 0,
+        Apes: 0,
+        Upi: 0,
+        Total: 0,
+        Settlement: 0,
+        SubTotal: 0,
+      }
+    );
+  }
+  return null; // Or an empty object if preferred
+}, [table.getFilteredRowModel().rows, report_id]);
+
   return (
+    <>
+    {report_id == '2_15' && <div className="flex justify-between mt-3 mb-3">
+        {servicesTotal && (
+          <>
+            <div className="mb-3 flex flex-wrap gap-6">
+
+              {
+                Object.entries(servicesTotal).map(([key, value]) => {
+                  return  <div className="py-2 px-3 flex gap-1 flex-col min-w-[150px] rounded-lg bg-white border border-[#7851bd33]">
+                  <div className="flex gap-2.5 items-center">
+                    <span className="text-sm font-medium tracking-[1.8px] text-[#637381] uppercase">
+                      {key}
+                    </span>
+                  </div>
+                  <span className="text-md font-semibold text-[#212B36] tracking-[1.8px]">
+                  ₹ {value.toFixed(2)}
+                  </span>
+                 
+                </div>
+                })
+              }
+           
+           
+            </div>
+          </>
+        )}
+      </div>}
     <div className="rounded-sm border border-stroke bg-white  pt-3 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark  xl:pb-1">
       <div className="" style={{ minHeight: "75vh" }}>
         <div className="flex justify-between mt-3">
@@ -518,26 +588,35 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 Page Size:
               </label>
               <select
-                id="pageSizeSelect"
-                value={pageSize}
-                onChange={(e) => {
-                  const size = Number(e.target.value);
-                  setPageSize(size);
-                  table.setPageSize(size);
-                }}
-                className="px-2 py-1 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {[5, 10, 20, 50,100].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+    id="pageSizeSelect"
+    value={pageSize}
+    onChange={(e) => {
+      const value = e.target.value;
+      if (value === "All") {
+        const allRowsCount = table.getFilteredRowModel().rows.length; // Adjust based on your table library
+        setPageSize(allRowsCount); // Update state
+        table.setPageSize(allRowsCount); // Set all rows to display
+      } else {
+        const size = Number(value);
+        setPageSize(size);
+        table.setPageSize(size);
+      }
+    }}
+    className="px-2 py-1 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    {["All" , 5, 10, 20, 50, 100].map((size) => (
+      <option key={size} value={size}>
+        {size}
+      </option>
+    ))}
+   
+  </select>
             </div>
           </div>
         )}
       </div>
     </div>
+    </>
   );
 };
 
