@@ -318,7 +318,7 @@ function App() {
             }
           />
 
-<Route
+          <Route
             path="/logs/*"
             element={
               <>
