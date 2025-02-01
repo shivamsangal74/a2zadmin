@@ -33,8 +33,8 @@ import Risk from "../RiskManage/Risk";
 import { getDefaultRisk } from "../../Services/riskService";
 import api from "../../Services/Axios/api";
 import { Modal } from "antd";
-import MapSelector from "../../components/LocationMap"
-import map from "../../images/maps.svg"
+import MapSelector from "../../components/LocationMap";
+import map from "../../images/maps.svg";
 const panSchema = z.string().refine((value) => {
   if (value.length !== 10) return false;
 
@@ -64,10 +64,7 @@ const schema = z
       .min(10, "Mobile number must be 10 digits")
       .max(10, "Mobile number must be 10 digits"),
     fullName: z.string().optional(),
-    emailAddress: z
-      .string()
-      .email("Invalid email address")
-      .optional(),
+    emailAddress: z.string().email("Invalid email address").optional(),
     panNo: panSchema.nullable().optional(),
     profile: z.string().nullable().optional(),
     dob: z.coerce
@@ -75,7 +72,9 @@ const schema = z
       .min(new Date(1920, 0, 1), {
         message: "Date cannot go past January 1 1920",
       })
-      .max(new Date(), { message: "Date must be in the past" }).nullable().optional(),
+      .max(new Date(), { message: "Date must be in the past" })
+      .nullable()
+      .optional(),
     password: z.string().nullable().optional(),
     ekycStatus: z.number().nullable().optional(),
     userType: z.string().nonempty("User type cannot be empty"),
@@ -112,8 +111,8 @@ const schema = z
     gstNo: z.string().nullable().optional(),
     adharUdyog: z.string().nullable().optional(),
     shopOwnership: z.string().nullable().optional(),
-    optional1: z.number().nullable().optional(),
-    optional2: z.number().nullable().optional(),
+    optional1: z.any().nullable().optional(),
+    optional2: z.any().nullable().optional(),
     optional3: z.string().nullable().optional(),
     optional4: z.string().nullable().optional(),
     selfVideo: z.string().nullable().optional(),
@@ -135,8 +134,7 @@ const schema = z
     instantAutoCredit: z.boolean().nullable().optional(),
     minBalanceAlert: z.number().nullable().optional(),
     minBalanceAutoRefill: z.number().nullable().optional(),
-    userRole: z.string().nullable().optional(),
-
+    userRole: z.string().nullable().optional().default(""),
   })
   .refine((data) => {
     const errors = [];
@@ -299,7 +297,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           //   });
           // });
         }
-        setValue("userRole",_data.userType )
+        setValue("userRole", _data.userType);
         setUserData(_data);
         return userData;
       } catch (error) {
@@ -338,8 +336,8 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           setValue("ekycStatus", 1);
           Object.entries(aadharData).forEach(([key, value]) => {
             setValue(key, value);
-          })
-          setValue('profile',response.data.profile_image)
+          });
+          setValue("profile", response.data.profile_image);
           setValue("dob", dayjs(aadharData.DOB));
         } else {
           setValue("ekycStatus", 0);
@@ -384,7 +382,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
 
   const onChange = (e: string) => {
     const numericValue = e.replace(/\D/g, "");
-    if(numericValue.length > 12) return;
+    if (numericValue.length > 12) return;
     const formattedValue = numericValue.match(/.{1,4}/g)?.join(" ") || "";
     setValue("aadharNo", formattedValue);
   };
@@ -395,27 +393,26 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
     setValue("commission", commaSeparatedValues);
   }
 
-const [roleData,setRoleData] = useState([])
-  const { isLoading:roleLoading, error:roleError } = useQuery({
+  const [roleData, setRoleData] = useState([]);
+  const { isLoading: roleLoading, error: roleError } = useQuery({
     queryKey: ["permissions"],
     queryFn: async () => {
       try {
-        const response = await api.get('/permissions/getroles');
-        let role_Data = []
-        debugger
-        if(response.data.Roles.length> 0){
-          response.data.Roles.forEach((role)=>{
+        const response = await api.get("/permissions/getroles");
+        let role_Data = [];
+        debugger;
+        if (response.data.Roles.length > 0) {
+          response.data.Roles.forEach((role) => {
             role_Data.push({
               showvalue: role.roleName,
-              value: role.id.toString()
-
-             })
-          })  
-          setRoleData(role_Data)
+              value: role.id.toString(),
+            });
+          });
+          setRoleData(role_Data);
         }
         return response.data.Roles || [];
       } catch (error: any) {
-        toast.error(error.message || 'An error occurred while fetching roles.');
+        toast.error(error.message || "An error occurred while fetching roles.");
         throw error;
       }
     },
@@ -423,11 +420,10 @@ const [roleData,setRoleData] = useState([])
   });
   if (roleLoading) return <Loader />;
 
-  const onLocationSelect = (location:any) => {
+  const onLocationSelect = (location: any) => {
     setValue("optional1", location.lat);
     setValue("optional2", location.lng);
   };
- 
 
   return (
     <div className="w-full flex flex-col sm:flex-row flex-grow overflow-hidden">
@@ -526,7 +522,6 @@ const [roleData,setRoleData] = useState([])
                 <SearchDropDown
                   disabledProp={edit}
                   required={true}
-
                   placeholder="Select Sponsor"
                   options={[
                     { showvalue: "admin", value: "admin" },
@@ -770,7 +765,6 @@ const [roleData,setRoleData] = useState([])
                   name="userRole"
                   controlProp={control}
                 />
-                
               </>
             )}
 
@@ -865,19 +859,25 @@ const [roleData,setRoleData] = useState([])
                 />
 
                 <div className="flex gap-3">
-                <div className="w-100">
-                <RHFInput
-                  isModel={false}
-                  controlProp={control}
-                  disabledProp={edit}
-                  label="Longitute"
-                  name="optional2"
-                  registerAction={{ ...register("optional2") }}
-                  placeholder="Enter Longitute"
-                  error={errors.optional2?.message}
-                />
-                </div>
-                <img src={map} alt="" height={30} width={30} onClick={()=> setOpenLocation(true)}  />
+                  <div className="w-100">
+                    <RHFInput
+                      isModel={false}
+                      controlProp={control}
+                      disabledProp={edit}
+                      label="Longitute"
+                      name="optional2"
+                      registerAction={{ ...register("optional2") }}
+                      placeholder="Enter Longitute"
+                      error={errors.optional2?.message}
+                    />
+                  </div>
+                  <img
+                    src={map}
+                    alt=""
+                    height={30}
+                    width={30}
+                    onClick={() => setOpenLocation(true)}
+                  />
                 </div>
 
                 <RHFInput
@@ -1056,16 +1056,14 @@ const [roleData,setRoleData] = useState([])
           )}
         </form>
         <Modal
-        title={<p>Location</p>}
-        width={1200}
-        
-        open={openLocation}
-        onCancel={() => setOpenLocation(false)}
-        onOk={() => setOpenLocation(false)}
-      >
-             <MapSelector onLocationSelect={onLocationSelect} />
-
-      </Modal>
+          title={<p>Location</p>}
+          width={1200}
+          open={openLocation}
+          onCancel={() => setOpenLocation(false)}
+          onOk={() => setOpenLocation(false)}
+        >
+          <MapSelector onLocationSelect={onLocationSelect} />
+        </Modal>
         <AuthModel
           open={openAuth}
           validateOtp={valiadateOTP}
