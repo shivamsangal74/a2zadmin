@@ -23,6 +23,7 @@ import { SecurityOutlined } from "@mui/icons-material";
 import { jwtDecode } from "jwt-decode";
 import api from "../../Services/Axios/api";
 import Loader from "../Loader/Loader";
+import { FaUsers } from "react-icons/fa6";
 const { Sider } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
@@ -150,6 +151,8 @@ const Sidebar: React.FC = () => {
             "/users/userlist",
             <ListAltOutlinedIcon style={{ fontSize: 18 }} />
           ),
+          getItem("Credopay Users","1l1", "/users/onboardeduserlist", <FaUsers />)
+
       ].filter(Boolean)
     ),
     getItem(
@@ -306,6 +309,12 @@ const Sidebar: React.FC = () => {
             "/report/recharge-report",
             <AccountBalanceWalletOutlinedIcon style={{ fontSize: 18 }} />
           ),
+          getItem(
+            "Live Recharge Report",
+            "123",
+            "/report/live-recharge-report",
+            <AccountBalanceWalletOutlinedIcon style={{ fontSize: 18 }} />
+          ),
         userPermissions?.reports?.moneyReport &&
           getItem(
             "Money Report",
@@ -355,6 +364,8 @@ const Sidebar: React.FC = () => {
             "/report/settlement-report",
             <BsBank style={{ fontSize: 18 }} />
           ),
+          getItem("Mpos/Micro Atm Report","355", "/report/mos-matm-report", <BsBank />)
+
       ].filter(Boolean)
     ),
     getItem(

@@ -381,6 +381,8 @@ const ManageCategory = () => {
               <Option value="loanemi">LoanEmi</Option>
               <Option value="fastag">Fastag</Option>
               <Option value="gateway">Gateway</Option>
+              <Option value="mpos">MPOS</Option>
+              <Option value="matm">MATM</Option>
             </Select>
           </div>
           {services && (

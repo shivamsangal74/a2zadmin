@@ -46,6 +46,8 @@ import UserPermissions from "./pages/UserPermissions/UserPermissions";
 import Permissions from "./pages/UserPermissions/Permissions";
 import EditUserPermissions from "./pages/UserPermissions/EditRole";
 import { ServerLogs } from "./pages/ServerLogs";
+import { OnBoardedUsers } from "./pages/UserList/OnBoardedUsers";
+import LiveReports from "./pages/Reports/LiveReport";
 
 const queryClient = new QueryClient();
 function App() {
@@ -83,6 +85,8 @@ function App() {
                 <Routes>
                   <Route path="/" element={<AddUser />} />
                   <Route path="/userlist" element={<UserList />} />
+                  <Route path="/onboardeduserlist" element={<OnBoardedUsers />} />
+
                   <Route path="/login" element={<Login />} />
                   <Route path="/kyc/:userid" element={<KycPage />} />
                   <Route path="/usersKyclist/:userid" element={<KycList />} />
@@ -178,6 +182,14 @@ function App() {
                 </Routes>
                 <Routes>
                   <Route
+                    path="/live-recharge-report"
+                    element={
+                      <LiveReports entity={"Transaction"} report_id={"2_4"} />
+                    }
+                  />
+                </Routes>
+                <Routes>
+                  <Route
                     path="/money-report"
                     element={
                       <Reports entity={"Transaction"} report_id={"2_5"} />
@@ -234,9 +246,9 @@ function App() {
                 </Routes>
                 <Routes>
                   <Route
-                    path="/business-report"
+                    path="/mos-matm-report"
                     element={
-                      <Reports entity={"Transaction"} report_id={"2_15"} />
+                      <Reports entity={"Transaction"} report_id={"2_17"} />
                     }
                   />
                 </Routes>

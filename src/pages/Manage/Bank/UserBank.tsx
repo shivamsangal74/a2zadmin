@@ -33,6 +33,8 @@ import {
   updateUserBank,
 } from "../../../Services/commonService";
 import { BsTrash } from "react-icons/bs";
+import { Select, Option } from "@material-tailwind/react";
+
 interface Service {
   id: string;
   userId: string;
@@ -59,14 +61,7 @@ const UserBank = () => {
       try {
         const response = await getUserBankList();
         const serviceData = response;
-        //   const filteredData = serviceData.map((item:any) => {
-        //   return {
-        //     ...item,
-        //     categorys: typeof item.categorys == "string"
-        //       ? JSON.parse(item.categorys)
-        //       : JSON.stringify([]),
-        //   };
-        // });
+
         if (serviceData.length > 0) {
           setServices(serviceData);
         }
@@ -126,7 +121,7 @@ const UserBank = () => {
 
   return (
     <DefaultLayout isList={true}>
-      <Container>
+      <div className="container">
         <Typography variant="h4" gutterBottom>
           User Settlement
         </Typography>
@@ -158,6 +153,9 @@ const UserBank = () => {
                   <b>Set. Limit</b>
                 </TableCell>
                 <TableCell>
+                  <b>Live Set. Limit</b>
+                </TableCell>
+                <TableCell>
                   <b>Set. Status</b>
                 </TableCell>
                 <TableCell>
@@ -174,8 +172,7 @@ const UserBank = () => {
                   <TableRow key={index}>
                     <TableCell>
                       <IconButton
-                        onClick={() => toggleRow(index, service.userId)}
-                      >
+                        onClick={() => toggleRow(index, service.userId)}>
                         {expandedRowIndex === index ? (
                           <ExpandLess />
                         ) : (
@@ -199,7 +196,7 @@ const UserBank = () => {
                         <Chip label={service.type} color="success" />
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell style={{ width: "125px" }}>
                       <Input
                         value={service.LimitSettlement}
                         onChange={(e) => {
@@ -214,6 +211,9 @@ const UserBank = () => {
                           service.LimitSettlement = newValue; // Directly update the service object if necessary
                         }}
                       />
+                    </TableCell>
+                    <TableCell style={{ width: "125px" }}>
+                      <Input value={service.liveLimitSettlement} disabled />
                     </TableCell>
 
                     <TableCell>
@@ -290,13 +290,11 @@ const UserBank = () => {
                   <TableRow>
                     <TableCell
                       style={{ paddingBottom: 0, paddingTop: 0 }}
-                      colSpan={10}
-                    >
+                      colSpan={10}>
                       <Collapse
                         in={expandedRowIndex === index}
                         timeout="auto"
-                        unmountOnExit
-                      >
+                        unmountOnExit>
                         <Box margin={1}>
                           {isLoading && <Spin />}
 
@@ -309,6 +307,8 @@ const UserBank = () => {
                                 <TableCell>Branch Ifsc</TableCell>
                                 <TableCell>Bank Name</TableCell>
                                 <TableCell>Bene Name</TableCell>
+                                <TableCell>Type</TableCell>
+
                                 <TableCell>Status</TableCell>
                                 <TableCell>Actions</TableCell>
                               </TableRow>
@@ -324,6 +324,26 @@ const UserBank = () => {
                                     <TableCell>{category.bankName}</TableCell>
                                     <TableCell>
                                       {category.beneficaryName}
+                                    </TableCell>
+                                    <TableCell size="medium">
+                                      <Select
+                                        label="Select AccounType"
+                                        onChange={(e) => {
+                                          handleLimitChange(
+                                            "type",
+                                            e,
+                                            category.userId,
+                                            "userId"
+                                          );
+                                        }}
+                                        value={category.type}>
+                                        <Option key={index} value={"Primary"}>
+                                          Primary
+                                        </Option>
+                                        <Option key={index} value={"Relative"}>
+                                          Relative
+                                        </Option>
+                                      </Select>
                                     </TableCell>
                                     <TableCell>
                                       <Switch
@@ -388,7 +408,7 @@ const UserBank = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Container>
+      </div>
     </DefaultLayout>
   );
 };
