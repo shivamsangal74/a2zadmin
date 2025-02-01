@@ -45,7 +45,7 @@ const DefaultLayout: React.FC<{ children: ReactNode; isList: Boolean }> = ({
             <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             <main>
               <div
-                className={`mx-auto max-w-screen-2xl p-4 ${
+                className={`mx-auto p-4 ${
                   isList ? "md:p-6 2xl:px-5 2xl:py-2" : "md:p-6 2xl:p-5"
                 }`}
               >
