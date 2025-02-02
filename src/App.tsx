@@ -48,6 +48,7 @@ import EditUserPermissions from "./pages/UserPermissions/EditRole";
 import { ServerLogs } from "./pages/ServerLogs";
 import { OnBoardedUsers } from "./pages/UserList/OnBoardedUsers";
 import LiveReports from "./pages/Reports/LiveReport";
+import { ApesUsers } from "./pages/UserList/ApesUsers";
 
 const queryClient = new QueryClient();
 function App() {
@@ -86,6 +87,8 @@ function App() {
                   <Route path="/" element={<AddUser />} />
                   <Route path="/userlist" element={<UserList />} />
                   <Route path="/onboardeduserlist" element={<OnBoardedUsers />} />
+                  <Route path="/aepsuserslist" element={<ApesUsers />} />
+
 
                   <Route path="/login" element={<Login />} />
                   <Route path="/kyc/:userid" element={<KycPage />} />
