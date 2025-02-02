@@ -151,7 +151,8 @@ const Sidebar: React.FC = () => {
             "/users/userlist",
             <ListAltOutlinedIcon style={{ fontSize: 18 }} />
           ),
-          getItem("Credopay Users","1l1", "/users/onboardeduserlist", <FaUsers />)
+          getItem("Credopay Users","1l1", "/users/onboardeduserlist", <FaUsers />),
+          getItem("Aeps Users","1l1fd", "/users/aepsuserslist", <FaUsers />)
 
       ].filter(Boolean)
     ),

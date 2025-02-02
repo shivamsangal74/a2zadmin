@@ -33,6 +33,7 @@ import {
 } from "@mui/icons-material"; // MUI Icons
 import DropDown from "../../components/DropDown/DropDown";
 import CheckBox from "@mui/icons-material/CheckBox";
+import StatsDisplay from "../../components/DisplatStats";
 
 interface reportsProps {
   entity: string;
@@ -743,25 +744,40 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     setDateRange(value);
   };
 
-  const servicesTotal = (report_id == '2_15' && tableData.length > 0) && tableData.reduce(
-    (acc, curr) => {
-      acc.Money += curr?.Money;
-      acc.Recharge += curr?.Recharge;
-      acc.Apes += curr?.Apes;
-      acc.Settlement += curr?.Settlement;
-      acc.Upi += curr?.upi;
-      acc.SubTotal += curr?.SubTotal;
-      return acc;
-    },
-    {
-      Money: 0,
-      Recharge: 0,
-      Apes: 0,
-      Settlement: 0,
-      Upi: 0,
-      SubTotal: 0,
-    }
-  );
+
+
+  function calculateStatusAndAmountTotals(dataArray:any) {
+    const totals = {
+      success: { count: 0, amount: 0 },
+      pending: { count: 0, amount: 0 },
+      fail: { count: 0, amount: 0 },
+      others: { count: 0, amount: 0 }, // For unexpected statuses
+    };
+  
+    dataArray.forEach((item:any) => {
+      const status = item?.status &&  item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
+      const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
+  
+      if (status === "success") {
+        totals.success.count += 1;
+        totals.success.amount += amount;
+      } else if (status === "pending") {
+        totals.pending.count += 1;
+        totals.pending.amount += amount;
+      } else if (status === "fail" || status === "failed") {
+        totals.fail.count += 1;
+        totals.fail.amount += amount;
+      } else {
+        totals.others.count += 1;
+        totals.others.amount += amount;
+      }
+    });
+  
+    return totals;
+  }
+  
+const totalAmount = tableData && tableData.length > 0 && calculateStatusAndAmountTotals(tableData) 
+console.log(totalAmount)
 
   return (
     <DefaultLayout isList>
@@ -853,7 +869,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         </div>
       </div>
 
-      
+      {report_id != "2_15" && <StatsDisplay  stats={totalAmount}/>}
      
       <BasicTable
         data={tableData}
