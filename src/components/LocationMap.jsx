@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { GoogleMap, useLoadScript, Marker} from "@react-google-maps/api";
 import usePlacesAutocomplete, {
   getGeocode,
@@ -21,10 +21,37 @@ export default function MapSelector({onLocationSelect}) {
 function GoogleMap1({onLocationSelect}) {
   
   const [selected, setSelected] = useState({ lat: 43.45, lng: -80.49 });
-  const [open, setOpen] = useState(false);
+  const [defaultCenter, setDefaultCenter] = useState(null);
 
+  const [open, setOpen] = useState(false);
+  // Function to get user's current location
+  const getUserLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setSelected({ lat: latitude, lng: longitude });
+          setDefaultCenter({ lat: latitude, lng: longitude })
+          onLocationSelect({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error("Error fetching location:", error);
+          setSelected({ lat: 43.45, lng: -80.49 }); // Default location (fallback)
+        }
+      );
+    } else {
+      console.warn("Geolocation is not supported by this browser.");
+      setSelected({ lat: 43.45, lng: -80.49 }); // Default location (fallback)
+    }
+  };
+
+  // Fetch location on mount
+  useEffect(() => {
+    getUserLocation();
+  }, []);
   return (
     <>
+     {defaultCenter && <>
       <div className="places-container">
         <PlacesAutocomplete setSelected={setSelected} onLocationSelect={onLocationSelect} />
       </div>
@@ -32,7 +59,10 @@ function GoogleMap1({onLocationSelect}) {
     <div style={{height: "500px", width: "100%"}}>
     <APIProvider apiKey={"AIzaSyCqK3dniQj_pFBtgl5GjCUmwp7F_6f4cc4"}>
       <div style={{ height: "100%", width: "100%" }}>
-        <Map zoom={18} center={selected} mapId={"cc38c4c76d152f62"}>
+        <Map defaultZoom={16} defaultCenter={defaultCenter}  gestureHandling={"greedy"} mapId={"cc38c4c76d152f62"} onClick={(e)=> {
+          setSelected(e.detail.latLng)
+          onLocationSelect(e.detail.latLng)
+          }}>
           <AdvancedMarker position={selected} onClick={() => setOpen(true)}>
             <Pin
               background={"grey"}
@@ -50,6 +80,7 @@ function GoogleMap1({onLocationSelect}) {
       </div>
     </APIProvider>
     </div>
+     </>}
     </>
   );
 }
