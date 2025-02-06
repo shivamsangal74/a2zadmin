@@ -271,6 +271,7 @@ const servicesTotal = useMemo(() => {
         acc.Money += curr?.Money || 0;
         acc.Apes += curr?.Apes || 0;
         acc.Upi += curr?.upi || 0;
+        acc.Mpos += curr?.mpos || 0;
         acc.Total += curr?.Total || 0;
         acc.Settlement += curr?.Settlement || 0;
         acc.SubTotal += curr?.SubTotal || 0;
@@ -281,6 +282,7 @@ const servicesTotal = useMemo(() => {
         Money: 0,
         Apes: 0,
         Upi: 0,
+        Mpos:0,
         Total: 0,
         Settlement: 0,
         SubTotal: 0,

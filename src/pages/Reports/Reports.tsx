@@ -21,8 +21,8 @@ import {
 import { BsGlobe } from "react-icons/bs";
 import api from "../../Services/Axios/api";
 import { toast } from "react-toastify";
-import { Select, Option } from "@material-tailwind/react";
-import { Box, Typography, IconButton } from "@mui/material";
+import { Select, Option, Textarea } from "@material-tailwind/react";
+import { Box, Typography, IconButton, TextField } from "@mui/material";
 import {
   CheckCircle,
   HourglassEmpty,
@@ -34,6 +34,7 @@ import {
 import DropDown from "../../components/DropDown/DropDown";
 import CheckBox from "@mui/icons-material/CheckBox";
 import StatsDisplay from "../../components/DisplatStats";
+import Popup from "../../components/Model/Model";
 
 interface reportsProps {
   entity: string;
@@ -47,12 +48,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [filters, setFilters] = useState({});
   const [searchCondition, setSearchCondition] = useState("");
   const [searchValue, setSearchValue] = useState("");
-  const [isVisible, setIsVisible] = useState(false);
+  const [isProcessing, setisProcessing] = useState(false);
 
   const last30Days = () => {
-
     let startDate = dayjs().subtract(1, "day").startOf("day");
-    if(report_id == '2_15'){
+    if (report_id == "2_15") {
       startDate = dayjs().startOf("month");
     }
     const endDate = dayjs().endOf("day");
@@ -100,11 +100,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   const handleLast30DaysDateRange = () => {
     // Get the start of the current day (00:00:00)
-    let startDate = moment().startOf("day");;
-    if(report_id == '2_15'){
+    let startDate = moment().startOf("day");
+    if (report_id == "2_15") {
       startDate = moment().startOf("month");
     }
-
 
     // Get the end of the current day (23:59:59)
     const endDate = moment().endOf("day");
@@ -204,20 +203,25 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     setDateRange(value);
   };
 
-  async function settlementStatusChange(value: any, params: any) {
+  async function settlementStatusChange(value: any, params: any, options: any) {
     try {
+      setisProcessing(true)
       let tranxId = params.row.original.requestId;
       const response = await api.post(`/settelment/manual-setllement`, {
         tranxId: tranxId,
         value: value,
+        otherValues: options,
       });
       toast.warn("Settlment Status Updated");
+      await handleGetReportData()
       return response.data;
     } catch (error: any) {
       toast.error(error.message);
       console.error(error);
       throw error;
     } finally {
+      setisProcessing(false)
+
     }
   }
 
@@ -272,39 +276,41 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleCheckStatusMoney(params: any) {
-    setLoading(true)
-    debugger
+    setLoading(true);
+    debugger;
     try {
       let tranx = params.row.original.refId;
-      let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD")
-      debugger
-      const response = await api.post(`/money/checkinstantpaystatus`, {externalRef:tranx , transactionDate : Date},{
-        withCredentials: true
-      });
+      let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD");
+      debugger;
+      const response = await api.post(
+        `/money/checkinstantpaystatus`,
+        { externalRef: tranx, transactionDate: Date },
+        {
+          withCredentials: true,
+        }
+      );
       let resp = response.data;
-      if(resp.status == "Success"){
-        await moneyStatusChange("Success",params );
-        await handleGetReportData()
+      if (resp.status == "Success") {
+        await moneyStatusChange("Success", params);
+        await handleGetReportData();
         toast.success(resp.response);
-      }else if(resp.status == "Pending"){
+      } else if (resp.status == "Pending") {
         toast.warn(resp.response);
-      } else if(resp.status == "Failed"){
-        await moneyStatusChange("Failed",params );
-        await handleGetReportData()
+      } else if (resp.status == "Failed") {
+        await moneyStatusChange("Failed", params);
+        await handleGetReportData();
         toast.error(resp.response);
       }
-      
-      
     } catch (error: any) {
       toast.error(error.response?.data?.message);
       console.error(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function moneyStatusChange(value: any, params: any) {
-    debugger
+    debugger;
     try {
       let tranxId = params.row.original.refId;
       const response = await api.post(`/money/manual-money`, {
@@ -312,6 +318,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         value: value,
       });
       toast.warn("Money transfer Status Updated");
+      await handleGetReportData()
       return response.data;
     } catch (error: any) {
       toast.error(error.message);
@@ -320,7 +327,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     } finally {
     }
   }
-
 
   async function handleGetReportData() {
     try {
@@ -517,44 +523,115 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         </div>
       );
     }
-    if (col.prop == "settlment_manual") {
+    if (col.prop === "settlment_manual") {
       columnConfig.size = 150;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}>
-          <CheckBox
-            titleAccess="Success"
-            onClick={() => {
-              if (info.row.original.status !== "Success") {
-                settlementStatusChange("Success", info);
-              }
-            }}
-            style={{
-              cursor:
-                info.row.original.status === "Success"
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-          />
-          <Close
-            titleAccess="Failed"
-            onClick={() => {
-              if (info.row.original.status !== "Failed") {
-                settlementStatusChange("Failed", info);
-              }
-            }}
-            style={{
-              marginLeft: "10px",
-              cursor:
-                info.row.original.status === "Failed"
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-          />
-        </div>
-      );
+      columnConfig.cell = (info) => {
+        const [popupOpen, setPopupOpen] = useState(false);
+        const [remark, setRemark] = useState("");
+        const [bankRefId, setBankRefId] = useState("");
+
+        const handleSettlement = async (status) => {
+          debugger
+          const mode = info.row.original.mode;
+
+          if (mode === "Cash") {
+            await settlementStatusChange(status, info,{});
+          } else if (status=="Failed") {
+            await settlementStatusChange(status, info,{});
+
+          }else if (mode === "NEFT") {
+            setPopupOpen(true);
+          }
+        };
+
+        const handlePopupSubmit = async () => {
+          settlementStatusChange("Success", info, {
+            bankRefId,
+            remark,
+          }).finally(()=>{
+            setPopupOpen(false);
+          })
+          
+        };
+
+        return (
+          <div style={{ textAlign: "center" }}>
+            <CheckBox
+              titleAccess="Success"
+              onClick={() => {
+                if (info.row.original.status !== "Success") {
+                  handleSettlement("Success");
+                }
+              }}
+              style={{
+                cursor:
+                  info.row.original.status === "Success"
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            />
+            <Close
+              titleAccess="Failed"
+              onClick={() => {
+                if (info.row.original.status !== "Failed") {
+                  handleSettlement("Failed");
+                }
+              }}
+              style={{
+                marginLeft: "10px",
+                cursor:
+                  info.row.original.status === "Failed"
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            />
+
+            {popupOpen && (
+              <Popup
+                title={"NEFT Settlement Details"}
+                isOpen={popupOpen}
+                onClose={() => setPopupOpen(false)}>
+                <div className="mt-2">
+                  <TextField
+                    size="small"
+                    label="bankRefId"
+                    placeholder="Bank Reference ID"
+                    fullWidth
+                    onChange={(e) => setBankRefId(e.target.value)}
+                    value={bankRefId}
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <Textarea
+                    label="Remark"
+                    placeholder="Remark"
+                    value={remark || " "}
+                    onChange={(e) => setRemark(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-between mt-10">
+                    <ButtonLabel 
+                    loader={isProcessing}
+                    
+                    onClick={handlePopupSubmit} label="Submit" />
+
+                  <ButtonLabel
+                    loader={isProcessing}
+                    style={{ backgroundColor: "red" }}
+                    onClick={() => setPopupOpen(false)}
+                    label="Cancel"
+                  />
+                </div>
+
+                
+              </Popup>
+            )}
+
+          </div>
+        );
+      };
     }
     if (col.prop == "status") {
       columnConfig.size = 150;
@@ -591,23 +668,20 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                 )}
               </div>
             )}
-
           </div>
 
           {report_id === "2_5" && info.row.original.status == "Pending" && (
-              <div className="action flex gap-3 items-center">
-               
-
-                {info.row.original.status === "Pending" && (
-                  <button
-                  onClick={()=> handleCheckStatusMoney(info)}
+            <div className="action flex gap-3 items-center">
+              {info.row.original.status === "Pending" && (
+                <button
+                  onClick={() => handleCheckStatusMoney(info)}
                   className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300">
-                    <CompareArrows titleAccess="Check Status" />{" "}
-                    {/* Check Status Icon */}
-                  </button>
-                )}
-              </div>
-            )}
+                  <CompareArrows titleAccess="Check Status" />{" "}
+                  {/* Check Status Icon */}
+                </button>
+              )}
+            </div>
+          )}
           {/* <div className="flex gap-2">
             <div className="info">{info.getValue()}</div>
             {info.row.original.status !== "Success" && (
@@ -654,8 +728,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}
-        >
+          }}>
           <CheckBox
             titleAccess="Success"
             onClick={() => {
@@ -744,20 +817,22 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     setDateRange(value);
   };
 
-
-
-  function calculateStatusAndAmountTotals(dataArray:any) {
+  function calculateStatusAndAmountTotals(dataArray: any) {
     const totals = {
       success: { count: 0, amount: 0 },
       pending: { count: 0, amount: 0 },
       fail: { count: 0, amount: 0 },
       others: { count: 0, amount: 0 }, // For unexpected statuses
     };
-  
-    dataArray.forEach((item:any) => {
-      const status = item?.status &&  item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
+
+    dataArray.forEach((item: any) => {
+      let opNames = ["balEnquiry","	miniStatement"]
+      console.log(item)
+      if(!opNames.includes(item?.OpName)){
+        
+      const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
       const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
-  
+
       if (status === "success") {
         totals.success.count += 1;
         totals.success.amount += amount;
@@ -771,16 +846,21 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         totals.others.count += 1;
         totals.others.amount += amount;
       }
+    }
     });
-  
+
     return totals;
   }
-  
-const totalAmount = tableData && tableData.length > 0 && calculateStatusAndAmountTotals(tableData) 
-console.log(totalAmount)
+
+  const totalAmount =
+    tableData &&
+    tableData.length > 0 &&
+    calculateStatusAndAmountTotals(tableData);
+  console.log(totalAmount);
 
   return (
     <DefaultLayout isList>
+
       <div className="flex-1">
         <h1 className="text-dark-400">{reportData.Report.ReportName}</h1>
       </div>
@@ -869,8 +949,8 @@ console.log(totalAmount)
         </div>
       </div>
 
-      {report_id != "2_15" && <StatsDisplay  stats={totalAmount}/>}
-     
+      {report_id != "2_15" && <StatsDisplay stats={totalAmount} />}
+
       <BasicTable
         data={tableData}
         columns={columns}
@@ -879,7 +959,7 @@ console.log(totalAmount)
         isSeachable={true}
         isReport={true}
         report_id={report_id}
-        isShowSeq={report_id == '2_15' ?  true : false}
+        isShowSeq={report_id == "2_15" ? true : false}
       />
     </DefaultLayout>
   );
