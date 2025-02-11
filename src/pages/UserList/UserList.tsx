@@ -24,8 +24,13 @@ import { toast } from "react-toastify";
 import { FaAccessibleIcon } from "react-icons/fa6";
 import { EditCalendarOutlined, ThunderstormTwoTone } from "@mui/icons-material";
 import { Tooltip } from "antd";
+import { saveAs } from "file-saver";
+import ExcelJS from "exceljs";
+import { SiMicrosoftexcel } from "react-icons/si";
+
 const UserList = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState([]);
   const [openError, setOpenError] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
@@ -121,6 +126,44 @@ const UserList = () => {
       setOpenAutoFill(true);
     }
   }
+
+  const exportExcel = async () => {
+    setLoading(true);
+    try {
+      // Create a new Excel workbook and worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Users");
+
+      // Add header row
+      worksheet.columns = [
+        { header: "user Id", key: "userUniqueId", width: 10 },
+        { header: "Name", key: "fullName", width: 25 },
+        { header: "sponsorId", key: "sponsorId", width: 10 },
+        { header: "wallet", key: "wallet", width: 25 },
+        { header: "Mobile", key: "phoneNumber", width: 25 },
+        { header: "userType", key: "userType", width: 25 },
+      ];
+
+      // Add data rows
+      userData.forEach((item: any) => {
+        worksheet.addRow(item);
+      });
+
+      // Generate Excel file buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      // Convert buffer to Blob and trigger download
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      saveAs(blob, "UserData.xlsx");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   async function createAutoFill() {
     try {
       await saveautoFillData({
@@ -228,6 +271,22 @@ const UserList = () => {
               label="Add New User"
               Icon={<BsPlusLg fontSize={16} />}
             />
+            <div
+              className="flex items-center justify-center rounded cursor-pointer"
+              style={{
+                backgroundColor: "green",
+                width: "40px",
+                height: "40px",
+              }}
+            >
+              <SiMicrosoftexcel
+                fontSize={25}
+                color="white"
+                onClick={exportExcel}
+                title="Export user list"
+                style={{ cursor: "pointer", opacity: loading ? 0.5 : 1 }}
+              />
+            </div>
             {/* <button
             onClick={() => navigate("/users")}
             type="button"
