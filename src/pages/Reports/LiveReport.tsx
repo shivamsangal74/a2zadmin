@@ -8,6 +8,7 @@ import { Loyalty, CheckCircle, HourglassEmpty, Error, Refresh, TransferWithinASt
 import { BsGlobe } from "react-icons/bs";
 import api from "../../Services/Axios/api";
 import Breadcrumb from "../../components/Breadcrumbs/Breadcrumb";
+import StatsDisplay from "../../components/DisplatStats";
 
 interface ReportColumn {
   name: string;
@@ -196,6 +197,70 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
     });
   }, [reportData]);
 
+  
+  function calculateStatusAndAmountTotals(dataArray: any) {
+    const totals = {
+      success: { count: 0, amount: 0 },
+      pending: { count: 0, amount: 0 },
+      fail: { count: 0, amount: 0 },
+      others: { count: 0, amount: 0 }, // For unexpected statuses
+    };
+
+    dataArray.forEach((item: any) => {
+      let opNames = ["AadharPay", "withdrawal"];
+      if ((report_id == "2_10")) {
+        if (opNames.includes(item?.OpName)) {
+          console.log(item?.OpName);
+
+          const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
+          const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
+
+          if (status === "success") {
+            totals.success.count += 1;
+            totals.success.amount += amount;
+          } else if (status === "pending") {
+            totals.pending.count += 1;
+            totals.pending.amount += amount;
+          } else if (status === "fail" || status === "failed") {
+            totals.fail.count += 1;
+            totals.fail.amount += amount;
+          } else {
+            totals.others.count += 1;
+            totals.others.amount += amount;
+          }
+        }
+      }else {
+        const status = item?.status && item?.status.trim().toLowerCase();
+          const amount = parseFloat(item.amount) || 0;
+
+          if (status === "success") {
+            totals.success.count += 1;
+            totals.success.amount += amount;
+          } else if (status === "pending") {
+            totals.pending.count += 1;
+            totals.pending.amount += amount;
+          } else if (status === "fail" || status === "failed") {
+            totals.fail.count += 1;
+            totals.fail.amount += amount;
+          } else {
+            totals.others.count += 1;
+            totals.others.amount += amount;
+          }
+      }
+    });
+
+    return totals;
+  }
+
+  const totalAmount =
+    tableData &&
+    tableData.length > 0 &&
+    calculateStatusAndAmountTotals(tableData);
+ 
+
+  
+  
+  
   if (loading) {
     return (
       <DefaultLayout isList>
@@ -204,9 +269,13 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
     );
   }
 
+
+
   return (
     <DefaultLayout isList>
       <Breadcrumb pageName={`Live ${reportData?.Report.ReportName}`} />
+      {report_id != "2_15" && <StatsDisplay stats={totalAmount} />}
+
       <BasicTable
         data={tableData}
         columns={columns}
