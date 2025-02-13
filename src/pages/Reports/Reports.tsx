@@ -205,7 +205,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   async function settlementStatusChange(value: any, params: any, options: any) {
     try {
-      setisProcessing(true)
+      setisProcessing(true);
       let tranxId = params.row.original.requestId;
       const response = await api.post(`/settelment/manual-setllement`, {
         tranxId: tranxId,
@@ -213,15 +213,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         otherValues: options,
       });
       toast.warn("Settlment Status Updated");
-      await handleGetReportData()
+      await handleGetReportData();
       return response.data;
     } catch (error: any) {
       toast.error(error.message);
       console.error(error);
       throw error;
     } finally {
-      setisProcessing(false)
-
+      setisProcessing(false);
     }
   }
 
@@ -318,7 +317,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         value: value,
       });
       toast.warn("Money transfer Status Updated");
-      await handleGetReportData()
+      await handleGetReportData();
       return response.data;
     } catch (error: any) {
       toast.error(error.message);
@@ -452,8 +451,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             textAlign: "center",
           }}>
           <div>
-            {info.row.original.aadhar.slice(0, 8).replace(/\d/g, "*") +
-              info.row.original.aadhar.slice(8)}
+            {(
+              info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
+              info.row.original.aadhar.slice(8)
+            ).toUpperCase()}
           </div>
         </div>
       );
@@ -531,15 +532,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         const [bankRefId, setBankRefId] = useState("");
 
         const handleSettlement = async (status) => {
-          debugger
+          debugger;
           const mode = info.row.original.mode;
 
           if (mode === "Cash") {
-            await settlementStatusChange(status, info,{});
-          } else if (status=="Failed") {
-            await settlementStatusChange(status, info,{});
-
-          }else if (mode === "NEFT") {
+            await settlementStatusChange(status, info, {});
+          } else if (status == "Failed") {
+            await settlementStatusChange(status, info, {});
+          } else if (mode === "NEFT") {
             setPopupOpen(true);
           }
         };
@@ -548,10 +548,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           settlementStatusChange("Success", info, {
             bankRefId,
             remark,
-          }).finally(()=>{
+          }).finally(() => {
             setPopupOpen(false);
-          })
-          
+          });
         };
 
         return (
@@ -612,10 +611,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                 </div>
 
                 <div className="flex justify-between mt-10">
-                    <ButtonLabel 
+                  <ButtonLabel
                     loader={isProcessing}
-                    
-                    onClick={handlePopupSubmit} label="Submit" />
+                    onClick={handlePopupSubmit}
+                    label="Submit"
+                  />
 
                   <ButtonLabel
                     loader={isProcessing}
@@ -624,11 +624,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                     label="Cancel"
                   />
                 </div>
-
-                
               </Popup>
             )}
-
           </div>
         );
       };
@@ -826,27 +823,46 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     };
 
     dataArray.forEach((item: any) => {
-      let opNames = ["balEnquiry","	miniStatement"]
-      console.log(item)
-      if(!opNames.includes(item?.OpName)){
-        
-      const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
-      const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
+      let opNames = ["AadharPay", "withdrawal"];
+      if ((report_id == "2_10")) {
+        if (opNames.includes(item?.OpName)) {
+          console.log(item?.OpName);
 
-      if (status === "success") {
-        totals.success.count += 1;
-        totals.success.amount += amount;
-      } else if (status === "pending") {
-        totals.pending.count += 1;
-        totals.pending.amount += amount;
-      } else if (status === "fail" || status === "failed") {
-        totals.fail.count += 1;
-        totals.fail.amount += amount;
-      } else {
-        totals.others.count += 1;
-        totals.others.amount += amount;
+          const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
+          const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
+
+          if (status === "success") {
+            totals.success.count += 1;
+            totals.success.amount += amount;
+          } else if (status === "pending") {
+            totals.pending.count += 1;
+            totals.pending.amount += amount;
+          } else if (status === "fail" || status === "failed") {
+            totals.fail.count += 1;
+            totals.fail.amount += amount;
+          } else {
+            totals.others.count += 1;
+            totals.others.amount += amount;
+          }
+        }
+      }else {
+        const status = item?.status && item?.status.trim().toLowerCase();
+          const amount = parseFloat(item.amount) || 0;
+
+          if (status === "success") {
+            totals.success.count += 1;
+            totals.success.amount += amount;
+          } else if (status === "pending") {
+            totals.pending.count += 1;
+            totals.pending.amount += amount;
+          } else if (status === "fail" || status === "failed") {
+            totals.fail.count += 1;
+            totals.fail.amount += amount;
+          } else {
+            totals.others.count += 1;
+            totals.others.amount += amount;
+          }
       }
-    }
     });
 
     return totals;
@@ -856,11 +872,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     tableData &&
     tableData.length > 0 &&
     calculateStatusAndAmountTotals(tableData);
-  console.log(totalAmount);
+ 
 
   return (
     <DefaultLayout isList>
-
       <div className="flex-1">
         <h1 className="text-dark-400">{reportData.Report.ReportName}</h1>
       </div>
