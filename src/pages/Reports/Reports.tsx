@@ -274,6 +274,40 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
+  async function handleCheckStatusApes(params: any) {
+    setLoading(true);
+    debugger;
+    try {
+      let tranx = params.row.original.refId;
+      let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD");
+      debugger;
+      const response = await api.post(
+        `/money/checkinstantpaystatus`,
+        { externalRef: tranx, transactionDate: Date },
+        {
+          withCredentials: true,
+        }
+      );
+      let resp = response.data;
+      if (resp.status == "Success") {
+        await moneyStatusChange("Success", params);
+        await handleGetReportData();
+        toast.success(resp.response);
+      } else if (resp.status == "Pending") {
+        toast.warn(resp.response);
+      } else if (resp.status == "Failed") {
+        await moneyStatusChange("Failed", params);
+        await handleGetReportData();
+        toast.error(resp.response);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleCheckStatusMoney(params: any) {
     setLoading(true);
     debugger;
@@ -308,6 +342,24 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
+  async function apesStatusChange(value: any, params: any) {
+    debugger;
+    try {
+      let tranxId = params.row.original.refId;
+      const response = await api.post(`/apes/manual-money`, {
+        tranxId: tranxId,
+        value: value,
+      });
+      toast.warn("Apes Status Updated");
+      await handleGetReportData();
+      return response.data;
+    } catch (error: any) {
+      toast.error(error.message);
+      console.error(error);
+      throw error;
+    } finally {
+    }
+  }
   async function moneyStatusChange(value: any, params: any) {
     debugger;
     try {
@@ -438,7 +490,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           <div>{formatDateString(info.getValue())}</div>
         </div>
       );
@@ -449,7 +502,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           <div>
             {(
               info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
@@ -468,7 +522,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}>
+          }}
+        >
           {info.row.original.pltform == "Web" ? <BsGlobe /> : info.getValue()}
         </div>
       );
@@ -480,7 +535,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           {info.getValue()}
         </div>
       );
@@ -491,7 +547,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           <CheckBox
             titleAccess="Success"
             onClick={() => {
@@ -589,7 +646,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               <Popup
                 title={"NEFT Settlement Details"}
                 isOpen={popupOpen}
-                onClose={() => setPopupOpen(false)}>
+                onClose={() => setPopupOpen(false)}
+              >
                 <div className="mt-2">
                   <TextField
                     size="small"
@@ -636,7 +694,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           <div className="flex gap-2 items-center">
             {/* Info section */}
             {/* <div className="info text-base">{info.getValue()}</div> */}
@@ -651,14 +710,16 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               <div className="action flex gap-3 items-center">
                 <button
                   onClick={() => handleResendRequest(info)}
-                  className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300">
+                  className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300"
+                >
                   <Refresh titleAccess="Resend Status" /> {/* Resend Icon */}
                 </button>
 
                 {info.row.original.status === "Pending" && (
                   <button
                     onClick={() => handleCheckStatus(info)}
-                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300">
+                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                  >
                     <CompareArrows titleAccess="Check Status" />{" "}
                     {/* Check Status Icon */}
                   </button>
@@ -667,12 +728,27 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             )}
           </div>
 
+          {report_id === "2_10" && info.row.original.status == "Pending" && (
+            <div className="action flex gap-3 items-center">
+              {info.row.original.status === "Pending" && (
+                <button
+                  onClick={() => handleCheckStatusApes(info)}
+                  className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                >
+                  <CompareArrows titleAccess="Check Status" />{" "}
+                  {/* Check Status Icon */}
+                </button>
+              )}
+            </div>
+          )}
+
           {report_id === "2_5" && info.row.original.status == "Pending" && (
             <div className="action flex gap-3 items-center">
               {info.row.original.status === "Pending" && (
                 <button
                   onClick={() => handleCheckStatusMoney(info)}
-                  className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300">
+                  className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                >
                   <CompareArrows titleAccess="Check Status" />{" "}
                   {/* Check Status Icon */}
                 </button>
@@ -725,7 +801,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           <CheckBox
             titleAccess="Success"
             onClick={() => {
@@ -772,7 +849,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         <div
           style={{
             textAlign: "center",
-          }}>
+          }}
+        >
           {info.getValue()}
         </div>
       );
@@ -824,7 +902,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
     dataArray.forEach((item: any) => {
       let opNames = ["AadharPay", "withdrawal"];
-      if ((report_id == "2_10")) {
+      if (report_id == "2_10") {
         if (opNames.includes(item?.OpName)) {
           console.log(item?.OpName);
 
@@ -845,23 +923,23 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             totals.others.amount += amount;
           }
         }
-      }else {
+      } else {
         const status = item?.status && item?.status.trim().toLowerCase();
-          const amount = parseFloat(item.amount) || 0;
+        const amount = parseFloat(item.amount) || 0;
 
-          if (status === "success") {
-            totals.success.count += 1;
-            totals.success.amount += amount;
-          } else if (status === "pending") {
-            totals.pending.count += 1;
-            totals.pending.amount += amount;
-          } else if (status === "fail" || status === "failed") {
-            totals.fail.count += 1;
-            totals.fail.amount += amount;
-          } else {
-            totals.others.count += 1;
-            totals.others.amount += amount;
-          }
+        if (status === "success") {
+          totals.success.count += 1;
+          totals.success.amount += amount;
+        } else if (status === "pending") {
+          totals.pending.count += 1;
+          totals.pending.amount += amount;
+        } else if (status === "fail" || status === "failed") {
+          totals.fail.count += 1;
+          totals.fail.amount += amount;
+        } else {
+          totals.others.count += 1;
+          totals.others.amount += amount;
+        }
       }
     });
 
@@ -872,7 +950,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     tableData &&
     tableData.length > 0 &&
     calculateStatusAndAmountTotals(tableData);
- 
 
   return (
     <DefaultLayout isList>
@@ -923,7 +1000,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             <div
               key={filterName}
               className="mb-2"
-              style={{ width: filterName.includes("userId") ? "35%" : "18%" }}>
+              style={{ width: filterName.includes("userId") ? "35%" : "18%" }}
+            >
               {filterName == "tm.paymentType" || filterName == "tm.status" ? (
                 <DropDownCheakBox
                   label={filterableDisplayColumns[index]}
