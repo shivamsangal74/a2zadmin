@@ -290,13 +290,13 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       );
       let resp = response.data;
       if (resp.status == "Success") {
-        await moneyStatusChange("Success", params);
+        await apesStatusChange("Success", params);
         await handleGetReportData();
         toast.success(resp.response);
       } else if (resp.status == "Pending") {
         toast.warn(resp.response);
       } else if (resp.status == "Failed") {
-        await moneyStatusChange("Failed", params);
+        await apesStatusChange("Failed", params);
         await handleGetReportData();
         toast.error(resp.response);
       }
@@ -346,7 +346,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     debugger;
     try {
       let tranxId = params.row.original.refId;
-      const response = await api.post(`/apes/manual-money`, {
+      const response = await api.post(`/apes/manual-apes`, {
         tranxId: tranxId,
         value: value,
       });
