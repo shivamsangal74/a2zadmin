@@ -1,144 +1,222 @@
-import React, { useEffect, useState } from 'react';
-import DefaultLayout from '../layout/DefaultLayout';
-import { toast } from 'react-toastify';
-import axios from 'axios';
-import { apiUrl } from '../Utills/constantt';
-import BasicTable from '../components/BasicTable/BasicTable';
-import { FaEye } from 'react-icons/fa'; // Eye icon for viewing JSON
+import React, { useState } from "react";
+import DefaultLayout from "../layout/DefaultLayout";
+import moment from "moment";
+import {
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+  IconButton,
+  Collapse,
+} from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Spin } from "antd";
+import { getLogslist, getLogslistById } from "../Services/commonService";
+import Loader from "../common/Loader";
 
 export const ServerLogs = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [logs, setLogs] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedLog, setSelectedLog] = useState(null);
-    const [jsonType, setJsonType] = useState(''); // 'request' or 'response' to track which body to show in modal
+  const [Loading, setLoading] = useState(false);
+  const [expandedRowIndex, setExpandedRowIndex] = useState<number | null>(null);
+  const [logs, setLogs] = useState([]);
+  const [services, setServices] = useState([]);
+  const { isLoading, error } = useQuery({
+    queryKey: ["filters"],
+    queryFn: async () => {
+      try {
+        const today = new Date();
 
-    // Define columns with eye icon in requestBody and responseBody columns
-    const columns = React.useMemo(
-        () => [
-            { Header: "Method", accessorKey: "method" },
-            { Header: "Path", accessorKey: "path" },
-            { Header: "User ID", accessorKey: "userID" },
-            {
-                Header: "Request Body", 
-                accessorKey: "body", 
-                cell: (row: any) => (
-                    <>
-                        
-                       <div className='flex justify-center'>
-                       <FaEye
-                            onClick={() => handleViewJson('request', row.row.original)}
-                            style={{ cursor: 'pointer', color: 'blue', fontSize: '20px', marginLeft: '10px' }}
-                        />
-                       </div>
-                    </>
-                )
-            },
-            {
-                Header: "Response Body", 
-                accessorKey: "responseBody", 
-                cell: (row: any) => (
-                    <div className='flex justify-center'> 
-                        
-                        <FaEye
-                            onClick={() => handleViewJson('response', row.row.original)}
-                            style={{ cursor: 'pointer', color: 'blue', fontSize: '20px', marginLeft: '10px' }}
-                        />
-                    </div>
-                )
-            }
-        ],
-        []
-    );
+        // Format date as YYYY-MM-DD
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0"); // Ensure two digits
+        const day = String(today.getDate()).padStart(2, "0"); // Ensure two digits
 
-    // Handle modal display for request/response body
-    const handleViewJson = (type: string, log: any) => {
-        setJsonType(type);
-        setSelectedLog(log);
-        setIsModalOpen(true);
-    };
+        // Create start and end timestamps
+        const startOfDay = `${year}-${month}-${day} 00:00:00`;
+        const endOfDay = `${year}-${month}-${day} 23:59:59`;
 
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setSelectedLog(null);
-    };
+        const response = await getLogslist(startOfDay, endOfDay);
+        const logsData = response;
 
-    // Fetch logs from API
-    useEffect(() => {
-        async function fetchLogs() {
-            try {
-                const data = await axios.get(`${apiUrl}/api/logs`);
-                setLogs(data.data);
-            } catch (error) {
-                toast.error("Something went wrong.");
-            }
+        if (logsData.length > 0) {
+          setLogs(logsData);
         }
-        fetchLogs();
-    }, []);
-
-    return (
-        <DefaultLayout isList={true}>
-            <BasicTable
-                data={logs}
-                columns={columns}
-                actions={""}
-                filter={["userID","method"]}
-            />
-
-            {/* Modal for showing JSON details */}
-            {isModalOpen && selectedLog && (
-                <div style={modalStyle.overlay}>
-                    <div style={modalStyle.modal}>
-                     
-                    <button onClick={closeModal} style={modalStyle.closeBtn}>X</button>
-
-                        <pre>
-                            {JSON.stringify(
-                                jsonType === 'request' ? selectedLog.body : selectedLog.responseBody,
-                                null,
-                                2
-                            )}
-                        </pre>
-
-                    </div>
-
-                </div>
-            )}
-        </DefaultLayout>
-    );
-};
-
-// Modal styling
-const modalStyle = {
-    overlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        return logsData;
+      } catch (error) {
+        throw error;
+      }
     },
-    modal: {
-        backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '5px',
-        width: '600px',
-        maxHeight: '80vh',
-        overflowY: 'auto',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    },
-    closeBtn: {
-        padding: '10px 15px',
-        backgroundColor: '#007bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        marginTop: '10px',
-    },
+    refetchOnWindowFocus: true,
+  });
+  if (isLoading) return <Loader />;
+  if (error) {
+    return toast.error("Something went wrong!");
+  }
+
+  const toggleRow = async (index: number, serviceId: any) => {
+    setExpandedRowIndex(expandedRowIndex === index ? null : index);
+    await handleFetchCategory(serviceId);
+  };
+  async function handleFetchCategory(serviceId: any) {
+    setLoading(true);
+    try {
+      const today = new Date();
+
+      // Format date as YYYY-MM-DD
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0"); // Ensure two digits
+      const day = String(today.getDate()).padStart(2, "0"); // Ensure two digits
+
+      // Create start and end timestamps
+      const startOfDay = `${year}-${month}-${day} 00:00:00`;
+      const endOfDay = `${year}-${month}-${day} 23:59:59`;
+      const data = await getLogslistById(startOfDay, endOfDay, serviceId);
+      setServices(data);
+    } catch (error) {
+      toast.error("Failed to fetch user");
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <DefaultLayout isList={true}>
+      <div className="container">
+        <Typography variant="h4" gutterBottom>
+          Server Logs
+        </Typography>
+
+        <TableContainer
+          component={Paper}
+          sx={{ maxWidth: "100%", overflowX: "auto" }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell>
+                  <b>Date</b>
+                </TableCell>
+                <TableCell>
+                  <b>Method</b>
+                </TableCell>
+                <TableCell>
+                  <b>Service</b>
+                </TableCell>
+                <TableCell>
+                  <b>Status</b>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {logs.map((service: any, index) => (
+                <React.Fragment key={index}>
+                  <TableRow>
+                    <TableCell>
+                      <IconButton onClick={() => toggleRow(index, service.id)}>
+                        {expandedRowIndex === index ? (
+                          <ExpandLess />
+                        ) : (
+                          <ExpandMore />
+                        )}
+                      </IconButton>
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: "middle" }}>
+                      {moment(service.created_at).format(
+                        "DD/MM/YYYY hh:mm:ss a"
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: "middle" }}>
+                      {service.method}
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: "middle" }}>
+                      {service.request_headers}
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: "middle" }}>
+                      {service.response_status}
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow>
+                    <TableCell
+                      sx={{ paddingBottom: 0, paddingTop: 0 }}
+                      colSpan={5}
+                    >
+                      <Collapse
+                        in={expandedRowIndex === index}
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <Box sx={{ margin: 1 }}>
+                          {isLoading && <Spin />}
+                          <Table sx={{ backgroundColor: "#f0f0f0" }}>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>
+                                  <b>Url</b>
+                                </TableCell>
+                                <TableCell>
+                                  <b>Request</b>
+                                </TableCell>
+                                <TableCell>
+                                  <b>Response</b>
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {services.map((category: any) => (
+                                <TableRow key={category.id}>
+                                  <TableCell
+                                    sx={{
+                                      maxWidth: "250px",
+                                      whiteSpace: "normal",
+                                      wordBreak: "break-word",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {category.url}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      maxWidth: "500px",
+                                      whiteSpace: "normal",
+                                      wordBreak: "break-word",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {category.request_body}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      maxWidth: "650px",
+                                      whiteSpace: "normal",
+                                      wordBreak: "break-word",
+                                      verticalAlign: "top",
+                                    }}
+                                  >
+                                    {category.response_body}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    </DefaultLayout>
+  );
 };
 
 export default ServerLogs;

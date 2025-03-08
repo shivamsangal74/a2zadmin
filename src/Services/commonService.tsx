@@ -230,3 +230,37 @@ export async function deleteUserBank(userId: any, col1: any) {
     throw errorMessage;
   }
 }
+
+export async function getLogslist(fromDate: any, toDate: any) {
+  try {
+    const response = await api.post(
+      "/common/logs",
+      { fromDate, toDate },
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || "Something went wrong!";
+    return { error: true, message: errorMessage };
+  }
+}
+
+export async function getLogslistById(fromDate: any, toDate: any, id: any) {
+  try {
+    const response = await api.post(
+      "/common/logs-id",
+      { fromDate, toDate, id },
+      {
+        withCredentials: true,
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || "Something went wrong!";
+    return { error: true, message: errorMessage };
+  }
+}
