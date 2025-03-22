@@ -111,6 +111,9 @@ export const ServerLogs = () => {
                 <TableCell>
                   <b>Status</b>
                 </TableCell>
+                <TableCell>
+                  <b>UserId</b>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -139,6 +142,9 @@ export const ServerLogs = () => {
                     </TableCell>
                     <TableCell sx={{ verticalAlign: "middle" }}>
                       {service.response_status}
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: "middle" }}>
+                      {service.response_headers}
                     </TableCell>
                   </TableRow>
 
