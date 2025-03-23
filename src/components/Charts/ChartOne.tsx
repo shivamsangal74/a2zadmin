@@ -1,199 +1,164 @@
-import { ApexOptions } from 'apexcharts';
-import React, { useState } from 'react';
-import ReactApexChart from 'react-apexcharts';
+import React, { useEffect, useState } from "react";
+import ReactApexChart from "react-apexcharts";
+import { ApexOptions } from "apexcharts";
+import { apiUrl } from "../../Utills/constantt";
+import * as am4core from "@amcharts/amcharts4/core";
+import * as am4charts from "@amcharts/amcharts4/charts";
+import * as am4themes_animated from "@amcharts/amcharts4/themes/animated";
+const TransactionsBarChart = () => {
+    const [data, setData] = useState([]);
 
-const options: ApexOptions = {
-  legend: {
-    show: false,
-    position: 'top',
-    horizontalAlign: 'left',
-  },
-  colors: ['#3C50E0', '#80CAEE'],
-  chart: {
-    fontFamily: 'Satoshi, sans-serif',
-    height: 335,
-    type: 'area',
-    dropShadow: {
-      enabled: true,
-      color: '#623CEA14',
-      top: 10,
-      blur: 4,
-      left: 0,
-      opacity: 0.1,
-    },
+    useEffect(() => {
+        fetch(apiUrl + "/dashboard/service-data")
+            .then((response) => response.json())
+            .then((data) => {
+              debugger
+                const formattedData = data.chartData.map((item:any) => ({
+                    name: item.service,
+                    currentMonthTotalAmount: parseFloat(item.today).toFixed(2),
+                    prevMonthTotalAmount: parseFloat(item.last_month).toFixed(2),
+                }));
+                setData(formattedData);
+            })
+            .catch((error) => console.error("Error fetching data:", error));
+    }, []);
 
-    toolbar: {
-      show: false,
-    },
-  },
-  responsive: [
-    {
-      breakpoint: 1024,
-      options: {
+    const options: ApexOptions = {
         chart: {
-          height: 300,
+            type: "bar",
+            height: 450,
+            stacked: true,
         },
-      },
-    },
-    {
-      breakpoint: 1366,
-      options: {
-        chart: {
-          height: 350,
+        colors: ['#3C50E0', '#80CAEE'],
+        xaxis: {
+            categories: data.map((item:any) => item.name),
         },
-      },
-    },
-  ],
-  stroke: {
-    width: [2, 2],
-    curve: 'straight',
-  },
-  // labels: {
-  //   show: false,
-  //   position: "top",
-  // },
-  grid: {
-    xaxis: {
-      lines: {
-        show: true,
-      },
-    },
-    yaxis: {
-      lines: {
-        show: true,
-      },
-    },
-  },
-  dataLabels: {
-    enabled: false,
-  },
-  markers: {
-    size: 4,
-    colors: '#fff',
-    strokeColors: ['#3056D3', '#80CAEE'],
-    strokeWidth: 3,
-    strokeOpacity: 0.9,
-    strokeDashArray: 0,
-    fillOpacity: 1,
-    discrete: [],
-    hover: {
-      size: undefined,
-      sizeOffset: 5,
-    },
-  },
-  xaxis: {
-    type: 'category',
-    categories: [
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-    ],
-    axisBorder: {
-      show: false,
-    },
-    axisTicks: {
-      show: false,
-    },
-  },
-  yaxis: {
-    title: {
-      style: {
-        fontSize: '0px',
-      },
-    },
-    min: 0,
-    max: 100,
-  },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'left',
+        },
+        
+        dataLabels: {
+            enabled: true,
+        },
+        stroke: {
+            width: 2,
+            curve: 'smooth',
+        },
+        tooltip: {
+          enabled: false
+        }
+    };
+
+    useEffect(() => {
+      let chart = am4core.create("chartdiv", am4charts.XYChart3D);
+      chart.paddingBottom = 30;
+      chart.angle = 35;
+
+      // Color Array (Dark & Light shades)
+      const colors = [
+        ["#FEBC27", "#FCE1A4"],  // Money Transfer
+        ["#F28860", "#F6B49E"],  // Recharge
+        ["#EF5D6E", "#F29CA8"],  // Apes
+        ["#F491A4", "#F9C5D3"],  // MPOS
+        ["#DF8AB9", "#F1B5D4"],  // Settlement
+        ["#AB8ABF", "#D1C4DE"],  // Add Money
+        ["#6B86C1", "#A3B5E0"],  
+        ["#66CFF9", "#A8E6FF"],  
+        ["#65C9CB", "#A6E4E5"]
+    ];
+
+      // Raw Data (before sorting)
+      let rawData = data
+
+      // Convert amounts to numbers, then sort in descending order
+      rawData = rawData
+          .map((item, index) => ({
+              ...item,
+              currentMonthTotalAmount: parseFloat(item.currentMonthTotalAmount),
+              prevMonthTotalAmount: parseFloat(item.prevMonthTotalAmount),
+              total: parseFloat(item.currentMonthTotalAmount) + parseFloat(item.prevMonthTotalAmount),
+              color1: colors[index % colors.length][0], // Assigning colors index-wise
+              color2: colors[index % colors.length][1]
+          }))
+          .sort((a, b) => a.total - b.total); // Sort in descending order
+
+      chart.data = rawData;
+
+      // X Axis
+      let categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+      categoryAxis.dataFields.category = "name";
+      categoryAxis.renderer.grid.template.disabled = true;
+      categoryAxis.renderer.labels.template.rotation = 0;  
+      categoryAxis.renderer.labels.template.horizontalCenter = "middle"; 
+      categoryAxis.renderer.labels.template.verticalCenter = "top"; 
+      categoryAxis.renderer.labels.template.dy = 10; 
+      categoryAxis.renderer.labels.template.wrap = true; 
+      
+      // ✅ **Force all labels to be visible**
+      categoryAxis.renderer.minGridDistance = 1;
+      categoryAxis.renderer.labels.template.disabled = false;
+
+      // Y Axis
+     // Y Axis
+let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+valueAxis.renderer.grid.template.disabled = true;
+valueAxis.min = 0;
+valueAxis.strictMinMax = false; // Disable strict min-max for auto-scaling
+valueAxis.extraMax = 0.2; // Adds 20% extra space on top
+valueAxis.maxPrecision = 0; // Avoids decimal precision issues
+valueAxis.renderer.labels.template.paddingBottom = 10;
+
+      // First Stacked Layer (Previous Month)
+      let series1 = chart.series.push(new am4charts.ConeSeries());
+      series1.columns.template.width = am4core.percent(40); 
+      series1.dataFields.valueY = "prevMonthTotalAmount";
+      series1.dataFields.categoryX = "name";
+      series1.name = "Previous Month";
+      series1.stacked = true;
+      series1.columns.template.tooltipText = "{categoryX} Previous: [bold]{valueY}[/]";
+      series1.columns.template.adapter.add("fill", (fill, target) => target.dataItem.dataContext.color1);
+      series1.columns.template.adapter.add("stroke", (stroke, target) => target.dataItem.dataContext.color1);
+
+      // Second Stacked Layer (Current Month)
+      let series2 = chart.series.push(new am4charts.ConeSeries());
+series2.columns.template.width = am4core.percent(40);
+
+      series2.dataFields.valueY = "currentMonthTotalAmount";
+      series2.dataFields.categoryX = "name";
+      series2.name = "Current Month";
+      series2.stacked = true;
+      series2.columns.template.tooltipText = "{categoryX} Current: [bold]{valueY}[/]";
+      series2.columns.template.adapter.add("fill", (fill, target) => target.dataItem.dataContext.color2);
+      series2.columns.template.adapter.add("stroke", (stroke, target) => target.dataItem.dataContext.color2);
+
+      // Cleanup on Unmount
+      return () => {
+          chart.dispose();
+      };
+  }, [data]);
+
+    return (
+        <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
+         
+
+            <div>
+        
+                    {/* <ReactApexChart
+                        options={options}
+                        series={[
+                            { name: "Today", data: data.map(item => item.currentMonthTotalAmount) },
+                            { name: "Previous Month Day", data: data.map(item => item.prevMonthTotalAmount) },
+                        ]}
+                        type="bar"
+                        height={350}
+                    /> */}
+
+<div id="chartdiv" style={{ width: "100%", height: "400px" }}></div>
+               
+            </div>
+        </div>
+    );
 };
 
-interface ChartOneState {
-  series: {
-    name: string;
-    data: number[];
-  }[];
-}
-
-const ChartOne: React.FC = () => {
-  const [state, setState] = useState<ChartOneState>({
-    series: [
-      {
-        name: 'Product One',
-        data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30, 45],
-      },
-
-      {
-        name: 'Product Two',
-        data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39, 51],
-      },
-    ],
-  });
-
-  const handleReset = () => {
-    setState((prevState) => ({
-      ...prevState,
-    }));
-  };
-  handleReset;
-
-  return (
-    <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
-      <div className="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-        <div className="flex w-full flex-wrap gap-3 sm:gap-5">
-          <div className="flex min-w-47.5">
-            <span className="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-primary">
-              <span className="block h-2.5 w-full max-w-2.5 rounded-full bg-primary"></span>
-            </span>
-            <div className="w-full">
-              <p className="font-semibold text-primary">Total Revenue</p>
-              <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
-            </div>
-          </div>
-          <div className="flex min-w-47.5">
-            <span className="mt-1 mr-2 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-secondary">
-              <span className="block h-2.5 w-full max-w-2.5 rounded-full bg-secondary"></span>
-            </span>
-            <div className="w-full">
-              <p className="font-semibold text-secondary">Total Sales</p>
-              <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex w-full max-w-45 justify-end">
-          <div className="inline-flex items-center rounded-md bg-whiter p-1.5 dark:bg-meta-4">
-            <button className="rounded bg-white py-1 px-3 text-xs font-medium text-black shadow-card hover:bg-white hover:shadow-card dark:bg-boxdark dark:text-white dark:hover:bg-boxdark">
-              Day
-            </button>
-            <button className="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark">
-              Week
-            </button>
-            <button className="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark">
-              Month
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div id="chartOne" className="-ml-5">
-          <ReactApexChart
-            options={options}
-            series={state.series}
-            type="area"
-            height={350}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default ChartOne;
+export default TransactionsBarChart;
