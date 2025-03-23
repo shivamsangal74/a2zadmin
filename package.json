@@ -14,6 +14,7 @@
     "url": "https://goyalpaisa.com"
   },
   "dependencies": {
+    "@amcharts/amcharts4": "^4.10.40",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.3.4",
@@ -30,6 +31,7 @@
     "antd": "^5.17.2",
     "apexcharts": "^3.41.0",
     "axios": "^1.6.8",
+    "d3": "^7.9.0",
     "dayjs": "^1.11.10",
     "exceljs": "^4.4.0",
     "export-to-csv": "^1.3.0",
@@ -38,6 +40,7 @@
     "flowbite-react": "^0.7.5",
     "headlessui": "^0.0.0",
     "heroicons": "^2.1.3",
+    "highcharts": "^12.1.2",
     "i": "^0.3.7",
     "jsvectormap": "^1.5.3",
     "jwt-decode": "^4.0.0",
