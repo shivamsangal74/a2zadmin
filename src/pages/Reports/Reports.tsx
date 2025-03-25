@@ -140,7 +140,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           Entity: entity,
         });
 
-        setReportData(response.data);
+        if (!response.data || Object.keys(response.data).length === 0) {
+          // Delay setting data if it's empty
+          setTimeout(() => {
+            setReportData(response.data);
+          }, 2000); // 2 seconds delay
+        } else {
+          setReportData(response.data);
+        }
       } catch (error) {
         console.error("Error fetching report data:", error);
       } finally {
@@ -152,6 +159,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }, [entity, report_id]);
 
   useEffect(() => {
+    if (!reportData) return;
     const handleGetReportData = async () => {
       try {
         const response = await api.post(apiUrl + "/report/getReportData", {
@@ -160,7 +168,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           filters: filters,
           dateRange: handleLast30DaysDateRange(),
         });
-        setTableData(response.data);
+        setTableData(response.data ?? []);
       } catch (error) {
         console.error("Error fetching report data:", error);
       } finally {
@@ -478,145 +486,83 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     return maskedAadhaar;
   };
 
-  const columns = reportData.Report.DisplayColumns.map((col) => {
-    let columnConfig = {
-      header: col.name,
-      accessorKey: col.prop,
-      size: 190,
-    };
-    if (col.prop == "createdDate") {
-      columnConfig.size = 120;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          <div>{formatDateString(info.getValue())}</div>
-        </div>
-      );
-    }
-    if (col.prop == "aadhar") {
-      columnConfig.size = 120;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          <div>
-            {(
-              info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
-              info.row.original.aadhar.slice(8)
-            ).toUpperCase()}
+  const columns =
+    reportData?.Report?.DisplayColumns?.map((col) => {
+      let columnConfig = {
+        header: col.name,
+        accessorKey: col.prop,
+        size: 190,
+      };
+      if (col.prop == "createdDate") {
+        columnConfig.size = 120;
+        columnConfig.cell = (info) => (
+          <div
+            style={{
+              textAlign: "center",
+            }}
+          >
+            <div>{formatDateString(info.getValue())}</div>
           </div>
-        </div>
-      );
-    }
-
-    if (col.prop == "pltform") {
-      columnConfig.size = 50;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {info.row.original.pltform == "Web" ? <BsGlobe /> : info.getValue()}
-        </div>
-      );
-    }
-
-    if (col.prop == "tranxDesc") {
-      columnConfig.size = 220;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          {info.getValue()}
-        </div>
-      );
-    }
-    if (col.prop == "") {
-      columnConfig.size = 150;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          <CheckBox
-            titleAccess="Success"
-            onClick={() => {
-              if (info.row.original.status !== "Success") {
-                handleStatusChange("Success", info);
-              }
-            }}
+        );
+      }
+      if (col.prop == "aadhar") {
+        columnConfig.size = 120;
+        columnConfig.cell = (info) => (
+          <div
             style={{
-              cursor:
-                info.row.original.status === "Success"
-                  ? "not-allowed"
-                  : "pointer",
+              textAlign: "center",
             }}
-          />
-          <Close
-            titleAccess="Failed"
-            onClick={() => {
-              if (info.row.original.status !== "Failed") {
-                handleStatusChange("Failed", info);
-              }
-            }}
+          >
+            <div>
+              {(
+                info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
+                info.row.original.aadhar.slice(8)
+              ).toUpperCase()}
+            </div>
+          </div>
+        );
+      }
+
+      if (col.prop == "pltform") {
+        columnConfig.size = 50;
+        columnConfig.cell = (info) => (
+          <div
             style={{
-              marginLeft: "10px",
-              cursor:
-                info.row.original.status === "Failed"
-                  ? "not-allowed"
-                  : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
-          />
-        </div>
-      );
-    }
-    if (col.prop === "settlment_manual") {
-      columnConfig.size = 150;
-      columnConfig.cell = (info) => {
-        const [popupOpen, setPopupOpen] = useState(false);
-        const [remark, setRemark] = useState("");
-        const [bankRefId, setBankRefId] = useState("");
+          >
+            {info.row.original.pltform == "Web" ? <BsGlobe /> : info.getValue()}
+          </div>
+        );
+      }
 
-        const handleSettlement = async (status) => {
-          debugger;
-          const mode = info.row.original.mode;
-
-          if (mode === "Cash") {
-            await settlementStatusChange(status, info, {});
-          } else if (status == "Failed") {
-            await settlementStatusChange(status, info, {});
-          } else if (mode === "NEFT") {
-            setPopupOpen(true);
-          }
-        };
-
-        const handlePopupSubmit = async () => {
-          settlementStatusChange("Success", info, {
-            bankRefId,
-            remark,
-          }).finally(() => {
-            setPopupOpen(false);
-          });
-        };
-
-        return (
-          <div style={{ textAlign: "center" }}>
+      if (col.prop == "tranxDesc") {
+        columnConfig.size = 220;
+        columnConfig.cell = (info) => (
+          <div
+            style={{
+              textAlign: "center",
+            }}
+          >
+            {info.getValue()}
+          </div>
+        );
+      }
+      if (col.prop == "") {
+        columnConfig.size = 150;
+        columnConfig.cell = (info) => (
+          <div
+            style={{
+              textAlign: "center",
+            }}
+          >
             <CheckBox
               titleAccess="Success"
               onClick={() => {
                 if (info.row.original.status !== "Success") {
-                  handleSettlement("Success");
+                  handleStatusChange("Success", info);
                 }
               }}
               style={{
@@ -630,7 +576,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               titleAccess="Failed"
               onClick={() => {
                 if (info.row.original.status !== "Failed") {
-                  handleSettlement("Failed");
+                  handleStatusChange("Failed", info);
                 }
               }}
               style={{
@@ -641,83 +587,161 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                     : "pointer",
               }}
             />
-
-            {popupOpen && (
-              <Popup
-                title={"NEFT Settlement Details"}
-                isOpen={popupOpen}
-                onClose={() => setPopupOpen(false)}
-              >
-                <div className="mt-2">
-                  <TextField
-                    size="small"
-                    label="bankRefId"
-                    placeholder="Bank Reference ID"
-                    fullWidth
-                    onChange={(e) => setBankRefId(e.target.value)}
-                    value={bankRefId}
-                  />
-                </div>
-
-                <div className="mt-5">
-                  <Textarea
-                    label="Remark"
-                    placeholder="Remark"
-                    value={remark || " "}
-                    onChange={(e) => setRemark(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex justify-between mt-10">
-                  <ButtonLabel
-                    loader={isProcessing}
-                    onClick={handlePopupSubmit}
-                    label="Submit"
-                  />
-
-                  <ButtonLabel
-                    loader={isProcessing}
-                    style={{ backgroundColor: "red" }}
-                    onClick={() => setPopupOpen(false)}
-                    label="Cancel"
-                  />
-                </div>
-              </Popup>
-            )}
           </div>
         );
-      };
-    }
-    if (col.prop == "status") {
-      columnConfig.size = 150;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          <div className="flex gap-2 items-center">
-            {/* Info section */}
-            {/* <div className="info text-base">{info.getValue()}</div> */}
+      }
+      if (col.prop === "settlment_manual") {
+        columnConfig.size = 150;
+        columnConfig.cell = (info) => {
+          const [popupOpen, setPopupOpen] = useState(false);
+          const [remark, setRemark] = useState("");
+          const [bankRefId, setBankRefId] = useState("");
 
-            {/* Status section */}
-            <div className="status" style={{ width: "100px" }}>
-              {renderStatus(info.row.original.status)}
+          const handleSettlement = async (status) => {
+            debugger;
+            const mode = info.row.original.mode;
+
+            if (mode === "Cash") {
+              await settlementStatusChange(status, info, {});
+            } else if (status == "Failed") {
+              await settlementStatusChange(status, info, {});
+            } else if (mode === "NEFT") {
+              setPopupOpen(true);
+            }
+          };
+
+          const handlePopupSubmit = async () => {
+            settlementStatusChange("Success", info, {
+              bankRefId,
+              remark,
+            }).finally(() => {
+              setPopupOpen(false);
+            });
+          };
+
+          return (
+            <div style={{ textAlign: "center" }}>
+              <CheckBox
+                titleAccess="Success"
+                onClick={() => {
+                  if (info.row.original.status !== "Success") {
+                    handleSettlement("Success");
+                  }
+                }}
+                style={{
+                  cursor:
+                    info.row.original.status === "Success"
+                      ? "not-allowed"
+                      : "pointer",
+                }}
+              />
+              <Close
+                titleAccess="Failed"
+                onClick={() => {
+                  if (info.row.original.status !== "Failed") {
+                    handleSettlement("Failed");
+                  }
+                }}
+                style={{
+                  marginLeft: "10px",
+                  cursor:
+                    info.row.original.status === "Failed"
+                      ? "not-allowed"
+                      : "pointer",
+                }}
+              />
+
+              {popupOpen && (
+                <Popup
+                  title={"NEFT Settlement Details"}
+                  isOpen={popupOpen}
+                  onClose={() => setPopupOpen(false)}
+                >
+                  <div className="mt-2">
+                    <TextField
+                      size="small"
+                      label="bankRefId"
+                      placeholder="Bank Reference ID"
+                      fullWidth
+                      onChange={(e) => setBankRefId(e.target.value)}
+                      value={bankRefId}
+                    />
+                  </div>
+
+                  <div className="mt-5">
+                    <Textarea
+                      label="Remark"
+                      placeholder="Remark"
+                      value={remark || " "}
+                      onChange={(e) => setRemark(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex justify-between mt-10">
+                    <ButtonLabel
+                      loader={isProcessing}
+                      onClick={handlePopupSubmit}
+                      label="Submit"
+                    />
+
+                    <ButtonLabel
+                      loader={isProcessing}
+                      style={{ backgroundColor: "red" }}
+                      onClick={() => setPopupOpen(false)}
+                      label="Cancel"
+                    />
+                  </div>
+                </Popup>
+              )}
+            </div>
+          );
+        };
+      }
+      if (col.prop == "status") {
+        columnConfig.size = 150;
+        columnConfig.cell = (info) => (
+          <div
+            style={{
+              textAlign: "center",
+            }}
+          >
+            <div className="flex gap-2 items-center">
+              {/* Info section */}
+              {/* <div className="info text-base">{info.getValue()}</div> */}
+
+              {/* Status section */}
+              <div className="status" style={{ width: "100px" }}>
+                {renderStatus(info.row.original.status)}
+              </div>
+
+              {/* Action buttons (display only if status is not "Success") */}
+              {report_id === "2_4" && info.row.original.status == "Pending" && (
+                <div className="action flex gap-3 items-center">
+                  <button
+                    onClick={() => handleResendRequest(info)}
+                    className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300"
+                  >
+                    <Refresh titleAccess="Resend Status" /> {/* Resend Icon */}
+                  </button>
+
+                  {info.row.original.status === "Pending" && (
+                    <button
+                      onClick={() => handleCheckStatus(info)}
+                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                    >
+                      <CompareArrows titleAccess="Check Status" />{" "}
+                      {/* Check Status Icon */}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Action buttons (display only if status is not "Success") */}
-            {report_id === "2_4" && info.row.original.status == "Pending" && (
+            {report_id === "2_10" && info.row.original.status == "Pending" && (
               <div className="action flex gap-3 items-center">
-                <button
-                  onClick={() => handleResendRequest(info)}
-                  className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300"
-                >
-                  <Refresh titleAccess="Resend Status" /> {/* Resend Icon */}
-                </button>
-
                 {info.row.original.status === "Pending" && (
                   <button
-                    onClick={() => handleCheckStatus(info)}
+                    onClick={() => handleCheckStatusApes(info)}
                     className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
                   >
                     <CompareArrows titleAccess="Check Status" />{" "}
@@ -726,36 +750,21 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                 )}
               </div>
             )}
-          </div>
 
-          {report_id === "2_10" && info.row.original.status == "Pending" && (
-            <div className="action flex gap-3 items-center">
-              {info.row.original.status === "Pending" && (
-                <button
-                  onClick={() => handleCheckStatusApes(info)}
-                  className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                >
-                  <CompareArrows titleAccess="Check Status" />{" "}
-                  {/* Check Status Icon */}
-                </button>
-              )}
-            </div>
-          )}
-
-          {report_id === "2_5" && info.row.original.status == "Pending" && (
-            <div className="action flex gap-3 items-center">
-              {info.row.original.status === "Pending" && (
-                <button
-                  onClick={() => handleCheckStatusMoney(info)}
-                  className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                >
-                  <CompareArrows titleAccess="Check Status" />{" "}
-                  {/* Check Status Icon */}
-                </button>
-              )}
-            </div>
-          )}
-          {/* <div className="flex gap-2">
+            {report_id === "2_5" && info.row.original.status == "Pending" && (
+              <div className="action flex gap-3 items-center">
+                {info.row.original.status === "Pending" && (
+                  <button
+                    onClick={() => handleCheckStatusMoney(info)}
+                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                  >
+                    <CompareArrows titleAccess="Check Status" />{" "}
+                    {/* Check Status Icon */}
+                  </button>
+                )}
+              </div>
+            )}
+            {/* <div className="flex gap-2">
             <div className="info">{info.getValue()}</div>
             {info.row.original.status !== "Success" && (
               <div className="action flex gap-3">
@@ -764,108 +773,109 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               </div>
             )}
           </div> */}
-        </div>
-      );
-    }
+          </div>
+        );
+      }
 
-    if (col.prop == "message") {
-      console.log(col);
-      columnConfig.size = 250;
-      columnConfig.cell = (row) => (
-        <div style={{ textAlign: "center" }}>
-          {(() => {
-            const response = row.row.original.response;
-            if (!response) return response;
+      if (col.prop == "message") {
+        console.log(col);
+        columnConfig.size = 250;
+        columnConfig.cell = (row) => (
+          <div style={{ textAlign: "center" }}>
+            {(() => {
+              const response = row.row.original.response;
+              if (!response) return response;
 
-            try {
-              const parsedResponse = JSON.parse(response);
+              try {
+                const parsedResponse = JSON.parse(response);
 
-              return (
-                parsedResponse?.message ||
-                parsedResponse?.status ||
-                parsedResponse?.response_description ||
-                parsedResponse?.message ||
-                response
-              );
-            } catch (e) {
-              return response;
-            }
-          })()}
-        </div>
-      );
-    }
-
-    if (col.prop == "money_manual") {
-      columnConfig.size = 150;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          <CheckBox
-            titleAccess="Success"
-            onClick={() => {
-              if (info.row.original.status !== "Success") {
-                moneyStatusChange("Success", info);
+                return (
+                  parsedResponse?.message ||
+                  parsedResponse?.status ||
+                  parsedResponse?.response_description ||
+                  parsedResponse?.message ||
+                  response
+                );
+              } catch (e) {
+                return response;
               }
-            }}
+            })()}
+          </div>
+        );
+      }
+
+      if (col.prop == "money_manual") {
+        columnConfig.size = 150;
+        columnConfig.cell = (info) => (
+          <div
             style={{
-              cursor:
-                info.row.original.status === "Success"
-                  ? "not-allowed"
-                  : "pointer",
+              textAlign: "center",
             }}
-          />
-          <Close
-            titleAccess="Failed"
-            onClick={() => {
-              if (info.row.original.status !== "Failed") {
-                moneyStatusChange("Failed", info);
-              }
-            }}
+          >
+            <CheckBox
+              titleAccess="Success"
+              onClick={() => {
+                if (info.row.original.status !== "Success") {
+                  moneyStatusChange("Success", info);
+                }
+              }}
+              style={{
+                cursor:
+                  info.row.original.status === "Success"
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            />
+            <Close
+              titleAccess="Failed"
+              onClick={() => {
+                if (info.row.original.status !== "Failed") {
+                  moneyStatusChange("Failed", info);
+                }
+              }}
+              style={{
+                marginLeft: "10px",
+                cursor:
+                  info.row.original.status === "Failed"
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            />
+          </div>
+        );
+      }
+
+      if (
+        col.prop == "OpName" ||
+        col.prop == "amount" ||
+        col.prop == "gst" ||
+        col.prop == "tds" ||
+        col.prop == "apiBal" ||
+        col.prop == "reportType"
+      ) {
+        columnConfig.size = 100;
+        columnConfig.cell = (info) => (
+          <div
             style={{
-              marginLeft: "10px",
-              cursor:
-                info.row.original.status === "Failed"
-                  ? "not-allowed"
-                  : "pointer",
+              textAlign: "center",
             }}
-          />
-        </div>
-      );
-    }
+          >
+            {info.getValue()}
+          </div>
+        );
+      }
 
-    if (
-      col.prop == "OpName" ||
-      col.prop == "amount" ||
-      col.prop == "gst" ||
-      col.prop == "tds" ||
-      col.prop == "apiBal" ||
-      col.prop == "reportType"
-    ) {
-      columnConfig.size = 100;
-      columnConfig.cell = (info) => (
-        <div
-          style={{
-            textAlign: "center",
-          }}
-        >
-          {info.getValue()}
-        </div>
-      );
-    }
+      return columnConfig;
+    }) ?? [];
 
-    return columnConfig;
-  });
-
-  const filterableColumns = reportData.Report.DropDowns;
+  const filterableColumns = reportData?.Report?.DropDowns ?? [];
   const _search = filterableColumns.some((item: any) =>
     item.includes("serachCondition")
   );
-  const filterableDisplayColumns = reportData.Report.DropDownDisplayName;
-  const DateModel = reportData.Report.DateModel;
-  const dropdownValues = reportData.DropDowns[0];
+  const filterableDisplayColumns =
+    reportData?.Report?.DropDownDisplayName ?? [];
+  const DateModel = reportData?.Report?.DateModel ?? "";
+  const dropdownValues = reportData?.DropDowns?.[0] ?? {};
 
   function finalValue(index: any) {
     let value = filters[`dropdown[${index}]`]
@@ -954,7 +964,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   return (
     <DefaultLayout isList>
       <div className="flex-1">
-        <h1 className="text-dark-400">{reportData.Report.ReportName}</h1>
+        <h1 className="text-dark-400">{reportData?.Report?.ReportName}</h1>
       </div>
       <div className="flex gap-5 w-full justify-between items-center mt-4 mb-2">
         <div className="flex gap-5 flex-wrap" style={{ flex: 2 }}>
