@@ -1,7 +1,6 @@
 import { ApexOptions } from "apexcharts";
 import React, { useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
-import axios from "axios";
 import api from "../../Services/Axios/api";
 
 const ChartThree: React.FC = () => {
@@ -15,17 +14,18 @@ const ChartThree: React.FC = () => {
       try {
         const response = await api.get("/dashboard/fund-data"); // Replace with actual API URL
         const data = response.data.chartData;
-        data.sort((a: any, b: any) => parseFloat(b.currentMonthTotalAmount) - parseFloat(a.currentMonthTotalAmount));
+
+        // Sort data by absolute value
+        data.sort((a: any, b: any) => Math.abs(b.currentMonthTotalAmount) - Math.abs(a.currentMonthTotalAmount));
 
         const categories = data.map((item: any) => item.name);
-        const seriesData = data.map((item: any) => parseFloat(item.currentMonthTotalAmount));
+        const positiveData = data.map((item: any) => (item.currentMonthTotalAmount > 0 ? item.currentMonthTotalAmount : 0));
+        const negativeData = data.map((item: any) => (item.currentMonthTotalAmount < 0 ? item.currentMonthTotalAmount : 0));
 
         setChartData({
           series: [
-            {
-              name: "Total Amount",
-              data: seriesData,
-            },
+            { name: "Positive Amount", data: positiveData },
+            { name: "Negative Amount", data: negativeData },
           ],
           categories,
         });
@@ -33,7 +33,7 @@ const ChartThree: React.FC = () => {
         console.error("Error fetching data:", error);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -41,22 +41,46 @@ const ChartThree: React.FC = () => {
     chart: {
       type: "bar",
       height: 600,
+      stacked: true,
     },
     plotOptions: {
       bar: {
-        borderRadius: 4,
+        borderRadius: 1,
         horizontal: true,
-        distributed: true,
+        barHeight: "100%",
       },
     },
-    colors: chartData.series.length
-      ? chartData.series[0].data.map((value) => `rgba(30, 144, 255, ${0.3 + (value / Math.max(...chartData.series[0].data)) * 0.7})`)
-      : [],
+    colors: ["#008FFB", "#FF4560"], // Blue for positive, Red for negative
     dataLabels: {
       enabled: true,
     },
+    stroke: {
+      width: 1,
+      colors: ["#fff"],
+    },
+    grid: {
+      xaxis: {
+        lines: {
+          show: false,
+        },
+      },
+    },
     xaxis: {
       categories: chartData.categories,
+      title: {
+        text: "Transaction Amount",
+      },
+      labels: {
+        formatter: (val) => `${Math.abs(Number(val))}`,
+      },
+    },
+    tooltip: {
+      y: {
+        formatter: (val) => `${Math.abs(val)}`,
+      },
+    },
+    legend: {
+      position: "bottom",
     },
   };
 

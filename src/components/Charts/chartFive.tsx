@@ -1,18 +1,21 @@
 import React from "react";
 import ReactApexChart from "react-apexcharts";
 
-const SemiDonutChart = ({ activeUsers, inactiveUsers,userType }) => {
+const SemiDonutChart = ({idx,activeUsers, inactiveUsers,userType }) => {
+
+  let colurs = ["#2D8D9E" , "#6FAE8F" , "#E9A353" ,"#B64A5A" , "#E9A59E"  ]
+
   const chartOptions = {
     chart: {
       type: "donut",
       
     },
     labels: [`Active ${userType}`, `Inactive ${userType}`],
-    colors: ["#28a745", "#dc3545"],
+    colors: [colurs[idx], "#CECED5"],
     legend: {
       position: "bottom",
       labels: {
-        colors: "#fff",
+        colors: "#000",
       },
     },
     plotOptions: {
@@ -28,7 +31,7 @@ const SemiDonutChart = ({ activeUsers, inactiveUsers,userType }) => {
     dataLabels: {
       enabled: true,
       style: {
-        colors: ["#fff"], 
+        colors: ["#000"], 
       },
     },
   };
