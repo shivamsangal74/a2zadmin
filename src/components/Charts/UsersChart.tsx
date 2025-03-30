@@ -28,7 +28,7 @@ const [chartData,setChartData] = useState([])
 
        
        {chartData.map((data, index) => (
-          <NeedleChart key={index} inactiveUsers={parseInt(data.inactiveUsers)} activeUsers={parseInt(data.activeUsers)}  userType={data.userType} />
+          <NeedleChart key={index} idx={index} inactiveUsers={parseInt(data.inactiveUsers)} activeUsers={parseInt(data.activeUsers)}  userType={data.userType} />
         ))}
      
       </div>
