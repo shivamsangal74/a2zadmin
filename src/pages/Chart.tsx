@@ -8,6 +8,7 @@ import CustomBarChart from '../components/Charts/ChartFour';
 import PieChart from '../components/Charts/ChartTwo';
 import ChartFour from '../components/Charts/ChartFour';
 import UsersChart from '../components/Charts/UsersChart';
+import { TopUsers } from '../components/Charts/TopUsers';
 
 const Chart: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const Chart: React.FC = () => {
         <UsersChart />
         <ChartThree />
         <ChartFour />
+        <TopUsers />
     
 
       </div>
