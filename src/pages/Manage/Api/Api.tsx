@@ -34,6 +34,7 @@ import {
 
 import { styled } from "@mui/system";
 import { IoArrowUpCircleSharp } from "react-icons/io5";
+import { getAllFunds, getFund } from "../../../Services/categoryServices";
 
 const commissionTypes = ["commission", "surcharge"];
 const paymentTypes = ["percentage", "rupee"];
@@ -55,6 +56,11 @@ interface CircleData {
   apiName: string;
   name: string;
   circleCode: string;
+}
+
+interface FundData {
+  name: string;
+  fundCode: string;
 }
 
 interface ApiData {
@@ -101,6 +107,10 @@ const Api = () => {
     {
       header: "Api Method",
       accessorKey: "apiMethod",
+    },
+    {
+      header: "Fund",
+      accessorKey: "name",
     },
     {
       header: "Status",
@@ -283,11 +293,13 @@ const Api = () => {
 
   const [_data, setData] = useState<RowData[]>([]);
   const [_cdata, setCdata] = useState<CircleData[]>([]);
+  const [_fundData, setFundData] = useState<FundData[]>([]);
   const [deletId, setDeleteId] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [apiName, setApiName] = useState("");
   const [apiId, setApiId] = useState("");
   const [apiType, setApiType] = useState("Recharge");
+  const [apiFund, setApiFund] = useState("");
   const [apiRechargeUrl, setApiRechargeUrl] = useState("");
   const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [apitoken, setApitoken] = useState("");
@@ -378,6 +390,7 @@ const Api = () => {
         responseStatus: responseStatus,
         rofferUrl: rofferUrl,
         planUrl: planUrl,
+        fundCode: apiFund,
         operatorUrl: operatorUrl,
         resposeType: resposeType,
         responseApiBalance: responseApiBalance,
@@ -442,6 +455,10 @@ const Api = () => {
 
   const handleApiTypeChange = (event: any) => {
     setApiType(event);
+  };
+
+  const handleApiFundChange = (event: any) => {
+    setApiFund(event);
   };
 
   const handleOperatorApi = async (event: any) => {
@@ -532,6 +549,7 @@ const Api = () => {
     try {
       setApiId(id);
       let _data = await getApi(id);
+
       setIsEdit(true);
       if (_data.api.length > 0) {
         setApiName(_data.api[0].apiName);
@@ -550,6 +568,7 @@ const Api = () => {
         setApiFastCardUrl(_data.api[0].apiFastCardUrl);
         setApiInsuranceUrl(_data.api[0].apiInsurenceUrl);
         setApiType(_data.api[0].apiType);
+        setApiFund(_data.api[0].fundCode);
         setApitoken(_data.api[0].apiToken);
         setResponseCircle(_data.api[0].responseCircle);
         setResponseCircleCode(_data.api[0].responseCircleCode);
@@ -634,6 +653,8 @@ const Api = () => {
       try {
         const response = await getAllApi();
         const apiData = response.apiData;
+        let fundData = await getAllFunds();
+        setFundData(fundData.funds);
         if (apiData.length > 0) {
           setApis(apiData);
         }
@@ -1141,6 +1162,22 @@ const Api = () => {
                 onChange={(e) => setResponseCircleCode(e.target.value)}
               />
             </div>
+            <div className="mb-6 flex gap-6">
+              <div>
+                <Select
+                  label="Select Fund"
+                  onChange={handleApiFundChange}
+                  value={apiFund}
+                >
+                  {_fundData.map((fund: any, index: any) => (
+                    <Option key={index} value={fund.fundCode.toString()}>
+                      {fund.name}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+
             <div className="flex gap-6  mt-10">
               {isEdit ? (
                 <ButtonLabel
