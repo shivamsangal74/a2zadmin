@@ -1,20 +1,54 @@
 import React, { useState } from "react";
-import DefaultLayout from "../../layout/DefaultLayout";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  Grid,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import {
+  ExpandMore as ExpandMoreIcon,
+  LocationOn as LocationIcon,
+  Sync as SyncIcon,
+  Refresh as RefreshIcon,
+} from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../Services/Axios/api";
-import { toast } from "react-toastify";
 import Loader from "../../components/Loader/Loader";
 import Breadcrumb from "../../components/Breadcrumbs/Breadcrumb";
 import MapSelector from "../../components/LocationMap";
-import { Dialog } from "@mui/material";
-import map from "../../images/maps.svg";
-import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
+import mapIcon from "../../images/maps.svg";
+import moment from "moment";
+import { toast } from "react-toastify";
+import DefaultLayout from "../../layout/DefaultLayout";
 
 export const ApesUsers = () => {
   const [openMapModal, setOpenMapModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const [mapContext, setMapContext] = useState("");
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [isFetching, setIsFetching] = useState(false);
+  const [merchantDialogOpen, setMerchantDialogOpen] = useState(false);
+  const [merchantData, setMerchantData] = useState<any[]>([]);
+  const [onboardingDialogOpen, setOnboardingDialogOpen] = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useState<{
+    message: string;
+    is_approved: string;
+  } | null>(null);
 
   const handleMapClick = (row: any, context: string) => {
     setSelectedRow(row);
@@ -29,6 +63,7 @@ export const ApesUsers = () => {
         ...location,
         type: mapContext,
       });
+      refetch();
       toast.success(`Location updated successfully for ${mapContext}`);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong");
@@ -36,13 +71,7 @@ export const ApesUsers = () => {
     setOpenMapModal(false);
   };
 
-  const formatDateToISO = (utcDateString: string) => {
-    const utcDate = new Date(utcDateString);
-    const localDate = new Date(utcDate.getTime() + 330 * 60000);
-    return localDate.toISOString().replace("Z", "").replace("T", " ");
-  };
-
-  const { isLoading, data } = useQuery({
+  const { isLoading, data, refetch } = useQuery({
     queryKey: ["allaepsusers"],
     queryFn: async () => {
       const response = await api.post("/apes/allaepsusers");
@@ -58,166 +87,434 @@ export const ApesUsers = () => {
     return acc;
   }, {});
 
-  const toggleRow = (userId: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [userId]: !prev[userId],
-    }));
+  const handleGetMerchantData = async (row: any) => {
+    setIsFetching(true);
+    try {
+      const response = await api.post("/apes/instant-merchantList", {
+        pan: row.pan,
+        mobile: row.mobile,
+      });
+      debugger;
+      const data = response.data.response.records;
+      setMerchantData(data); // save data
+      setMerchantDialogOpen(true); // open dialog
+      toast.success("Merchant data fetched successfully");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setIsFetching(false);
+    }
   };
 
+  async function checkOnBoardingStatus(row: any) {
+    setIsFetching(true);
+    try {
+      const response = await api.post("/apes/get-onboarded-users", {
+        userDetails: row.userId,
+      });
+
+      const { is_approved, message } = response.data;
+      setOnboardingStatus({ is_approved, message });
+      setOnboardingDialogOpen(true);
+
+      // Optional toast
+      if (["Verification-Pending", "Pending"].includes(is_approved)) {
+        toast.success(message);
+      } else {
+        toast.error(message);
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
+    } finally {
+      setIsFetching(false);
+    }
+  }
+
+
+
+  async function handleSyncLocation(row: any) {
+    setIsFetching(true);
+    try {
+      const response = await api.post("/apes/updatelocation", {
+        userDetails: row.userId,
+        type: row.type,
+      });
+
+      const {response_code, message } = response.data;
+    
+     
+
+      // Optional toast
+      if (response_code == 1) {
+        toast.success(message);
+      } else {
+        toast.error(message);
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
+    } finally {
+      setIsFetching(false);
+    }
+  }
+
   return (
-    <DefaultLayout isList={false}>
-      <Breadcrumb pageName="Credopay Users List" />
-      {isLoading && <Loader />}
+    <DefaultLayout isList>
+      <Box p={2}>
+        <Breadcrumb pageName="Credopay Users List" />
+        {isLoading ? (
+          <Box display="flex" justifyContent="center" mt={4}>
+            <CircularProgress />
+          </Box>
+        ) : groupedData ? (
+          Object.entries(groupedData).map(([userId, rows]: any, index) => {
+            const mainRow = rows[0];
 
-      {groupedData ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 text-sm">
-            <thead className="bg-gray-100 text-gray-700 text-left">
-              <tr>
-                <th className="p-3">#</th>
-                <th className="p-3">User ID</th>
-                <th className="p-3">Name</th>
-                <th className="p-3">Mobile</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Expand</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(groupedData).map(([userId, rows]: any, index) => {
-                const mainRow = rows[0];
-                const isExpanded = expandedRows[userId];
+            return (
+              <Accordion key={userId} sx={{ mb: 2, borderRadius: 2 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={0.5}>
+                      {index + 1}
+                    </Grid>
+                    <Grid item xs={2}>
+                      <Typography fontWeight="bold">{userId}</Typography>
+                    </Grid>
+                    <Grid item xs={2}>
+                      {mainRow.name}
+                    </Grid>
+                    <Grid item xs={2}>
+                      {mainRow.mobile}
+                    </Grid>
+                    <Grid item xs={3}>
+                      {mainRow.email}
+                    </Grid>
+                    <Grid item xs={2}>
+                      <Chip
+                        label={mainRow.status}
+                        color={
+                          mainRow.status === "Approved"
+                            ? "success"
+                            : mainRow.status === "Pending"
+                            ? "warning"
+                            : "error"
+                        }
+                        size="small"
+                      />
+                    </Grid>
+                  </Grid>
+                </AccordionSummary>
 
-                return (
-                  <React.Fragment key={userId}>
-                    <tr className="border-b">
-                      <td className="p-3">{index + 1}</td>
-                      <td className="p-3 font-semibold">{userId}</td>
-                      <td className="p-3">{mainRow.name}</td>
-                      <td className="p-3">{mainRow.mobile}</td>
-                      <td className="p-3">{mainRow.email}</td>
-                      <td className="p-3">
-                        <button onClick={() => toggleRow(userId)}>
-                          {isExpanded ? (
-                            <KeyboardArrowUp />
-                          ) : (
-                            <KeyboardArrowDown />
-                          )}
-                        </button>
-                      </td>
-                    </tr>
+                <AccordionDetails>
+                  {rows.map((row: any, idx: number) => (
+                    <Paper
+                      key={idx}
+                      elevation={2}
+                      sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid item md={3}>
+                          <Typography>
+                            <strong>Address:</strong> {row.address}
+                          </Typography>
+                          <Typography>
+                            <strong>Aadhaar:</strong> {row.aadhar}
+                          </Typography>
+                          <Typography>
+                            <strong>PAN:</strong> {row.pan}
+                          </Typography>
+                        </Grid>
 
-                    {isExpanded && (
-                      <tr className="bg-gray-50 border-b">
-                        <td colSpan={6}>
-                          {rows.map((row: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="p-4 border-t border-gray-300 grid md:grid-cols-4 gap-4">
-                              <div>
-                                <p>
-                                  <strong>Address:</strong> {row.address}
-                                </p>
-                                <p>
-                                  <strong>Aadhaar:</strong> {row.aadhar}
-                                </p>
-                                <p>
-                                  <strong>PAN:</strong> {row.pan}
-                                </p>
-                              </div>
-                              <div>
-                                <p>
-                                  <strong>Latitude:</strong> {row.latitude}
-                                </p>
-                                <p>
-                                  <strong>Longitude:</strong> {row.longitude}
-                                </p>
-                              </div>
-                              <div>
-                                <p>
-                                  <strong>Type:</strong> {row.type}
-                                </p>
-                                <p>
-                                  <strong>Reg Date:</strong>{" "}
-                                  {formatDateToISO(row.reg_date)}
-                                </p>
-                              </div>
-                              <div className="flex gap-4 items-start flex-wrap">
-                                {row.type === "instantpay" && (
-                                  <div className="flex items-center gap-1">
-                                    <img
-                                      src={map}
-                                      alt="instantPay"
-                                      className="cursor-pointer"
-                                      height={30}
-                                      width={30}
+                        <Grid item md={2}>
+                          <Typography>
+                            <strong>Outlet ID:</strong> {row.outletId}
+                          </Typography>
+                          <Typography>
+                            <strong>Lat:</strong> {row.latitude}
+                          </Typography>
+                          <Typography>
+                            <strong>Long:</strong> {row.longitude}
+                          </Typography>
+                        </Grid>
+
+                        <Grid item md={2}>
+                          <Typography>
+                            <strong>Type:</strong> {row.type}
+                          </Typography>
+                          <Typography>
+                            <strong>Reg Date:</strong>{" "}
+                            {moment(row.reg_date).format("DD/MM/YYYY")}
+                          </Typography>
+
+                          <Box mt={1}>
+                            <Chip
+                              label={row.status}
+                              color={
+                                row.status === "Approved"
+                                  ? "success"
+                                  : row.status === "Pending"
+                                  ? "warning"
+                                  : "error"
+                              }
+                              size="small"
+                            />
+                          </Box>
+                        </Grid>
+
+                        <Grid item md={2.5}>
+                          <Box display="flex" alignItems="center" gap={2}>
+                            {["instantPay", "paySprint", "credoPay"].map(
+                              (type) =>
+                                row.type
+                                  .toLowerCase()
+                                  .includes(type.toLocaleLowerCase()) ? (
+                                  <Tooltip
+                                    title={`Update location for ${type}`}
+                                    key={type}>
+                                    <IconButton
                                       onClick={() =>
-                                        handleMapClick(row, "instantPay")
-                                      }
-                                    />
-                                    <span>InstantPay</span>
-                                  </div>
-                                )}
+                                        handleMapClick(row, row.type)
+                                      }>
+                                      <Avatar
+                                        src={mapIcon}
+                                        sx={{ width: 30, height: 30 }}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
+                                ) : null
+                            )}
 
-                                {row.type === "paysprint" && (
-                                  <div className="flex items-center gap-1">
-                                    <img
-                                      src={map}
-                                      alt="paySprint"
-                                      className="cursor-pointer"
-                                      height={30}
-                                      width={30}
-                                      onClick={() =>
-                                        handleMapClick(row, "paySprint")
-                                      }
-                                    />
-                                    <span>PaySprint</span>
+                            {row.type === "instantpay" && (
+                              <div
+                                className="flex items-center gap-1"
+                                style={{ fontSize: "16px" }}>
+                                <div>
+                                  <span>InstantPay</span>
+                                  <div>
+                                    <p style={{ fontSize: "16px" }}>
+                                      lat : {row.instantPayLat}
+                                    </p>
+                                    <p style={{ fontSize: "16px" }}>
+                                      {" "}
+                                      Long : {row.instantPayLong}
+                                    </p>
                                   </div>
-                                )}
-
-                                {row.type === "credopay" && (
-                                  <div className="flex items-center gap-1">
-                                    <img
-                                      src={map}
-                                      alt="credoPay"
-                                      className="cursor-pointer"
-                                      height={30}
-                                      width={30}
-                                      onClick={() =>
-                                        handleMapClick(row, "credoPay")
-                                      }
-                                    />
-                                    <span>CredoPay</span>
-                                  </div>
-                                )}
+                                </div>
                               </div>
-                            </div>
+                            )}
+
+                            {row.type.toLowerCase().includes("paysprint") && (
+                              <div className="flex items-center gap-1">
+                                <span></span>
+                                <div>
+                                  <span>PaySprint</span>
+                                  <div>
+                                    <p>lat : {row.paySprintLat}</p>
+                                    <p>Long : {row.paySprintLong}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {row.type === "credopay" && (
+                              <div className="flex items-center gap-1">
+                                <div>
+                                  <span>credoPay</span>
+                                  <div>
+                                    <p>lat : {row.credoPayLat}</p>
+                                    <p>Long : {row.credoPaytLong}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Box>
+                        </Grid>
+
+                        <Grid item md={2.5}>
+                          <Box>
+                            {row.type.toLowerCase().includes("instantpay") && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={
+                                  isFetching ? (
+                                    <CircularProgress />
+                                  ) : (
+                                    <SyncIcon />
+                                  )
+                                }
+                                fullWidth
+                                sx={{ mb: 1 }}
+                                
+                                onClick={() => handleGetMerchantData(row)}>
+                                Get Merchant Data
+                              </Button>
+                            )}
+
+                            {row.type.toLowerCase().includes("paysprint") && (
+                              <>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={
+                                    isFetching ? (
+                                      <CircularProgress />
+                                    ) : (
+                                      <RefreshIcon />
+                                    )
+                                  }
+                                  fullWidth
+                                  onClick={()=> handleSyncLocation(row)}
+                                  sx={{ mb: 1 }}>
+                                  Sync Location
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={
+                                    isFetching ? (
+                                      <CircularProgress />
+                                    ) : (
+                                      <RefreshIcon />
+                                    )
+                                  }
+                                  fullWidth
+                                  onClick={() => checkOnBoardingStatus(row)}>
+                                  Onboarding status
+                                </Button>
+                              </>
+                            )}
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            );
+          })
+        ) : (
+          <Typography>No Records Found</Typography>
+        )}
+
+        <Dialog
+          open={openMapModal}
+          onClose={() => setOpenMapModal(false)}
+          maxWidth="md"
+          fullWidth>
+          <Box p={3}>
+            <Typography variant="h6" gutterBottom>
+              Select Location for <strong>{mapContext}</strong>
+            </Typography>
+            <MapSelector onLocationSelect={handleSelectLocation} />
+          </Box>
+        </Dialog>
+
+        <Dialog
+          open={merchantDialogOpen}
+          onClose={() => setMerchantDialogOpen(false)}
+          maxWidth="md"
+          fullWidth>
+          <Box p={3}>
+            <Typography variant="h6" mb={2}>
+              Merchant Data
+            </Typography>
+
+            {merchantData.map((merchant, idx) => (
+              <Paper key={idx} sx={{ mb: 2, p: 2, borderRadius: 2 }}>
+                <Typography>
+                  <strong>Name:</strong> {merchant.name}
+                </Typography>
+                <Typography>
+                  <strong>Mobile:</strong> {merchant.mobile}
+                </Typography>
+                <Typography>
+                  <strong>Email:</strong> {merchant.email}
+                </Typography>
+                <Typography>
+                  <strong>PAN:</strong> {merchant.pan}
+                </Typography>
+                <Typography>
+                  <strong>Outlet ID:</strong> {merchant.outletId}
+                </Typography>
+                <Typography>
+                  <strong>Last Activity:</strong> {merchant.lastActivityDt}
+                </Typography>
+                <Typography>
+                  <strong>KYC Status:</strong>{" "}
+                  {merchant.KYCStatus ? "Verified" : "Not Verified"}
+                </Typography>
+                <Typography>
+                  <strong>Active:</strong> {merchant.isActive ? "Yes" : "No"}
+                </Typography>
+
+                <Box mt={2}>
+                  <Typography variant="subtitle1">Bank Accounts</Typography>
+                  {merchant.bankAccounts.length > 0 ? (
+                    <TableContainer component={Paper} sx={{ mt: 1 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Account Number</TableCell>
+                            <TableCell>IFSC</TableCell>
+                            <TableCell>Primary</TableCell>
+                            <TableCell>Added At</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {merchant.bankAccounts.map((acc: any, i: number) => (
+                            <TableRow key={i}>
+                              <TableCell>{acc.accountNumber}</TableCell>
+                              <TableCell>{acc.ifsc}</TableCell>
+                              <TableCell>
+                                {acc.isPrimary ? "Yes" : "No"}
+                              </TableCell>
+                              <TableCell>{acc.addedAt}</TableCell>
+                            </TableRow>
                           ))}
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p>No Records Found</p>
-      )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography>No bank accounts found</Typography>
+                  )}
+                </Box>
+              </Paper>
+            ))}
+          </Box>
+        </Dialog>
 
-      <Dialog
-        open={openMapModal}
-        onClose={() => setOpenMapModal(false)}
-        maxWidth="md"
-        fullWidth>
-        <div className="p-4">
-          <h2 className="text-lg font-semibold mb-4 capitalize">
-            Select Location for {mapContext}
-          </h2>
-          <MapSelector onLocationSelect={handleSelectLocation} />
-        </div>
-      </Dialog>
+        <Dialog
+          open={onboardingDialogOpen}
+          onClose={() => setOnboardingDialogOpen(false)}
+          maxWidth="xs"
+          fullWidth>
+          <Box p={3}>
+            <Typography variant="h6" gutterBottom>
+              Onboarding Status
+            </Typography>
+
+            {onboardingStatus && (
+              <>
+                <Typography mb={1}>
+                  <strong>Message:</strong> {onboardingStatus.message}
+                </Typography>
+
+                <Chip
+                  label={onboardingStatus.is_approved}
+                  color={
+                    onboardingStatus.is_approved === "Approved"
+                      ? "success"
+                      : onboardingStatus.is_approved === "Verification-Pending"
+                      ? "warning"
+                      : "error"
+                  }
+                  variant="outlined"
+                  sx={{ mt: 1 }}
+                />
+              </>
+            )}
+          </Box>
+        </Dialog>
+      </Box>
     </DefaultLayout>
   );
 };
