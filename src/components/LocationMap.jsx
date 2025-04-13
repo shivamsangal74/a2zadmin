@@ -1,91 +1,142 @@
-import { useState, useMemo, useEffect } from "react";
-import { GoogleMap, useLoadScript, Marker} from "@react-google-maps/api";
+import { useState, useEffect } from "react";
+import { useLoadScript } from "@react-google-maps/api";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import {
+  AdvancedMarker,
+  APIProvider,
+  InfoWindow,
+  Pin,
+  Map,
+} from "@vis.gl/react-google-maps";
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
 } from "use-places-autocomplete";
-import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
-import { AdvancedMarker, APIProvider, InfoWindow, Pin ,Map} from "@vis.gl/react-google-maps";
+import Button from "@mui/material/Button";
 
-export default function MapSelector({onLocationSelect}) {
+export default function MapSelector({ onLocationSelect, initialLocation }) {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: "AIzaSyCqK3dniQj_pFBtgl5GjCUmwp7F_6f4cc4",
     libraries: ["places"],
   });
 
   if (!isLoaded) return <div>Loading...</div>;
-  return <GoogleMap1 onLocationSelect={onLocationSelect}/>;
+
+  return (
+    <GoogleMap1
+      onLocationSelect={onLocationSelect}
+      initialLocation={initialLocation}
+    />
+  );
 }
 
-function GoogleMap1({onLocationSelect}) {
-  
-  const [selected, setSelected] = useState({ lat: 43.45, lng: -80.49 });
-  const [defaultCenter, setDefaultCenter] = useState(null);
+function GoogleMap1({ onLocationSelect, initialLocation }) {
+  const [selected, setSelected] = useState(null); // confirmed
+  const [pendingLocation, setPendingLocation] = useState(null); // pending (click/search)
+  const [mapRef, setMapRef] = useState(null); // pan camera
+  const [center, setCenter] = useState(null); // for controlled center
 
-  const [open, setOpen] = useState(false);
-  // Function to get user's current location
+  useEffect(() => {
+    if (initialLocation) {
+      setSelected(initialLocation);
+      setPendingLocation(initialLocation);
+      setCenter(initialLocation);
+    } else {
+      getUserLocation();
+    }
+  }, [initialLocation]);
+
   const getUserLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          setSelected({ lat: latitude, lng: longitude });
-          setDefaultCenter({ lat: latitude, lng: longitude })
-          onLocationSelect({ lat: latitude, lng: longitude });
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setSelected(location);
+          setPendingLocation(location);
+          setCenter(location);
         },
-        (error) => {
-          console.error("Error fetching location:", error);
-          setSelected({ lat: 43.45, lng: -80.49 }); // Default location (fallback)
+        () => {
+          const fallback = { lat: 43.45, lng: -80.49 };
+          setSelected(fallback);
+          setPendingLocation(fallback);
+          setCenter(fallback);
         }
       );
-    } else {
-      console.warn("Geolocation is not supported by this browser.");
-      setSelected({ lat: 43.45, lng: -80.49 }); // Default location (fallback)
     }
   };
 
-  // Fetch location on mount
-  useEffect(() => {
-    getUserLocation();
-  }, []);
+  const handleMapClick = (e) => {
+    const coords = e.detail.latLng;
+    setPendingLocation(coords);
+    setCenter(coords); // pan the map
+  };
+
+  const confirmLocation = () => {
+    if (pendingLocation) {
+      setSelected(pendingLocation);
+      onLocationSelect(pendingLocation);
+    }
+  };
+
   return (
     <>
-     {defaultCenter && <>
-      <div className="places-container">
-        <PlacesAutocomplete setSelected={setSelected} onLocationSelect={onLocationSelect} />
-      </div>
-
-    <div style={{height: "500px", width: "100%"}}>
-    <APIProvider apiKey={"AIzaSyCqK3dniQj_pFBtgl5GjCUmwp7F_6f4cc4"}>
-      <div style={{ height: "100%", width: "100%" }}>
-        <Map defaultZoom={16} defaultCenter={defaultCenter}  gestureHandling={"greedy"} mapId={"cc38c4c76d152f62"} onClick={(e)=> {
-          setSelected(e.detail.latLng)
-          onLocationSelect(e.detail.latLng)
-          }}>
-          <AdvancedMarker position={selected} onClick={() => setOpen(true)}>
-            <Pin
-              background={"grey"}
-              borderColor={"green"}
-              glyphColor={"purple"}
+      {pendingLocation && (
+        <>
+          <div className="places-container" style={{ marginBottom: 10 }}>
+            <PlacesAutocomplete
+              onPlaceSelect={(loc) => {
+                setPendingLocation(loc);
+                setCenter(loc);
+              }}
             />
-          </AdvancedMarker>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={confirmLocation}
+              disabled={!pendingLocation}
+              style={{ marginLeft: 10, marginTop: 5 }}
+            >
+              Update Location
+            </Button>
+          </div>
 
-          {open && (
-            <InfoWindow position={selected} onCloseClick={() => setOpen(false)}>
-              <p>I'm in Hamburg</p>
-            </InfoWindow>
-          )}
-        </Map>
-      </div>
-    </APIProvider>
-    </div>
-     </>}
+          <div style={{ height: "500px", width: "100%" }}>
+            <APIProvider apiKey="AIzaSyCqK3dniQj_pFBtgl5GjCUmwp7F_6f4cc4">
+              <Map
+                mapId="cc38c4c76d152f62"
+                zoom={16}
+                center={center}
+                gestureHandling="greedy"
+                disableDefaultUI={false}
+                onClick={handleMapClick}
+                onLoad={(map) => setMapRef(map)}
+                style={{ height: "100%", width: "100%" }}
+              >
+                {selected && (
+                  <AdvancedMarker position={selected}>
+                    <Pin background="green" glyphColor="white" />
+                  </AdvancedMarker>
+                )}
+
+                {pendingLocation && (
+                  <AdvancedMarker position={pendingLocation}>
+                    <Pin background="orange" glyphColor="white" />
+                  </AdvancedMarker>
+                )}
+              </Map>
+            </APIProvider>
+          </div>
+        </>
+      )}
     </>
   );
 }
 
-const PlacesAutocomplete = ({ setSelected,onLocationSelect }) => {
+const PlacesAutocomplete = ({ onPlaceSelect }) => {
   const {
     ready,
     value,
@@ -101,13 +152,12 @@ const PlacesAutocomplete = ({ setSelected,onLocationSelect }) => {
   const handleSelect = async (address) => {
     setValue(address, false);
     clearSuggestions();
-debugger
+
     if (!address) return;
 
     const results = await getGeocode({ address });
     const { lat, lng } = await getLatLng(results[0]);
-    setSelected({ lat, lng });
-    onLocationSelect({ lat, lng });
+    onPlaceSelect({ lat, lng });
   };
 
   return (

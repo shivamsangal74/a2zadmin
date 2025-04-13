@@ -1062,7 +1062,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           onCancel={() => setOpenLocation(false)}
           onOk={() => setOpenLocation(false)}
         >
-          <MapSelector onLocationSelect={onLocationSelect} />
+          <MapSelector onLocationSelect={(loc)=> console.log(loc)} />
         </Modal>
         <AuthModel
           open={openAuth}
