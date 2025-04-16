@@ -189,7 +189,7 @@ const AddVendor = () => {
       receiverUser,
       totalAmount,
       commissionType,
-      OperatorId: Math.floor(1000 + Math.random() * 9000),
+      OperatorId: opraterID,
       remarks: remarks,
       userLapus: filteredLapus,
       cashAmounts: cashAmounts,
