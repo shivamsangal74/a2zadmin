@@ -419,8 +419,9 @@ export const ApesUsers = () => {
             </Typography>
 
             {merchantData.map((merchant, idx) => (
-              <Paper key={idx} sx={{ mb: 2, p: 2, borderRadius: 2 }}>
-                <Typography>
+              <Paper key={idx} sx={{ display : "flex" ,  mb: 2, p: 2, borderRadius: 2 }}>
+               <div>
+               <Typography>
                   <strong>Name:</strong> {merchant.name}
                 </Typography>
                 <Typography>
@@ -438,14 +439,25 @@ export const ApesUsers = () => {
                 <Typography>
                   <strong>Last Activity:</strong> {merchant.lastActivityDt}
                 </Typography>
-                <Typography>
+               </div>
+<div>
+<Typography>
                   <strong>KYC Status:</strong>{" "}
                   {merchant.KYCStatus ? "Verified" : "Not Verified"}
                 </Typography>
                 <Typography>
                   <strong>Active:</strong> {merchant.isActive ? "Yes" : "No"}
                 </Typography>
-
+                <Typography>
+                  <strong>Latitude
+                  :</strong>{" "}
+                  {merchant?.Latitude}
+                </Typography>
+                <Typography>
+                  <strong>Longitude
+                  :</strong> {merchant?.Longitude}
+                </Typography>
+</div>
                 <Box mt={2}>
                   <Typography variant="subtitle1">Bank Accounts</Typography>
                   {merchant.bankAccounts.length > 0 ? (
