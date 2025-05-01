@@ -39,6 +39,8 @@ import DefaultLayout from "../../layout/DefaultLayout";
 
 export const ApesUsers = () => {
   const [openMapModal, setOpenMapModal] = useState(false);
+  
+
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const [mapContext, setMapContext] = useState("");
   const [isFetching, setIsFetching] = useState(false);
