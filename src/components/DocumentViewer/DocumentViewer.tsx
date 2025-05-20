@@ -34,6 +34,13 @@ const DocumentViewer = ({
           ))}
         </>
       );
+    } else if (extension === "mp4") {
+      return (
+        <video controls width="100%">
+          <source src={path} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      );
     } else {
       return <p className="text-red-500">Unsupported file format</p>;
     }
