@@ -55,9 +55,12 @@ function GoogleMap1({ onLocationSelect, initialLocation }) {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          setSelected(location);
-          setPendingLocation(location);
-          setCenter(location);
+          if(!initialLocation){
+            setSelected(location);
+            setPendingLocation(location);
+            setCenter(location);
+          }
+         
         },
         () => {
           const fallback = { lat: 43.45, lng: -80.49 };
@@ -92,14 +95,15 @@ function GoogleMap1({ onLocationSelect, initialLocation }) {
                 setPendingLocation(loc);
                 setCenter(loc);
               }}
+              selected={pendingLocation}
+              setSelected={setPendingLocation}
             />
             <Button
               variant="contained"
               color="primary"
               onClick={confirmLocation}
               disabled={!pendingLocation}
-              style={{ marginLeft: 10, marginTop: 5 }}
-            >
+              style={{ marginLeft: 10, marginTop: 5 }}>
               Update Location
             </Button>
           </div>
@@ -114,8 +118,7 @@ function GoogleMap1({ onLocationSelect, initialLocation }) {
                 disableDefaultUI={false}
                 onClick={handleMapClick}
                 onLoad={(map) => setMapRef(map)}
-                style={{ height: "100%", width: "100%" }}
-              >
+                style={{ height: "100%", width: "100%" }}>
                 {selected && (
                   <AdvancedMarker position={selected}>
                     <Pin background="green" glyphColor="white" />
@@ -136,7 +139,7 @@ function GoogleMap1({ onLocationSelect, initialLocation }) {
   );
 }
 
-const PlacesAutocomplete = ({ onPlaceSelect }) => {
+const PlacesAutocomplete = ({ onPlaceSelect, selected, setSelected }) => {
   const {
     ready,
     value,
@@ -161,20 +164,45 @@ const PlacesAutocomplete = ({ onPlaceSelect }) => {
   };
 
   return (
-    <Autocomplete
-      freeSolo
-      options={status === "OK" ? data.map(({ description }) => description) : []}
-      onInputChange={handleInputChange}
-      onChange={(event, value) => handleSelect(value)}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Search an address"
-          variant="outlined"
-          fullWidth
-          disabled={!ready}
-        />
-      )}
-    />
+    <>
+      <Autocomplete
+        freeSolo
+        options={
+          status === "OK" ? data.map(({ description }) => description) : []
+        }
+        onInputChange={handleInputChange}
+        onChange={(event, value) => handleSelect(value)}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Search an address"
+            variant="outlined"
+            fullWidth
+            disabled={!ready}
+          />
+        )}
+      />
+
+      <div className="mt-2 flex gap-2">
+      <TextField
+        value={selected.lat ? selected.lat : ""}
+        onChange={(e) => {
+          console.log(e.target.value)
+          setSelected({ ...selected, lat: parseFloat(e.target.value) })
+        }
+        }
+        label={"Latitude"}
+        size="small"
+        className="mt-2"
+      />
+      <TextField
+        value={selected.lng ? selected.lng : ""}
+        onChange={(e) => setSelected({ ...selected, lng: parseFloat(e.target.value) })}
+        label={"Longitude"}
+        size="small"
+        className="ml-2"
+      />
+      </div>
+    </>
   );
 };
