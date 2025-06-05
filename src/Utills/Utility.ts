@@ -22,7 +22,8 @@ const capitalize = (str: string) => {
 const formatDate = (date: any) => {};
 
 function generateAddress(data: any) {
-  const address = data.data.address;
+  debugger;
+  const address = data.response.data.address;
   const addressArray = [
     address?.house,
     address?.street,
