@@ -36,6 +36,7 @@ import mapIcon from "../../images/maps.svg";
 import moment from "moment";
 import { toast } from "react-toastify";
 import DefaultLayout from "../../layout/DefaultLayout";
+import CreateUserDialog from "./AddNewUserForm";
 
 export const ApesUsers = () => {
   const [openMapModal, setOpenMapModal] = useState(false);
@@ -158,11 +159,32 @@ export const ApesUsers = () => {
       setIsFetching(false);
     }
   }
+  const [openNewUser, setOpenNewUser] = useState(false);
 
+  const saveNewUser = async (userData: any) => {
+    try {
+      await api.post("/mpos/saveorupdateuser", userData);
+      toast.success("User added successfully");
+      setOpenNewUser(false);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+    }
+  }
   return (
     <DefaultLayout isList>
       <Box p={2}>
-        <Breadcrumb pageName="Credopay Users List" />
+        <Breadcrumb pageName="Apes Users List" />
+        <>
+      <Button variant="contained" style={{marginBottom: 15}} onClick={() => setOpenNewUser(true)}>
+        Add New User
+      </Button>
+      <CreateUserDialog
+        open={openNewUser}
+        onClose={() => setOpenNewUser(false)}
+        onSubmit={saveNewUser}
+      />
+    </>
         {isLoading ? (
           <Box display="flex" justifyContent="center" mt={4}>
             <CircularProgress />
