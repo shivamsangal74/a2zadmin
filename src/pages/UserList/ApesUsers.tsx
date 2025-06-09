@@ -161,7 +161,7 @@ export const ApesUsers = () => {
   }
   const [openNewUser, setOpenNewUser] = useState(false);
 
-  const saveNewUser = async (userData: any) => {
+ async function saveNewUser (userData: any){
     try {
       await api.post("/mpos/saveorupdateuser", userData);
       toast.success("User added successfully");
