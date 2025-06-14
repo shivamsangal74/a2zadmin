@@ -9,6 +9,11 @@ import {
   Grid,
   MenuItem,
 } from "@mui/material";
+import { SearchDropDown } from "../../components/DropDown/SearchDropDown";
+import { toast } from "react-toastify";
+import api from "../../Services/Axios/api";
+import { useQuery } from "@tanstack/react-query";
+import { DropSearch } from "../../components/DropDown/DropSearch";
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -53,6 +58,7 @@ const initialForm: UserForm = {
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, onClose, onSubmit }) => {
   const [form, setForm] = useState<UserForm>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof UserForm, string>>>({});
+  const [users , setUsers] = useState<any[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -87,13 +93,83 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, onClose, onSu
     onClose();
   };
 
+  const { isLoading, error, data, refetch } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      try {
+        debugger
+        const response = await api.get("/users/");
+        const userData = response.data.users;
+        let _data: any[] = [];
+        if (userData.length > 0) {
+          userData.forEach((user: any) => {
+            _data.push({
+              showvalue:
+                user?.userUniqueId +
+                " " +
+                user?.fullName +
+                "(" +
+                user.phoneNumber +
+                ")",
+              value: user?.userUniqueId,
+            });
+          });
+        }
+        setUsers(userData)
+        return _data;
+      } catch (error) {
+        toast.error("something went wrong!");
+      }
+    },
+    refetchOnWindowFocus: false,
+  });
+
+
+  const handleChangeUsers = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debugger
+    let name = "userId"
+    setForm((prev) => ({ ...prev, [name]: e }));
+    const selectedUser = users.find(user => user.userUniqueId === e);
+    if (selectedUser) {
+      setForm((prev) => ({
+        ...prev,
+        name: selectedUser.fullName || "",
+        mobile: selectedUser.phoneNumber || "",
+        aadhar: selectedUser.aadharNo || "",
+        pan: selectedUser.panNo || "",
+        email: selectedUser.emailAddress || "",
+        address: selectedUser.address || "",
+        outletId: selectedUser.outletId || "",
+        latitude: selectedUser.latitude || "",
+        longitude: selectedUser.longitude || "",
+        reg_date: new Date().toISOString().split("T")[0], // Set current date as default
+      }));
+    } else {
+      setForm(initialForm);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Create New User</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} mt={1}>
+
+        <Grid item xs={12} sm={6}>
+        <DropSearch
+                    placeholder="Select User"
+                    options={data || []}
+                    required={true}
+                    value={form.userId}
+                    error={Boolean(errors["userId" as keyof UserForm])}
+                helperText={errors["userId" as keyof UserForm]}
+                    name="userId"
+                    onchange={handleChangeUsers}
+                    
+                  />
+            </Grid>
+
           {[
-            { label: "User ID", name: "userId" },
             { label: "Name", name: "name" },
             { label: "Mobile", name: "mobile", type: "tel" },
             { label: "Aadhar", name: "aadhar", type: "number" },

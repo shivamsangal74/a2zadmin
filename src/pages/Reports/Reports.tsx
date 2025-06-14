@@ -49,6 +49,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [searchCondition, setSearchCondition] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [isProcessing, setisProcessing] = useState(false);
+  const [timeRange,setTimeange] = useState("");
 
   const last30Days = () => {
     let startDate = dayjs().subtract(1, "day").startOf("day");
@@ -399,6 +400,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         filters: filters,
         dateRange: dateRange,
         search: search,
+        timeRange : timeRange,
       });
 
       setTableData(response.data);
@@ -961,6 +963,16 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     tableData.length > 0 &&
     calculateStatusAndAmountTotals(tableData);
 
+
+
+    const timeOptions = [
+      { showvalue: "0AM - 12PM (BATCH 1)", value: { start: "00:00:00", end: "11:59:59" } },
+      { showvalue: "12PM - 4PM (BATCH 2)", value: { start: "12:00:00", end: "15:59:59" } },
+      { showvalue: "4PM - 7PM (BATCH 3)", value: { start: "16:00:00", end: "18:59:59" } },
+      { showvalue: "7PM - 12AM (BATCH 4)", value: { start: "19:00:00", end: "23:59:59" } },
+    ];
+    
+
   return (
     <DefaultLayout isList>
       <div className="flex-1">
@@ -1035,8 +1047,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   isFilter={true}
                 />
               )}
+
+
+             
             </div>
-          ))}
+
+            
+          ))
+          
+          }
+
+
           {_search && (
             <div className="mb-2">
               <TextInput
@@ -1048,6 +1069,25 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               />
             </div>
           )}
+           {
+                 (report_id == "2_10" || report_id == "2_17" ) &&
+                 <div style={{width : "35%"}}>
+                   <DropSearch
+                 value={JSON.stringify(timeRange) || ""}
+                 place2={"timeRange"}
+                 onchange={(name: any, value: any) => {
+                   setTimeange(JSON.parse(value));
+                 }}
+                 placeholder={"Select TimeRange"}
+                 options={timeOptions.map((opt) => ({
+                   showvalue: opt.showvalue,
+                   value: JSON.stringify(opt.value), // serialize for transport
+                 }))}
+                 error={""}
+                 isFilter={true}
+               />
+                 </div>
+              }
           <ButtonLabel label="Get Data" onClick={handleGetReportData} />
         </div>
       </div>
