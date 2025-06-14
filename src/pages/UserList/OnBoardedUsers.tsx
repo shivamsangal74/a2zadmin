@@ -14,35 +14,56 @@ import { getUsers } from "../../Services/Axios/UserService";
 import { DropSearch } from "../../components/DropDown/DropSearch";
 import { ButtonLabel } from "../../components/Button/Button";
 import TextInput from "../../components/Input/TextInput";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  Grid,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import CreateCrydoDialogProps from "../../pages/UserList/AddNewCrydoPayForm";
 export const OnBoardedUsers = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [rowData, setRowData] = React.useState({});
-  
-  const formatDateToISO = (utcDateString:string) => {
+
+  const formatDateToISO = (utcDateString: string) => {
     const utcDate = new Date(utcDateString);
-  const localDate = new Date(utcDate.getTime() + 330 * 60000);
-  return localDate.toISOString().replace("Z", "").replace("T", " ");
+    const localDate = new Date(utcDate.getTime() + 330 * 60000);
+    return localDate.toISOString().replace("Z", "").replace("T", " ");
   };
-  
-  
+
   const onEdit = async () => {
     try {
       const id = rowData.id; // Store the ID before modifying rowData
       const updatedData = { ...rowData }; // Create a copy of rowData
       delete updatedData.id; // Remove the ID from the copy
-  
+
       const resp = await api.post("/mpos/update-mpos-user", {
         id: id, // Use the original ID here
         data: updatedData, // Send the updated data
       });
-  
+
       if (resp.status === 200) {
         toast.success("User updated successfully!");
-        refetch()
-        setIsOpen(false)
+        refetch();
+        setIsOpen(false);
         // Optionally refetch data or update state here
       } else {
         toast.error("Failed to update user.");
@@ -52,7 +73,6 @@ export const OnBoardedUsers = () => {
       toast.error(message);
     }
   };
-  
 
   const onClose = () => setIsOpen(false);
   const onRowClick = (row: any) => {
@@ -95,7 +115,7 @@ export const OnBoardedUsers = () => {
       cell: (row: any) => {
         console.log(row.row);
         return formatDateToISO(row.row.original.createdDate);
-      }
+      },
     },
     {
       header: "Action",
@@ -111,7 +131,7 @@ export const OnBoardedUsers = () => {
     },
   ];
 
-  const { isLoading, error, data,refetch } = useQuery({
+  const { isLoading, error, data, refetch } = useQuery({
     queryKey: ["allonboardedusers"],
     queryFn: async () => {
       try {
@@ -125,6 +145,18 @@ export const OnBoardedUsers = () => {
     refetchOnWindowFocus: true,
   });
 
+  const [openNewUser, setOpenNewUser] = useState(false);
+
+  const saveNewUser = async (userData: any) => {
+    try {
+      await api.post("/mpos/addonboarding", userData);
+      toast.success("User added successfully");
+      setOpenNewUser(false);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+    }
+  };
   const {
     isLoading: userIsLoading,
     error: userError,
@@ -171,8 +203,21 @@ export const OnBoardedUsers = () => {
   return (
     <DefaultLayout isList={false}>
       <Breadcrumb pageName="Credopay Users List" />
+      <Button
+        variant="contained"
+        style={{ marginBottom: 15 }}
+        onClick={() => setOpenNewUser(true)}
+      >
+        Add New User
+      </Button>
+      <CreateCrydoDialogProps
+        open={openNewUser}
+        onClose={() => setOpenNewUser(false)}
+        onSubmit={saveNewUser}
+      />
+
       {isLoading && <Loader />}
-     
+
       {data && data.length > 0 ? (
         <BasicTable data={data} columns={columns} filter={[]} />
       ) : (
@@ -194,7 +239,7 @@ export const OnBoardedUsers = () => {
           )}
 
           <TextInput
-          style={{ marginTop: "10px" }}
+            style={{ marginTop: "10px" }}
             name={"Password"}
             placeholder="Enter user Password"
             label="Password"
@@ -202,8 +247,8 @@ export const OnBoardedUsers = () => {
             onChange={(e) => handleChange("password", e)}
             isModel={true}
           />
-           <TextInput
-          style={{ marginTop: "10px" }}
+          <TextInput
+            style={{ marginTop: "10px" }}
             name={"CPID"}
             placeholder="Enter CPID"
             label="CPID"

@@ -55,10 +55,16 @@ const initialForm: UserForm = {
   hash: "",
 };
 
-const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, onClose, onSubmit }) => {
+const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
+  open,
+  onClose,
+  onSubmit,
+}) => {
   const [form, setForm] = useState<UserForm>(initialForm);
+
   const [errors, setErrors] = useState<Partial<Record<keyof UserForm, string>>>({});
   const [users , setUsers] = useState<any[]>([]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
