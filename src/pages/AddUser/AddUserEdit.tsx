@@ -317,15 +317,15 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
     try {
       const response = await validateOTP(code, reqID.toString());
       const address = generateAddress(response);
-      setProfile(response.data.profile_image);
+      setProfile(response.response.data.profile_image);
       const aadharData = {
         address: address,
-        fullName: response.data.full_name,
-        fatherName: response.data.care_of.split(":")[1],
-        pinCode: response.data.zip,
-        city: response.data.address.po,
-        state: response.data.address.state,
-        DOB: response.data.dob,
+        fullName: response.response.data.full_name,
+        fatherName: response.response.data.care_of.split(":")[1],
+        pinCode: response.response.data.zip,
+        city: response.response.data.address.po,
+        state: response.response.data.address.state,
+        DOB: response.response.data.dob,
       };
 
       if (response.status == "error") {
@@ -337,7 +337,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           Object.entries(aadharData).forEach(([key, value]) => {
             setValue(key, value);
           });
-          setValue("profile", response.data.profile_image);
+          setValue("profile", response.response.data.profile_image);
           setValue("dob", dayjs(aadharData.DOB));
         } else {
           setValue("ekycStatus", 0);
@@ -1062,7 +1062,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           onCancel={() => setOpenLocation(false)}
           onOk={() => setOpenLocation(false)}
         >
-          <MapSelector onLocationSelect={(loc)=> console.log(loc)} />
+          <MapSelector onLocationSelect={(loc) => console.log(loc)} />
         </Modal>
         <AuthModel
           open={openAuth}
