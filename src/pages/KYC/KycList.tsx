@@ -140,7 +140,8 @@ const KycList = () => {
       }
       const documentMap = new Map<string, Document>();
       const documentList = [
-        "aadharCard",
+        "Aadhaar Front Card",
+        "Aadhaar Back Card",
         "panCard",
         "gstRegistrations",
         "cancelCaque",
