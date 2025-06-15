@@ -112,7 +112,8 @@ const KycEdit = ({ userid }) => {
   ];
 
   const showNameDoc: any = {
-    aadharCard: "Aadhaar Card",
+    aadharFrontCard: "Aadhaar Front Card",
+    aadharBackCard: "Aadhaar Back Card",
     panCard: "Pan Card",
     gstRegistrations: "GST Registrations",
     cancelCaque: "Cancel Cheque",
@@ -285,7 +286,8 @@ const KycEdit = ({ userid }) => {
       setVerification(response?.userKycDetails[0]?.kycStatus);
       const documentMap = new Map<string, Document>();
       const documentList = [
-        "aadharCard",
+        "aadharFrontCard",
+        "aadharBackCard",
         "panCard",
         "gstRegistrations",
         "cancelCaque",
