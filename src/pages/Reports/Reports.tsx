@@ -235,6 +235,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleStatusChange(value: any, params: any) {
+    setLoading(true);
     try {
       let tranxId = params.row.original.refid;
       const response = await api.get(`/common/manual-status`, {
@@ -242,12 +243,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         withCredentials: true,
       });
       toast.warn("Recharge Status Updated");
+      await handleGetReportData();
       return response.data;
     } catch (error: any) {
       toast.error(error.message);
       console.error(error);
       throw error;
     } finally {
+      setLoading(false);
     }
   }
   async function handleResendRequest(params: any) {
@@ -268,6 +271,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleCheckStatus(params: any) {
+    setLoading(true);
     try {
       let tranx = params.row.original.refid;
       const response = await api.get(`/common/check-status`, {
@@ -281,6 +285,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       toast.error(error.message);
       console.error(error);
     } finally {
+      setLoading(false);
     }
   }
 
@@ -517,10 +522,12 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             }}
           >
             <div>
-              {(
-                info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
-                info.row.original.aadhar.slice(8)
-              ).toUpperCase()}
+              {info.row.original.aadhar
+                ? (
+                    info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
+                    info.row.original.aadhar.slice(8)
+                  ).toUpperCase()
+                : "N/A"}
             </div>
           </div>
         );
