@@ -314,6 +314,8 @@ const Api = () => {
   const [apiMethod, setApiMehod] = useState("");
   const [apiBalanceCheck, setApiBalanceCheck] = useState("");
   const [apiComplaint, setApiComplaint] = useState("");
+  const [apiCheckUrl, setAPiCheckUrl] = useState("");
+
   const [apiTimeout, setApiTimout] = useState("");
   const [selectedApiName, setSelectedApiName] = useState("");
   const [Apis, setApis] = useState(null);
@@ -381,6 +383,7 @@ const Api = () => {
         apiInsurenceUrl: apiInsuranceUrl,
         apiStatus: apiStatus,
         apiBalanceCheck: apiBalanceCheck,
+        apiCheckUrl: apiCheckUrl,
         responseCircle: responseCircle,
         responseCircleCode: responseCircleCode,
         responseKey: responseKey,
@@ -559,6 +562,7 @@ const Api = () => {
         setApiBody(_data.api[0].apiBody);
         setApiHeaders(_data.api[0].apiHeaders);
         setResponseApiBalance(_data.api[0].responseApiBalance);
+        setAPiCheckUrl(_data.api[0].apiCheckUrl);
         setResponseLappuBal(_data.api[0].responseLappuBal);
         setResponseLappuNo(_data.api[0].responseLappuNo);
         setApiBaseUrl(_data.api[0].apiBaseUrl);
@@ -987,6 +991,16 @@ const Api = () => {
             </div>
             {isShow == "true" && (
               <>
+                <div className="mb-6">
+                  <TextField
+                    id="outlined-multiline-static"
+                    label="Add API Check Status Url"
+                    multiline
+                    fullWidth
+                    value={apiCheckUrl}
+                    onChange={(e) => setAPiCheckUrl(e.target.value)}
+                  />
+                </div>
                 <div className="mb-6">
                   <TextField
                     id="outlined-multiline-static"
