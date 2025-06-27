@@ -46,6 +46,7 @@ const CreateApi = () => {
   const [apiStatus, setApiStatus] = useState("");
   const [apiBalanceCheck, setApiBalanceCheck] = useState("");
   const [apiComplaint, setApiComplaint] = useState("");
+  const [apiCheckUrl, setAPiCheckUrl] = useState("");
   const [apiTimeout, setApiTimout] = useState("");
   const [isShow, setIsShow] = useState("false");
   const [apiToken, setApiToken] = useState("");
@@ -116,6 +117,7 @@ const CreateApi = () => {
       responseFailValue: responseFailValue,
       responseSeprate: responseSeprate,
       responseMsg: responseMsg,
+      apiCheckUrl: apiCheckUrl,
     };
     params.forEach((param, index) => {
       if (param) {
@@ -314,6 +316,17 @@ const CreateApi = () => {
         </div>
         {isShow == "true" && (
           <>
+            <div className="mb-6">
+              <TextField
+                size="small"
+                id="outlined-multiline-static"
+                label="Add Check status Url"
+                multiline
+                fullWidth
+                value={apiCheckUrl}
+                onChange={(e) => setAPiCheckUrl(e.target.value)}
+              />
+            </div>
             <div className="mb-6">
               <TextField
                 size="small"
