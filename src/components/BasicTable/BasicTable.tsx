@@ -44,7 +44,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
   isSeachable = true,
   isReport = false,
   report_id,
-  isShowSeq = false
+  isShowSeq = false,
 }) => {
   const [sorting, setSorting] = useState([]);
   const [columnFilter, setColumnFilter] = useState([]);
@@ -88,7 +88,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
     });
   }
 
-  if(isShowSeq){
+  if (isShowSeq) {
     extendedColumns.unshift({
       id: "S_No.",
       header: "S_No.",
@@ -146,15 +146,13 @@ const BasicTable: React.FC<BasicTableProps> = ({
   let content = (
     <div
       className="flex border border-black shadow rounded flex-wrap"
-      style={{ width: "700px" }}
-    >
+      style={{ width: "700px" }}>
       <div
         style={{
           display: "grid",
           padding: "10px 15px",
           gridTemplateColumns: "auto auto auto auto",
-        }}
-      >
+        }}>
         <div className="px-5">
           <label>
             <input
@@ -167,7 +165,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
             Toggle All
           </label>
         </div>
-        {table.getAllLeafColumns().map((column: any, i:any) => {
+        {table.getAllLeafColumns().map((column: any, i: any) => {
           return (
             <div key={column.id} className="px-5">
               <label>
@@ -195,27 +193,26 @@ const BasicTable: React.FC<BasicTableProps> = ({
     const totalPages = table.getPageCount();
     const currentPage = table.getState().pagination.pageIndex + 1;
     const delta = 5; // Number of pages before/after current to show
-  
+
     if (totalPages <= 1) return [];
-  
+
     const pagination = new Set<number>();
-  
+
     // Always show the first page
     pagination.add(1);
-  
+
     // Pages before and after the current page
     for (let i = currentPage - delta; i <= currentPage + delta; i++) {
       if (i > 1 && i < totalPages) {
         pagination.add(i);
       }
     }
-  
+
     // Always show the last page
     pagination.add(totalPages);
-  
+
     return Array.from(pagination).sort((a, b) => a - b);
   };
-  
 
   async function exportExcel2(
     table: Table<any>,
@@ -261,363 +258,368 @@ const BasicTable: React.FC<BasicTableProps> = ({
     saveAs(new Blob([buf]), `${filename}.xlsx`);
   }
 
-// Inside the BasicTable component
-const servicesTotal = useMemo(() => {
-  if (report_id === "2_15" && table.getFilteredRowModel().rows.length > 0) {
-    return table.getFilteredRowModel().rows.reduce(
-      (acc, row) => {
-        const curr = row.original;
-        acc.Recharge += curr?.Recharge || 0;
-        acc.Money += curr?.Money || 0;
-        acc.Apes += curr?.Apes || 0;
-        acc.Upi += curr?.upi || 0;
-        acc.Mpos += curr?.mpos || 0;
-        acc.Total += curr?.Total || 0;
-        acc.Settlement += curr?.Settlement || 0;
-        acc.SubTotal += curr?.SubTotal || 0;
-        return acc;
-      },
-      {
-        Recharge: 0,
-        Money: 0,
-        Apes: 0,
-        Upi: 0,
-        Mpos:0,
-        Total: 0,
-        Settlement: 0,
-        SubTotal: 0,
-      }
-    );
-  }
-  return null; // Or an empty object if preferred
-}, [table.getFilteredRowModel().rows, report_id]);
+  // Inside the BasicTable component
+  const servicesTotal = useMemo(() => {
+    if (report_id === "2_15" && table.getFilteredRowModel().rows.length > 0) {
+      return table.getFilteredRowModel().rows.reduce(
+        (acc, row) => {
+          const curr = row.original;
+          acc.Recharge += curr?.Recharge || 0;
+          acc.Money += curr?.Money || 0;
+          acc.Apes += curr?.Apes || 0;
+          acc.Upi += curr?.upi || 0;
+          acc.Mpos += curr?.mpos || 0;
+          acc.Total += curr?.Total || 0;
+          acc.Settlement += curr?.Settlement || 0;
+          acc.SubTotal += curr?.SubTotal || 0;
+          return acc;
+        },
+        {
+          Recharge: 0,
+          Money: 0,
+          Apes: 0,
+          Upi: 0,
+          Mpos: 0,
+          Total: 0,
+          Settlement: 0,
+          SubTotal: 0,
+        }
+      );
+    }
+    return null; // Or an empty object if preferred
+  }, [table.getFilteredRowModel().rows, report_id]);
 
   return (
     <>
-    {report_id == '2_15' && <div className="flex justify-between mt-3 mb-3">
-        {servicesTotal && (
-          <>
-            <div className="mb-3 flex flex-wrap gap-6">
-
-              {
-                Object.entries(servicesTotal).map(([key, value]) => {
-                  return  <div className="py-2 px-3 flex gap-1 flex-col min-w-[150px] rounded-lg bg-white border border-[#7851bd33]">
-                  <div className="flex gap-2.5 items-center">
-                    <span className="text-sm font-medium tracking-[1.8px] text-[#637381] uppercase">
-                      {key}
-                    </span>
-                  </div>
-                  <span className="text-md font-semibold text-[#212B36] tracking-[1.8px]">
-                  ₹ {value.toFixed(2)}
-                  </span>
-                 
-                </div>
-                })
-              }
-           
-           
-            </div>
-          </>
-        )}
-      </div>}
-    <div className="rounded-sm border border-stroke bg-white  pt-3 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark  xl:pb-1">
-      <div className="" style={{ minHeight: "75vh" }}>
-        <div className="flex justify-between mt-3">
-          {isSeachable && (
-            <div className="">
-              <div className="m-2">
-                <TextField
-                  size="small"
-                  name="search"
-                  label="Search"
-                  onChange={(e) => setGlobalFilterValue(e.target.value)}
-                />
+      {report_id == "2_15" && (
+        <div className="flex justify-between mt-3 mb-3">
+          {servicesTotal && (
+            <>
+              <div className="mb-3 flex flex-wrap gap-6">
+                {Object.entries(servicesTotal).map(([key, value]) => {
+                  return (
+                    <div className="py-2 px-3 flex gap-1 flex-col min-w-[150px] rounded-lg bg-white border border-[#7851bd33]">
+                      <div className="flex gap-2.5 items-center">
+                        <span className="text-sm font-medium tracking-[1.8px] text-[#637381] uppercase">
+                          {key}
+                        </span>
+                      </div>
+                      <span className="text-md font-semibold text-[#212B36] tracking-[1.8px]">
+                        ₹ {value.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex gap-2 m-2">
-                {isFilters &&
-                  columns
-                    .filter((col) => filter.includes(col.accessorKey))
-                    .map((column) => (
-                      <div key={column.accessorKey}>
-                        {column.accessorKey === "status" ? (
-                          <div className="flex items-center gap-3">
-                            <div key={"fnd"} className="form-check">
-                              <input
-                                type="radio"
-                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                                name="statusFilter"
-                                id={`status-${"hfghgf"}`}
-                                value={""}
-                                onChange={(e) =>
-                                  handleColumnFilterChange(
-                                    column.accessorKey,
-                                    ""
-                                  )
-                                }
-                              />
-                              <label
-                                className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                                htmlFor={`status-${"fdf"}`}
-                              >
-                                All
-                              </label>
-                            </div>
-                            {getUniqueValues(
-                              column.accessorKey.toLowerCase()
-                            ).map((value, index) => (
-                              <div key={index} className="flex items-center">
+            </>
+          )}
+        </div>
+      )}
+      <div className="rounded-sm border border-stroke bg-white  pt-3 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark  xl:pb-1">
+        <div className="" style={{ minHeight: "75vh" }}>
+          <div className="flex justify-between mt-3">
+            {isSeachable && (
+              <div className="">
+                <div className="m-2">
+                  <TextField
+                    size="small"
+                    name="search"
+                    label="Search"
+                    onChange={(e) => setGlobalFilterValue(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2 m-2">
+                  {isFilters &&
+                    columns
+                      .filter((col) => filter.includes(col.accessorKey))
+                      .map((column) => (
+                        <div key={column.accessorKey}>
+                          {column.accessorKey === "status" ? (
+                            <div className="flex items-center gap-3">
+                              <div key={"fnd"} className="form-check">
                                 <input
                                   type="radio"
                                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
                                   name="statusFilter"
-                                  id={`status-${index}`}
-                                  value={value}
+                                  id={`status-${"hfghgf"}`}
+                                  value={""}
                                   onChange={(e) =>
                                     handleColumnFilterChange(
                                       column.accessorKey,
-                                      e.target.value
+                                      ""
                                     )
                                   }
                                 />
                                 <label
-                                  className={`className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"}`}
-                                  htmlFor={`status-${index}`}
-                                >
-                                  {value}
+                                  className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                  htmlFor={`status-${"fdf"}`}>
+                                  All
                                 </label>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                    ))}
-              </div>
-            </div>
-          )}
-          <div className="flex gap-2">
-            {isFilters &&
-              columns
-                .filter((col) => filter.includes(col.accessorKey))
-                .map((column) => (
-                  <div key={column.accessorKey} className="mb-2">
-                    {column.accessorKey === "status" ? (
-                      ""
-                    ) : (
-                      <select
-                        onChange={(e) =>
-                          handleColumnFilterChange(
-                            column.accessorKey,
-                            e.target.value
-                          )
-                        }
-                        className="form-select"
-                      >
-                        <option selected value="">
-                          Select{" "}
-                          {capitalizeFirstLetter(
-                            column.accessorKey.replace(/([A-Z])/g, " $1").trim()
+                              {getUniqueValues(
+                                column.accessorKey.toLowerCase()
+                              ).map((value, index) => (
+                                <div key={index} className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                                    name="statusFilter"
+                                    id={`status-${index}`}
+                                    value={value}
+                                    onChange={(e) =>
+                                      handleColumnFilterChange(
+                                        column.accessorKey,
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <label
+                                    className={`className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"}`}
+                                    htmlFor={`status-${index}`}>
+                                    {value}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            ""
                           )}
-                        </option>
-                        {getUniqueValues(column.accessorKey).map(
-                          (value, index) => (
-                            <option key={index} value={value}>
-                              {value}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    )}
-                  </div>
-                ))}
+                        </div>
+                      ))}
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2">
+              {isFilters &&
+                columns
+                  .filter((col) => filter.includes(col.accessorKey))
+                  .map((column) => (
+                    <div key={column.accessorKey} className="mb-2">
+                      {column.accessorKey === "status" ? (
+                        ""
+                      ) : (
+                        <select
+                          onChange={(e) =>
+                            handleColumnFilterChange(
+                              column.accessorKey,
+                              e.target.value
+                            )
+                          }
+                          className="form-select">
+                          <option selected value="">
+                            Select{" "}
+                            {capitalizeFirstLetter(
+                              column.accessorKey
+                                .replace(/([A-Z])/g, " $1")
+                                .trim()
+                            )}
+                          </option>
+                          {getUniqueValues(column.accessorKey).map(
+                            (value, index) => (
+                              <option key={index} value={value}>
+                                {value}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      )}
+                    </div>
+                  ))}
+            </div>
+            {data.length > 0 && isReport && (
+              <div className="flex justify-end gap-3 mr-3">
+                <div
+                  className="flex items-center justify-center rounded cursor-pointer"
+                  style={{
+                    backgroundColor: "green",
+                    width: "40px",
+                    height: "40px",
+                  }}>
+                  <SiMicrosoftexcel
+                    fontSize={25}
+                    color="white"
+                    onClick={() => exportExcel2(table, "report")}
+                  />
+                </div>
+                <div
+                  className="flex items-center justify-center rounded cursor-pointer"
+                  style={{
+                    backgroundColor: "#f77e17",
+                    width: "40px",
+                    height: "40px",
+                  }}
+                  onClick={() => exportExcel(table.getFilteredRowModel().rows)}>
+                  <GrDocumentCsv fontSize={25} color="white" />
+                </div>
+                <div
+                  className="flex items-center justify-center rounded cursor-pointer"
+                  style={{
+                    backgroundColor: "#1E40AF",
+                    width: "40px",
+                    height: "40px",
+                  }}>
+                  <Popover
+                    placement="leftBottom"
+                    title={
+                      "Choose which columns you want to display by default"
+                    }
+                    content={content}>
+                    <FaFilter fontSize={25} color="white" />
+                  </Popover>
+                </div>
+              </div>
+            )}
           </div>
-          {data.length > 0 && isReport && (
-            <div className="flex justify-end gap-3 mr-3">
-              <div
-                className="flex items-center justify-center rounded cursor-pointer"
-                style={{
-                  backgroundColor: "green",
-                  width: "40px",
-                  height: "40px",
-                }}
-              >
-                <SiMicrosoftexcel
-                  fontSize={25}
-                  color="white"
-                  onClick={() => exportExcel2(table, "report")}
-                />
+          <div
+            className="max-w-full overflow-x-auto"
+            style={{ minHeight: "64vh" }}>
+            <table className="w-full table-auto mt-2">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr
+                    key={headerGroup.id}
+                    className="bg-gray-2 text-left dark:bg-meta-4"
+                    style={{ backgroundColor: "#f5f5f5" }}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        onClick={header.column.getToggleSortingHandler()}
+                        style={{
+                          minWidth: header.getSize(),
+                          textAlign: "center",
+                          padding: "10px 20px",
+                          textWrap: "nowrap",
+                        }}
+                        className="py-4 px-4 font-large text-black dark:text-white">
+                        <div className="flex items-center justify-center gap-2">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {
+                            { asc: <FaArrowUp />, desc: <FaArrowDown /> }[
+                              header.column.getIsSorted() ?? null
+                            ]
+                          }
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id}>
+                    {row.getVisibleCells().map((cell) => {
+                      console.log(row.original.status);
+
+                      return (
+                        <td
+                          key={cell.id}
+                          style={{
+                            minWidth: cell.column.getSize(),
+                            fontSize: "0.8rem",
+                            textAlign: "center",
+                            color: `${
+                              row?.original?.status
+                                ?.toString()
+                                ?.toLowerCase() == "success" &&
+                              report_id != "1_3"
+                                ? "green"
+                                : row?.original?.status
+                                    ?.toString()
+                                    ?.toLowerCase() == "failed" &&
+                                  report_id != "1_3"
+                                ? "red"
+                                : row?.original?.status
+                                    ?.toString()
+                                    ?.toLowerCase() == "pending" &&
+                                  report_id != "1_3"
+                                ? "orange"
+                                : ""
+                            }`,
+                          }}
+                          className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark `}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {data.length > 10 && (
+            <div className="flex justify-between items-center p-5">
+              <div className="flex space-x-2">
+                <button
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}>
+                  Previous
+                </button>
+
+                {generatePagination().map((page, index, arr) => (
+                  <React.Fragment key={page}>
+                    {index > 0 && page !== arr[index - 1] + 1 && (
+                      <span>...</span>
+                    )}
+                    <button
+                      className={`px-4 py-2 rounded ${
+                        table.getState().pagination.pageIndex === page - 1
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                      onClick={() => table.setPageIndex(page - 1)}>
+                      {page}
+                    </button>
+                  </React.Fragment>
+                ))}
+
+                <button
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}>
+                  Next
+                </button>
               </div>
-              <div
-                className="flex items-center justify-center rounded cursor-pointer"
-                style={{
-                  backgroundColor: "#f77e17",
-                  width: "40px",
-                  height: "40px",
-                }}
-                onClick={() => exportExcel(table.getFilteredRowModel().rows)}
-              >
-                <GrDocumentCsv fontSize={25} color="white" />
-              </div>
-              <div
-                className="flex items-center justify-center rounded cursor-pointer"
-                style={{
-                  backgroundColor: "#1E40AF",
-                  width: "40px",
-                  height: "40px",
-                }}
-              >
-                <Popover
-                  placement="leftBottom"
-                  title={"Choose which columns you want to display by default"}
-                  content={content}
-                >
-                  <FaFilter fontSize={25} color="white" />
-                </Popover>
+
+              <div className="flex items-center space-x-2">
+                <label htmlFor="pageSizeSelect" className="text-gray-700">
+                  Page Size:
+                </label>
+                <select
+                  id="pageSizeSelect"
+                  value={pageSize}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "All") {
+                      const allRowsCount =
+                        table.getFilteredRowModel().rows.length; // Adjust based on your table library
+                      setPageSize(allRowsCount); // Update state
+                      table.setPageSize(allRowsCount); // Set all rows to display
+                    } else {
+                      const size = Number(value);
+                      setPageSize(size);
+                      table.setPageSize(size);
+                    }
+                  }}
+                  className="px-2 py-1 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {["All", 5, 10, 20, 50, 100].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           )}
         </div>
-        <div
-          className="max-w-full overflow-x-auto"
-          style={{ minHeight: "64vh" }}
-        >
-          <table className="w-full table-auto mt-2">
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr
-                  key={headerGroup.id}
-                  className="bg-gray-2 text-left dark:bg-meta-4"
-                  style={{ backgroundColor: "#f5f5f5" }}
-                >
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      onClick={header.column.getToggleSortingHandler()}
-                      style={{
-                        minWidth: header.getSize(),
-                        textAlign: "center",
-                        padding: "10px 20px",
-                        textWrap: "nowrap",
-                      }}
-                      className="py-4 px-4 font-large text-black dark:text-white"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {
-                          { asc: <FaArrowUp />, desc: <FaArrowDown /> }[
-                            header.column.getIsSorted() ?? null
-                          ]
-                        }
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map((cell) => {
-                    console.log(row.original.status)
-                    
-
-                    return (
-                      <td
-                        key={cell.id}
-                        style={{
-                          minWidth: cell.column.getSize(),
-                          fontSize: "0.8rem",
-                          textAlign: "center",
-                          color: `${ (row?.original?.status?.toString()?.toLowerCase()  == "success" && report_id !="1_3") ? "green" : (row?.original?.status?.toString()?.toLowerCase()  == "failed" && report_id !="1_3")  ? "red" :(row?.original?.status?.toString()?.toLowerCase()  == "pending" && report_id !="1_3") ? "orange" :  ""}`
-                        }}
-                        className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark `}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {data.length > 10 && (
-          <div className="flex justify-between items-center p-5">
-            <div className="flex space-x-2">
-  <button
-    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
-    onClick={() => table.previousPage()}
-    disabled={!table.getCanPreviousPage()}
-  >
-    Previous
-  </button>
-
-  {generatePagination().map((page, index, arr) => (
-    <React.Fragment key={page}>
-      {index > 0 && page !== arr[index - 1] + 1 && <span>...</span>}
-      <button
-        className={`px-4 py-2 rounded ${
-          table.getState().pagination.pageIndex === page - 1
-            ? "bg-blue-500 text-white"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-        }`}
-        onClick={() => table.setPageIndex(page - 1)}
-      >
-        {page}
-      </button>
-    </React.Fragment>
-  ))}
-
-  <button
-    className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
-    onClick={() => table.nextPage()}
-    disabled={!table.getCanNextPage()}
-  >
-    Next
-  </button>
-</div>
-
-            <div className="flex items-center space-x-2">
-              <label htmlFor="pageSizeSelect" className="text-gray-700">
-                Page Size:
-              </label>
-              <select
-    id="pageSizeSelect"
-    value={pageSize}
-    onChange={(e) => {
-      const value = e.target.value;
-      if (value === "All") {
-        const allRowsCount = table.getFilteredRowModel().rows.length; // Adjust based on your table library
-        setPageSize(allRowsCount); // Update state
-        table.setPageSize(allRowsCount); // Set all rows to display
-      } else {
-        const size = Number(value);
-        setPageSize(size);
-        table.setPageSize(size);
-      }
-    }}
-    className="px-2 py-1 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    {["All" , 5, 10, 20, 50, 100].map((size) => (
-      <option key={size} value={size}>
-        {size}
-      </option>
-    ))}
-   
-  </select>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
     </>
   );
 };

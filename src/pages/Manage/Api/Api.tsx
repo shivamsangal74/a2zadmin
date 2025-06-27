@@ -35,6 +35,7 @@ import {
 import { styled } from "@mui/system";
 import { IoArrowUpCircleSharp } from "react-icons/io5";
 import { getAllFunds, getFund } from "../../../Services/categoryServices";
+import { apiUrl } from "../../../Utills/constantt";
 
 const commissionTypes = ["commission", "surcharge"];
 const paymentTypes = ["percentage", "rupee"];
@@ -347,6 +348,18 @@ const Api = () => {
   const [responseMsg, setResponseMsg] = useState("");
   const [isOpreatorShow, setOperatorShow] = useState("false");
   const [isCircleShow, setCircleShow] = useState("false");
+
+
+    //Callback params
+    const [callBackUrl, setCallBackUrl] = useState("");
+    const [callBackTrxId, setCallbackTrxId] = useState("");
+    const [callBackStatus, setCallbackStatus] = useState("");
+    const [callBackOpId, setCallbackOpId] = useState("");
+    const [callBackSuccessValue, setCallBackSuccessValue] = useState("");
+    const [callBackFailValue, setCallBackFailValue] = useState("");
+    const [callBackId, setCallBackId] = useState("");
+    const [callBackApiBal, setCallBackApiBal] = useState("");
+
   const openPopup = () => setIsOpen(true);
   const closePopup = () => setIsOpen(false);
 
@@ -404,6 +417,14 @@ const Api = () => {
         responsePendingValue: responsePendingValue,
         responseFailValue: responseFailValue,
         responseMsg: responseMsg,
+        callBackTrxId,
+        callBackUrl,
+        callBackOpId,
+        callBackSuccessValue,
+        callBackFailValue,
+        callBackId,
+        callBackStatus,
+        callBackApiBal
         // apiMethod: apiMethod,
       };
       params.forEach((param, index) => {
@@ -548,6 +569,13 @@ const Api = () => {
     }
     console.log(_data);
   };
+
+  function getRandomHex(length = 6) {
+    const hex = Math.floor(Math.random() * Math.pow(16, length)).toString(16);
+    return hex.padStart(length, "0");
+  }
+
+
   const handleOpenEdit = async (id: string) => {
     try {
       setApiId(id);
@@ -589,6 +617,24 @@ const Api = () => {
         setResponseSuccessValue(_data.api[0].responseSuccessValue);
         setResponseFailValue(_data.api[0].responseFailValue);
         setResponsePendingValue(_data.api[0].responsePendingValue);
+
+        let hexId = _data.api[0].callBackId
+          ? _data.api[0].callBackId
+          : getRandomHex();
+        setCallBackId(hexId);
+
+        setCallBackUrl(
+          _data.api[0]?.callBackUrl
+            ? _data.api[0].callBackUrl
+            : `${apiUrl}/common/recharge-master/callback/${hexId}`
+        );
+        setCallbackTrxId(_data.api[0].callBackTrxId);
+debugger
+        setCallbackOpId(_data.api[0].callBackOpId);
+        setCallbackStatus(_data.api[0].callBackStatus);
+        setCallBackSuccessValue(_data.api[0]?.callBackSuccessValue)
+        setCallBackFailValue(_data.api[0].callBackFailValue);
+        setCallBackApiBal(_data.api[0].callBackApiBal);
 
         const params = Object.keys(_data.api[0])
           .filter((key) => key.startsWith("param") && _data.api[0][key])
@@ -649,6 +695,13 @@ const Api = () => {
     setOperatorUrl("");
     setResponseSeprate("");
     setResponseMsg("");
+    setCallBackFailValue("")
+    setCallBackSuccessValue("")
+    setCallBackUrl("")
+    setCallbackOpId("")
+    setCallbackTrxId("")
+    setCallbackStatus("")
+    setCallBackId("")
   }
 
   const { isLoading, error, data, refetch } = useQuery({
@@ -1192,6 +1245,79 @@ const Api = () => {
               </div>
             </div>
 
+            <div className="mb-4">CallBack Params</div>
+            <div className="mb-6">
+              <TextField
+                id="outlined-multiline-static"
+                label="Dynamic Callback Url"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackUrl}
+                disabled
+                onChange={(e) => setCallBackUrl(e.target.value)}
+              />
+            </div>
+            <div className="mb-6 flex gap-6">
+              <TextField
+                id="outlined-multiline-static"
+                label="Callback transection id"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackTrxId}
+                onChange={(e) => setCallbackTrxId(e.target.value)}
+              />
+
+              <TextField
+                id="outlined-multiline-static"
+                label="Callback Operator id"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackOpId}
+                onChange={(e) => setCallbackOpId(e.target.value)}
+              />
+              <TextField
+                id="outlined-multiline-static"
+                label="Callback Status"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackStatus}
+                onChange={(e) => setCallbackStatus(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-6">
+            <TextField
+                id="outlined-multiline-static"
+                label="Callback Api Bal"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackApiBal}
+                onChange={(e) => setCallBackApiBal(e.target.value)}
+              />
+              <TextField
+                id="outlined-multiline-static"
+                label="Callback Success Value"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackSuccessValue}
+                onChange={(e) => setCallBackSuccessValue(e.target.value)}
+              />
+              <TextField
+                id="outlined-multiline-static"
+                label="Callback Fail Value"
+                multiline
+                fullWidth
+                size="small"
+                value={callBackFailValue}
+                onChange={(e) => setCallBackFailValue(e.target.value)}
+              />
+            </div>
+            
             <div className="flex gap-6  mt-10">
               {isEdit ? (
                 <ButtonLabel
