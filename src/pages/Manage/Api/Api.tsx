@@ -36,6 +36,7 @@ import { styled } from "@mui/system";
 import { IoArrowUpCircleSharp } from "react-icons/io5";
 import { getAllFunds, getFund } from "../../../Services/categoryServices";
 import { apiUrl } from "../../../Utills/constantt";
+import api from "../../../Services/Axios/api";
 
 const commissionTypes = ["commission", "surcharge"];
 const paymentTypes = ["percentage", "rupee"];
@@ -313,6 +314,8 @@ const Api = () => {
   const [apiInsuranceUrl, setApiInsuranceUrl] = useState("");
   const [apiStatus, setApiStatus] = useState("");
   const [apiMethod, setApiMehod] = useState("");
+  const [checkStatusMethod, setcheckStatusMethod] = useState("");
+  const [checkStatusBody, setcheckStatusBody] = useState("");
   const [apiBalanceCheck, setApiBalanceCheck] = useState("");
   const [apiComplaint, setApiComplaint] = useState("");
   const [apiCheckUrl, setAPiCheckUrl] = useState("");
@@ -349,16 +352,15 @@ const Api = () => {
   const [isOpreatorShow, setOperatorShow] = useState("false");
   const [isCircleShow, setCircleShow] = useState("false");
 
-
-    //Callback params
-    const [callBackUrl, setCallBackUrl] = useState("");
-    const [callBackTrxId, setCallbackTrxId] = useState("");
-    const [callBackStatus, setCallbackStatus] = useState("");
-    const [callBackOpId, setCallbackOpId] = useState("");
-    const [callBackSuccessValue, setCallBackSuccessValue] = useState("");
-    const [callBackFailValue, setCallBackFailValue] = useState("");
-    const [callBackId, setCallBackId] = useState("");
-    const [callBackApiBal, setCallBackApiBal] = useState("");
+  //Callback params
+  const [callBackUrl, setCallBackUrl] = useState("");
+  const [callBackTrxId, setCallbackTrxId] = useState("");
+  const [callBackStatus, setCallbackStatus] = useState("");
+  const [callBackOpId, setCallbackOpId] = useState("");
+  const [callBackSuccessValue, setCallBackSuccessValue] = useState("");
+  const [callBackFailValue, setCallBackFailValue] = useState("");
+  const [callBackId, setCallBackId] = useState("");
+  const [callBackApiBal, setCallBackApiBal] = useState("");
 
   const openPopup = () => setIsOpen(true);
   const closePopup = () => setIsOpen(false);
@@ -384,6 +386,8 @@ const Api = () => {
         apiBody: apiBody,
         apiHeaders: apiHeaders,
         apiMethod: apiMethod,
+        checkStatusMethod: checkStatusMethod,
+        checkStatusBody: checkStatusBody,
         apiBaseUrl: apiBaseUrl,
         apiRechargeUrl: apiRechargeUrl,
         apiToken: apitoken,
@@ -424,7 +428,7 @@ const Api = () => {
         callBackFailValue,
         callBackId,
         callBackStatus,
-        callBackApiBal
+        callBackApiBal,
         // apiMethod: apiMethod,
       };
       params.forEach((param, index) => {
@@ -475,6 +479,10 @@ const Api = () => {
 
   const handleApiMethod = (event: any) => {
     setApiMehod(event);
+  };
+
+  const handleCheckStatusApiMethod = (event: any) => {
+    setcheckStatusMethod(event);
   };
 
   const handleApiTypeChange = (event: any) => {
@@ -575,7 +583,6 @@ const Api = () => {
     return hex.padStart(length, "0");
   }
 
-
   const handleOpenEdit = async (id: string) => {
     try {
       setApiId(id);
@@ -617,7 +624,8 @@ const Api = () => {
         setResponseSuccessValue(_data.api[0].responseSuccessValue);
         setResponseFailValue(_data.api[0].responseFailValue);
         setResponsePendingValue(_data.api[0].responsePendingValue);
-
+        setcheckStatusBody(_data.api[0].checkStatusBody);
+        setcheckStatusMethod(_data.api[0].checkStatusMethod);
         let hexId = _data.api[0].callBackId
           ? _data.api[0].callBackId
           : getRandomHex();
@@ -629,10 +637,10 @@ const Api = () => {
             : `${apiUrl}/common/recharge-master/callback/${hexId}`
         );
         setCallbackTrxId(_data.api[0].callBackTrxId);
-debugger
+        debugger;
         setCallbackOpId(_data.api[0].callBackOpId);
         setCallbackStatus(_data.api[0].callBackStatus);
-        setCallBackSuccessValue(_data.api[0]?.callBackSuccessValue)
+        setCallBackSuccessValue(_data.api[0]?.callBackSuccessValue);
         setCallBackFailValue(_data.api[0].callBackFailValue);
         setCallBackApiBal(_data.api[0].callBackApiBal);
 
@@ -695,13 +703,13 @@ debugger
     setOperatorUrl("");
     setResponseSeprate("");
     setResponseMsg("");
-    setCallBackFailValue("")
-    setCallBackSuccessValue("")
-    setCallBackUrl("")
-    setCallbackOpId("")
-    setCallbackTrxId("")
-    setCallbackStatus("")
-    setCallBackId("")
+    setCallBackFailValue("");
+    setCallBackSuccessValue("");
+    setCallBackUrl("");
+    setCallbackOpId("");
+    setCallbackTrxId("");
+    setCallbackStatus("");
+    setCallBackId("");
   }
 
   const { isLoading, error, data, refetch } = useQuery({
@@ -1044,7 +1052,7 @@ debugger
             </div>
             {isShow == "true" && (
               <>
-                <div className="mb-6">
+                <div className="mb-6 bg-yellow-100">
                   <TextField
                     id="outlined-multiline-static"
                     label="Add API Check Status Url"
@@ -1052,6 +1060,26 @@ debugger
                     fullWidth
                     value={apiCheckUrl}
                     onChange={(e) => setAPiCheckUrl(e.target.value)}
+                  />
+                </div>
+                <div className="mb-6 bg-yellow-100">
+                  <Select
+                    label="Select Check Status Mehod"
+                    onChange={handleCheckStatusApiMethod}
+                    value={checkStatusMethod}
+                  >
+                    <Option value="get">GET</Option>
+                    <Option value="post">POST</Option>
+                  </Select>
+                </div>
+                <div className="mb-6 bg-yellow-100">
+                  <TextField
+                    id="outlined-multiline-static"
+                    label="Add API Check Status Body"
+                    multiline
+                    fullWidth
+                    value={checkStatusBody}
+                    onChange={(e) => setcheckStatusBody(e.target.value)}
                   />
                 </div>
                 <div className="mb-6">
@@ -1289,7 +1317,7 @@ debugger
               />
             </div>
             <div className="flex gap-6">
-            <TextField
+              <TextField
                 id="outlined-multiline-static"
                 label="Callback Api Bal"
                 multiline
@@ -1317,7 +1345,7 @@ debugger
                 onChange={(e) => setCallBackFailValue(e.target.value)}
               />
             </div>
-            
+
             <div className="flex gap-6  mt-10">
               {isEdit ? (
                 <ButtonLabel
