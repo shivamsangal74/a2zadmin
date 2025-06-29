@@ -271,6 +271,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleCheckStatus(params: any) {
+    debugger;
     setisProcessing(true);
     try {
       let tranx = params.row.original.refid;
@@ -282,7 +283,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       handleGetReportData();
       return response.data;
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message || error.message);
       console.error(error);
     } finally {
       setisProcessing(false);
