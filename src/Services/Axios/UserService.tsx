@@ -18,7 +18,7 @@ export const getUser = async (type: string) => {
 
 export const getUsers = async () => {
   try {
-    const response = await api.get("/users/", { withCredentials: true });
+    const response = await api.get("/users", { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error(error);

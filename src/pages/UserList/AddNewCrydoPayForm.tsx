@@ -10,7 +10,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { getUser } from "../../Services/Axios/UserService";
+import { getUser, getUsers } from "../../Services/Axios/UserService";
 import { toast } from "react-toastify";
 interface CreateCrydoDialogProps {
   open: boolean;
@@ -60,7 +60,7 @@ const CreateCrydoDialogProps: React.FC<CreateCrydoDialogProps> = ({
     queryKey: ["users"],
     queryFn: async () => {
       try {
-        const response = await getUser("all");
+        const response = await getUsers();
         const userData = response.users;
         let _data: any[] = [];
         if (userData.length > 0) {
