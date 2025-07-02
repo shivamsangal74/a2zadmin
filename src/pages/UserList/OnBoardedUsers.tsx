@@ -42,7 +42,7 @@ import CreateCrydoDialogProps from "../../pages/UserList/AddNewCrydoPayForm";
 export const OnBoardedUsers = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [rowData, setRowData] = React.useState({});
-
+  const [userData , setUserData] = useState<any[]>([]);
   const formatDateToISO = (utcDateString: string) => {
     const utcDate = new Date(utcDateString);
     const localDate = new Date(utcDate.getTime() + 330 * 60000);
@@ -157,15 +157,13 @@ export const OnBoardedUsers = () => {
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
-  const {
-    isLoading: userIsLoading,
-    error: userError,
-    data: userData,
-    refetch: userRefetch,
-  } = useQuery({
+ 
+
+  const { isLoading : userIsLoading, data : data123 } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       try {
+        debugger
         const response = await getUsers();
         const userData = response.users;
         let _data: any[] = [];
@@ -183,14 +181,13 @@ export const OnBoardedUsers = () => {
             });
           });
         }
-        console.log("userData", userData);
-        console.log(_data);
-        return _data;
+        setUserData(_data);
+        return userData;
       } catch (error) {
         toast.error("something went wrong!");
       }
     },
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const handleChange = (name: any, value: string | null) => {
