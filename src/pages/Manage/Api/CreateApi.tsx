@@ -45,6 +45,8 @@ const CreateApi = () => {
   const [apiInsuranceUrl, setApiInsuranceUrl] = useState("");
   const [apiStatus, setApiStatus] = useState("");
   const [apiBalanceCheck, setApiBalanceCheck] = useState("");
+  const [checkStatusMethod, setcheckStatusMethod] = useState("");
+  const [checkStatusBody, setcheckStatusBody] = useState("");
   const [apiComplaint, setApiComplaint] = useState("");
   const [apiCheckUrl, setAPiCheckUrl] = useState("");
   const [apiTimeout, setApiTimout] = useState("");
@@ -105,6 +107,8 @@ const CreateApi = () => {
       responseRDATA: responseRDATA,
       responseTxnid: responseTxnid,
       responseStatus: responseStatus,
+      checkStatusMethod: checkStatusMethod,
+      checkStatusBody: checkStatusBody,
       rofferUrl: rofferUrl,
       planUrl: planUrl,
       operatorUrl: operatorUrl,
@@ -140,6 +144,9 @@ const CreateApi = () => {
   };
   const handleApiMethod = (event: any) => {
     setApiMehod(event);
+  };
+  const handleCheckStatusApiMethod = (event: any) => {
+    setcheckStatusMethod(event);
   };
   const handleShow = (event: any) => {
     setIsShow(event);
@@ -316,7 +323,7 @@ const CreateApi = () => {
         </div>
         {isShow == "true" && (
           <>
-            <div className="mb-6">
+            <div className="mb-6 bg-yellow-100">
               <TextField
                 size="small"
                 id="outlined-multiline-static"
@@ -325,6 +332,26 @@ const CreateApi = () => {
                 fullWidth
                 value={apiCheckUrl}
                 onChange={(e) => setAPiCheckUrl(e.target.value)}
+              />
+            </div>
+            <div className="mb-6 bg-yellow-100">
+              <Select
+                label="Select Check Status Mehod"
+                onChange={handleCheckStatusApiMethod}
+                value={checkStatusMethod}
+              >
+                <Option value="get">GET</Option>
+                <Option value="post">POST</Option>
+              </Select>
+            </div>
+            <div className="mb-6 bg-yellow-100">
+              <TextField
+                id="outlined-multiline-static"
+                label="Add API Check Status Body"
+                multiline
+                fullWidth
+                value={checkStatusBody}
+                onChange={(e) => setcheckStatusBody(e.target.value)}
               />
             </div>
             <div className="mb-6">

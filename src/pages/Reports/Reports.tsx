@@ -21,7 +21,7 @@ import {
 import { BsGlobe } from "react-icons/bs";
 import api from "../../Services/Axios/api";
 import { toast } from "react-toastify";
-import { Select, Option, Textarea } from "@material-tailwind/react";
+import { Select, Option, Textarea, Spinner } from "@material-tailwind/react";
 import { Box, Typography, IconButton, TextField } from "@mui/material";
 import {
   CheckCircle,
@@ -271,7 +271,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleCheckStatus(params: any) {
-    setLoading(true);
+    debugger;
+    setisProcessing(true);
     try {
       let tranx = params.row.original.refid;
       const response = await api.get(`/common/check-status`, {
@@ -282,10 +283,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       handleGetReportData();
       return response.data;
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message || error.message);
       console.error(error);
     } finally {
-      setLoading(false);
+      setisProcessing(false);
     }
   }
 
@@ -358,7 +359,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function apesStatusChange(value: any, params: any) {
-    debugger;
+    setLoading(true);
     try {
       let tranxId = params.row.original.refId;
       const response = await api.post(`/apes/manual-apes`, {
@@ -373,8 +374,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       console.error(error);
       throw error;
     } finally {
+      setLoading(false);
     }
   }
+
   async function moneyStatusChange(value: any, params: any) {
     debugger;
     try {
@@ -736,10 +739,19 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
                   {info.row.original.status === "Pending" && (
                     <button
+                      disabled={isProcessing}
                       onClick={() => handleCheckStatus(info)}
-                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                      className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${
+                        isProcessing
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600"
+                      }`}
                     >
-                      <CompareArrows titleAccess="Check Status" />{" "}
+                      {isProcessing ? (
+                        <Spinner />
+                      ) : (
+                        <CompareArrows titleAccess="Check Status" />
+                      )}
                       {/* Check Status Icon */}
                     </button>
                   )}
