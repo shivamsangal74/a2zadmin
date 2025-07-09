@@ -317,7 +317,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
     try {
       const response = await validateOTP(code, reqID.toString());
       const address = generateAddress(response);
-      setProfile(response.response.data.profile_image);
+      setProfile(response?.response?.data?.profile_image);
       const aadharData = {
         address: address,
         fullName: response.response.data.full_name,
