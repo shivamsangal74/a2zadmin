@@ -358,6 +358,37 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
+  async function handlecheckStatusSettlement(params: any) {
+    setLoading(true);
+    debugger;
+    try {
+      let tranx = params.row.original.requestId;
+      let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD");
+      debugger;
+      const response = await api.post(
+        `/settelment/check-status`,
+        { externalRef: tranx, transactionDate: Date },
+        {
+          withCredentials: true,
+        }
+      );
+      let resp = response.data;
+      if (resp.status == "Success") {
+        toast.success(resp.message);
+        await handleGetReportData();
+      } else if (resp.status == "Pending") {
+        toast.warn(resp.message);
+      } else if (resp.status == "Failed") {
+        toast.error(resp.message);
+        await handleGetReportData();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
   async function apesStatusChange(value: any, params: any) {
     setLoading(true);
     try {
@@ -778,6 +809,19 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                 {info.row.original.status === "Pending" && (
                   <button
                     onClick={() => handleCheckStatusMoney(info)}
+                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                  >
+                    <CompareArrows titleAccess="Check Status" />{" "}
+                    {/* Check Status Icon */}
+                  </button>
+                )}
+              </div>
+            )}
+            {report_id === "2_14" && info.row.original.status == "Pending" && (
+              <div className="action flex gap-3 items-center">
+                {info.row.original.status === "Pending" && (
+                  <button
+                    onClick={() => handlecheckStatusSettlement(info)}
                     className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
                   >
                     <CompareArrows titleAccess="Check Status" />{" "}
