@@ -1,6 +1,6 @@
 import { Edit, EditOutlined } from "@mui/icons-material";
 import { Tooltip } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import DefaultLayout from "../../layout/DefaultLayout";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../Services/Axios/api";
@@ -43,6 +43,7 @@ export const OnBoardedUsers = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [rowData, setRowData] = React.useState({});
   const [userData , setUserData] = useState<any[]>([]);
+  const [ userIsLoading, setUserIsLoading ] = useState(false);
   const formatDateToISO = (utcDateString: string) => {
     const utcDate = new Date(utcDateString);
     const localDate = new Date(utcDate.getTime() + 330 * 60000);
@@ -159,10 +160,10 @@ export const OnBoardedUsers = () => {
   };
  
 
-  const { isLoading : userIsLoading, data : data123 } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
+  useEffect(() => {
+    async function fetchUsers() {
       try {
+        setUserIsLoading(true);
         debugger
         const response = await getUsers();
         const userData = response.users;
@@ -185,10 +186,13 @@ export const OnBoardedUsers = () => {
         return userData;
       } catch (error) {
         toast.error("something went wrong!");
+      } finally{
+        setUserIsLoading(false);
       }
-    },
-    refetchOnWindowFocus: true,
-  });
+    }
+
+    fetchUsers()
+  }, [rowData?.userid]);
 
   const handleChange = (name: any, value: string | null) => {
     if (name !== null) {
