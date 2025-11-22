@@ -648,7 +648,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             const mode = info.row.original.mode;
 
             if (mode === "Cash") {
-              await settlementStatusChange(status, info, {});
+              setSelectedStatus(status);
+              setPopupMode("Cash");
+              setPopupOpen(true);
             } else if (mode == "UPI") {
               setSelectedStatus(status);
               setPopupMode("UPI");
@@ -663,9 +665,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           };
 
           const handlePopupSubmit = async () => {
-            const options = popupMode === "NEFT" 
-              ? { bankRefId, remark }
-              : { remark };
+            const options = { bankRefId, remark }
             
             await settlementStatusChange(selectedStatus, info, options);
             setPopupOpen(false);
@@ -709,7 +709,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
               {popupOpen && (
                 <Popup
-                  title={popupMode === "UPI" ? "UPI Settlement Details" : "NEFT Settlement Details"}
+                  title={popupMode === "UPI" ? "UPI Settlement Details" : "Settlement Details"}
                   isOpen={popupOpen}
                   onClose={() => {
                     setPopupOpen(false);
@@ -728,8 +728,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       </Typography>
                     </div>
                   )}
-
-                  {popupMode === "NEFT" && (
                     <div className="mt-2">
                       <TextField
                         size="small"
@@ -740,7 +738,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                         value={bankRefId}
                       />
                     </div>
-                  )}
+       
 
                   <div className="mt-5">
                     <Textarea
