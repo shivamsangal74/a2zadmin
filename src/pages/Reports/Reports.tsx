@@ -640,6 +640,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           const [popupOpen, setPopupOpen] = useState(false);
           const [remark, setRemark] = useState("");
           const [bankRefId, setBankRefId] = useState("");
+          const [selectedStatus, setSelectedStatus] = useState("");
+          const [popupMode, setPopupMode] = useState(""); // "UPI" or "NEFT"
 
           const handleSettlement = async (status) => {
             debugger;
@@ -647,20 +649,30 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
             if (mode === "Cash") {
               await settlementStatusChange(status, info, {});
+            } else if (mode == "UPI") {
+              setSelectedStatus(status);
+              setPopupMode("UPI");
+              setPopupOpen(true);
             } else if (status == "Failed") {
               await settlementStatusChange(status, info, {});
             } else if (mode === "NEFT") {
+              setSelectedStatus("Success");
+              setPopupMode("NEFT");
               setPopupOpen(true);
             }
           };
 
           const handlePopupSubmit = async () => {
-            settlementStatusChange("Success", info, {
-              bankRefId,
-              remark,
-            }).finally(() => {
-              setPopupOpen(false);
-            });
+            const options = popupMode === "NEFT" 
+              ? { bankRefId, remark }
+              : { remark };
+            
+            await settlementStatusChange(selectedStatus, info, options);
+            setPopupOpen(false);
+            setRemark("");
+            setBankRefId("");
+            setSelectedStatus("");
+            setPopupMode("");
           };
 
           return (
@@ -697,25 +709,43 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
               {popupOpen && (
                 <Popup
-                  title={"NEFT Settlement Details"}
+                  title={popupMode === "UPI" ? "UPI Settlement Details" : "NEFT Settlement Details"}
                   isOpen={popupOpen}
-                  onClose={() => setPopupOpen(false)}
+                  onClose={() => {
+                    setPopupOpen(false);
+                    setRemark("");
+                    setBankRefId("");
+                    setSelectedStatus("");
+                    setPopupMode("");
+                  }}
+                  width=""
+                  styles={{}}
                 >
-                  <div className="mt-2">
-                    <TextField
-                      size="small"
-                      label="bankRefId"
-                      placeholder="Bank Reference ID"
-                      fullWidth
-                      onChange={(e) => setBankRefId(e.target.value)}
-                      value={bankRefId}
-                    />
-                  </div>
+                  {popupMode === "UPI" && (
+                    <div className="mt-2 mb-4">
+                      <Typography variant="body1" className="mb-2">
+                        Status: <span className={`font-semibold ${selectedStatus === "Success" ? "text-green-600" : "text-red-600"}`}>{selectedStatus}</span>
+                      </Typography>
+                    </div>
+                  )}
+
+                  {popupMode === "NEFT" && (
+                    <div className="mt-2">
+                      <TextField
+                        size="small"
+                        label="bankRefId"
+                        placeholder="Bank Reference ID"
+                        fullWidth
+                        onChange={(e) => setBankRefId(e.target.value)}
+                        value={bankRefId}
+                      />
+                    </div>
+                  )}
 
                   <div className="mt-5">
                     <Textarea
                       label="Remark"
-                      placeholder="Remark"
+                      placeholder="Enter remarks"
                       value={remark || " "}
                       onChange={(e) => setRemark(e.target.value)}
                     />
@@ -731,7 +761,13 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                     <ButtonLabel
                       loader={isProcessing}
                       style={{ backgroundColor: "red" }}
-                      onClick={() => setPopupOpen(false)}
+                      onClick={() => {
+                        setPopupOpen(false);
+                        setRemark("");
+                        setBankRefId("");
+                        setSelectedStatus("");
+                        setPopupMode("");
+                      }}
                       label="Cancel"
                     />
                   </div>
