@@ -517,22 +517,22 @@ const AddVendor = () => {
     {
       header: "Status",
       accessorKey: "status",
-    },
-    {
-      header: "Action",
-      cell: (row: any) => {
-        return (
-          <Button
-            size="small"
-            onClick={() => hanldeReverse(row.row.original)}
-            variant="outlined"
-            startIcon={<IoAdd />}
-          >
-            Reverse
-          </Button>
-        );
-      },
-    },
+    }
+    // {
+    //   header: "Action",
+    //   cell: (row: any) => {
+    //     return (
+    //       <Button
+    //         size="small"
+    //         onClick={() => hanldeReverse(row.row.original)}
+    //         variant="outlined"
+    //         startIcon={<IoAdd />}
+    //       >
+    //         Reverse
+    //       </Button>
+    //     );
+    //   },
+    // },
   ];
 
   const { refetch: paymentsRefetch } = useQuery({
