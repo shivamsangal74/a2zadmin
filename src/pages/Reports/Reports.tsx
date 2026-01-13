@@ -451,6 +451,21 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
+  async function deleteFirstRow(value:any) {
+    try {
+      await api.post(`/report/first-row`, {
+        tranxId: value,
+      });
+      toast.warn("Data Updated Successfully");
+      await handleGetReportData();
+    }
+    catch(error :any){
+      toast.error(error.message);
+      console.error(error);
+      throw error;
+    }
+  }
+
   if (loading) {
     return (
       <DefaultLayout isList>
@@ -1087,6 +1102,20 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       </div>
       <div className="flex gap-5 w-full justify-between items-center mt-4 mb-2">
         <div className="flex gap-5 flex-wrap" style={{ flex: 2 }}>
+        <ButtonLabel
+          label="Row"
+          onClick={async () => {
+            if (!tableData || tableData.length === 0) {
+              toast.warn('No row found');
+              return;
+            }
+            const tranxId = tableData[0];
+          
+            if (window.confirm('Are you sure you want to perform this action for the first row?')) {
+              await deleteFirstRow(tranxId.TraxId);
+            }
+          }}
+        />
           {report_id != "2_15" && (
             <div className="mb-2">
               <RangePicker
@@ -1187,6 +1216,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             </div>
           )}
           <ButtonLabel label="Get Data" onClick={handleGetReportData} />
+    
+
         </div>
       </div>
 
