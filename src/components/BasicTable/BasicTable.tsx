@@ -49,7 +49,12 @@ const BasicTable: React.FC<BasicTableProps> = ({
   const [sorting, setSorting] = useState([]);
   const [columnFilter, setColumnFilter] = useState([]);
   const [globalFilterValue, setGlobalFilterValue] = useState("");
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState(() => {
+    const hasMessageCol = Array.isArray(columns)
+      ? columns.some((c: any) => c?.accessorKey === "message" || c?.id === "message")
+      : false;
+    return isReport && hasMessageCol ? { message: false } : {};
+  });
   const [pageSize, setPageSize] = useState(10); // State for page size
   const handleColumnFilterChange = (accessor: string, value: string) => {
     setColumnFilter((prev) => {
@@ -289,6 +294,38 @@ const BasicTable: React.FC<BasicTableProps> = ({
     return null; // Or an empty object if preferred
   }, [table.getFilteredRowModel().rows, report_id]);
 
+  const hasMessageColumn = useMemo(() => {
+    if (!Array.isArray(extendedColumns)) return false;
+    return extendedColumns.some(
+      (c: any) => c?.accessorKey === "message" || c?.id === "message"
+    );
+  }, [extendedColumns]);
+
+  const getRowMessage = (original: any) => {
+    const response = original?.response ?? original?.message;
+    if (!response) return "";
+    if (typeof response !== "string") {
+      try {
+        return JSON.stringify(response);
+      } catch {
+        return String(response);
+      }
+    }
+
+    try {
+      const parsed = JSON.parse(response);
+      return (
+        parsed?.message ||
+        parsed?.status ||
+        parsed?.response_description ||
+        parsed?.error ||
+        response
+      );
+    } catch {
+      return response;
+    }
+  };
+
   return (
     <>
       {report_id == "2_15" && (
@@ -508,47 +545,78 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 ))}
               </thead>
               <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      console.log(row.original.status);
+                {table.getRowModel().rows.map((row) => {
+                  const rowMessage =
+                    hasMessageColumn && isReport ? getRowMessage(row.original) : "";
+                  const showRowMessage =
+                    Boolean(rowMessage) &&
+                    (row?.original?.status?.toString()?.toLowerCase() ?? "") !==
+                      "success";
 
-                      return (
-                        <td
-                          key={cell.id}
-                          style={{
-                            minWidth: cell.column.getSize(),
-                            fontSize: "0.8rem",
-                            textAlign: "center",
-                            color: `${
-                              row?.original?.status
-                                ?.toString()
-                                ?.toLowerCase() == "success" &&
-                              report_id != "1_3"
-                                ? "green"
-                                : row?.original?.status
+                  return (
+                    <React.Fragment key={row.id}>
+                      <tr>
+                        {row.getVisibleCells().map((cell) => {
+                          console.log(row.original.status);
+
+                          return (
+                            <td
+                              key={cell.id}
+                              style={{
+                                minWidth: cell.column.getSize(),
+                                fontSize: "0.8rem",
+                                textAlign: "center",
+                                color: `${
+                                  row?.original?.status
                                     ?.toString()
-                                    ?.toLowerCase() == "failed" &&
+                                    ?.toLowerCase() == "success" &&
                                   report_id != "1_3"
-                                ? "red"
-                                : row?.original?.status
-                                    ?.toString()
-                                    ?.toLowerCase() == "pending" &&
-                                  report_id != "1_3"
-                                ? "orange"
-                                : ""
-                            }`,
-                          }}
-                          className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark `}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                                    ? "green"
+                                    : row?.original?.status
+                                        ?.toString()
+                                        ?.toLowerCase() == "failed" &&
+                                      report_id != "1_3"
+                                    ? "red"
+                                    : row?.original?.status
+                                        ?.toString()
+                                        ?.toLowerCase() == "pending" &&
+                                      report_id != "1_3"
+                                    ? "orange"
+                                    : ""
+                                }`,
+                              }}
+                              className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark `}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+
+                      {showRowMessage && (
+                        <tr key={`${row.id}-message`}>
+                          <td
+                            colSpan={row.getVisibleCells().length}
+                            className="border-b border-[#eee] py-1 px-3 dark:border-strokedark"
+                            style={{
+                              textAlign: "left",
+                              color: "#b71c1c",
+                              fontSize: "11px",
+                              fontFamily:
+                                'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+                              paddingLeft: "14px",
+                              backgroundColor: "#f5f0f1",
+                            }}
+                          >
+                            {rowMessage}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
