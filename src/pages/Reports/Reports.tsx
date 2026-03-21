@@ -50,6 +50,13 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [searchCondition, setSearchCondition] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [isProcessing, setisProcessing] = useState(false);
+
+  // UPI Popup State
+  const [upiPopupOpen, setUpiPopupOpen] = useState(false);
+  const [upiPopupData, setUpiPopupData] = useState<any>(null);
+  const [upiPopupParams, setUpiPopupParams] = useState<any>(null);
+  const [upiUtr, setUpiUtr] = useState("");
+  const [upiRemark, setUpiRemark] = useState("");
   const [timeRange, setTimeange] = useState("");
 
   const last30Days = () => {
@@ -291,6 +298,37 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
+  async function handleCheckUPIStatus(params: any) {
+    debugger;
+    setisProcessing(true);
+    try {
+      let tranx = params.row.original.tranxId;
+      let date = params.row.original.createdDate;
+      const response = await api.get(`/payment/checkStatus`, {
+        params: { tranx, date },
+        withCredentials: true,
+      });
+      // if (response.data.status == 'Success') {
+      //   toast.success(response.data.message);
+      //   handleGetReportData();
+      // } else {
+      setUpiPopupData(response.data);
+      setUpiPopupParams(params);
+      setUpiPopupOpen(true);
+      // }
+      return response.data;
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error.message);
+      console.error(error);
+    } finally {
+      setisProcessing(false);
+    }
+  }
+
+
+
+
+
   async function handleCheckStatusApes(params: any) {
     setLoading(true);
     debugger;
@@ -452,7 +490,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
   }
 
-  async function deleteFirstRow(value:any) {
+  async function deleteFirstRow(value: any) {
     try {
       await api.post(`/report/first-row`, {
         tranxId: value,
@@ -460,7 +498,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       toast.warn("Data Updated Successfully");
       await handleGetReportData();
     }
-    catch(error :any){
+    catch (error: any) {
       toast.error(error.message);
       console.error(error);
       throw error;
@@ -574,9 +612,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             <div>
               {info.row.original.aadhar
                 ? (
-                    info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
-                    info.row.original.aadhar.slice(8)
-                  ).toUpperCase()
+                  info.row.original.aadhar.slice(0, 8).replace(/\d/g, "X") +
+                  info.row.original.aadhar.slice(8)
+                ).toUpperCase()
                 : "N/A"}
             </div>
           </div>
@@ -633,7 +671,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   toast.success("Copied to clipboard");
                   setTimeout(() => setCopied(false), 1500);
                 })
-                .catch(() => {});
+                .catch(() => { });
             }
           };
 
@@ -702,7 +740,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   toast.success("Copied to clipboard");
                   setTimeout(() => setCopied(false), 1500);
                 })
-                .catch(() => {});
+                .catch(() => { });
             }
           };
 
@@ -862,7 +900,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
           const handlePopupSubmit = async () => {
             const options = { bankRefId, remark }
-            
+
             await settlementStatusChange(selectedStatus, info, options);
             setPopupOpen(false);
             setRemark("");
@@ -924,17 +962,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       </Typography>
                     </div>
                   )}
-                    <div className="mt-2">
-                      <TextField
-                        size="small"
-                        label="bankRefId"
-                        placeholder="Bank Reference ID"
-                        fullWidth
-                        onChange={(e) => setBankRefId(e.target.value)}
-                        value={bankRefId}
-                      />
-                    </div>
-       
+                  <div className="mt-2">
+                    <TextField
+                      size="small"
+                      label="bankRefId"
+                      placeholder="Bank Reference ID"
+                      fullWidth
+                      onChange={(e) => setBankRefId(e.target.value)}
+                      value={bankRefId}
+                    />
+                  </div>
+
 
                   <div className="mt-5">
                     <Textarea
@@ -1002,11 +1040,33 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                     <button
                       disabled={isProcessing}
                       onClick={() => handleCheckStatus(info)}
-                      className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${
-                        isProcessing
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-green-500 hover:bg-green-600"
-                      }`}
+                      className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-500 hover:bg-green-600"
+                        }`}
+                    >
+                      {isProcessing ? (
+                        <Spinner />
+                      ) : (
+                        <CompareArrows titleAccess="Check Status" />
+                      )}
+                      {/* Check Status Icon */}
+                    </button>
+                  )}
+                </div>
+              )}
+              {report_id === "2_9" && ["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
+                <div className="action flex gap-3 items-center">
+
+
+                  {["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
+                    <button
+                      disabled={isProcessing}
+                      onClick={() => handleCheckUPIStatus(info)}
+                      className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-500 hover:bg-green-600"
+                        }`}
                     >
                       {isProcessing ? (
                         <Spinner />
@@ -1283,20 +1343,20 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       </div>
       <div className="flex gap-5 w-full justify-between items-center mt-4 mb-2">
         <div className="flex gap-5 flex-wrap" style={{ flex: 2 }}>
-        <ButtonLabel
-          label="Row"
-          onClick={async () => {
-            if (!tableData || tableData.length === 0) {
-              toast.warn('No row found');
-              return;
-            }
-            const tranxId = tableData[0];
-          
-            if (window.confirm('Are you sure you want to perform this action for the first row?')) {
-              await deleteFirstRow(tranxId.TraxId);
-            }
-          }}
-        />
+          <ButtonLabel
+            label="Row"
+            onClick={async () => {
+              if (!tableData || tableData.length === 0) {
+                toast.warn('No row found');
+                return;
+              }
+              const tranxId = tableData[0];
+
+              if (window.confirm('Are you sure you want to perform this action for the first row?')) {
+                await deleteFirstRow(tranxId.TraxId);
+              }
+            }}
+          />
           {report_id != "2_15" && (
             <div className="mb-2">
               <RangePicker
@@ -1397,7 +1457,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             </div>
           )}
           <ButtonLabel label="Get Data" onClick={handleGetReportData} />
-    
+
 
         </div>
       </div>
@@ -1414,6 +1474,139 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         report_id={report_id}
         isShowSeq={report_id == "2_15" ? true : false}
       />
+
+      {upiPopupOpen && (
+        <Popup
+          title=""
+          isOpen={upiPopupOpen}
+          onClose={() => {
+            setUpiPopupOpen(false);
+            setUpiUtr("");
+            setUpiRemark("");
+            setUpiPopupData(null);
+            setUpiPopupParams(null);
+          }}
+          width="md"
+          styles={{}}
+        >
+          <div className="flex flex-col items-center justify-center p-2">
+
+            <div className="text-blue-600 font-medium mb-4">
+              Transaction status is "{upiPopupParams?.row?.original?.status?.toUpperCase() || 'UNKNOWN'}".
+            </div>
+            <div className="font-bold mb-2">Response :</div>
+            <div className="text-sm text-left w-full max-w-sm mb-4">
+              <div><strong>Status:</strong> {upiPopupData?.status || upiPopupData?.status || 'N/A'}</div>
+              <div><strong>Message:</strong> {upiPopupData?.message || upiPopupData?.message || 'N/A'}</div>
+              {upiPopupData?.orderId && <div><strong>Order ID:</strong> {upiPopupData.orderId}</div>}
+              {upiPopupData?.utr && <div><strong>Utr:</strong> {upiPopupData.utr}</div>}
+            </div>
+
+            <div className="mt-2 border border-yellow-400 bg-yellow-50 p-4 rounded text-center mb-6">
+              <Error className="text-yellow-600 mb-2" sx={{ fontSize: 40 }} />
+              <div className="font-bold text-yellow-700 text-lg">Warning!</div>
+              <p className="text-xs text-gray-700 mt-2">
+                You can manually mark this transaction as SUCCESS or FAILED. Please be aware that this action will not be cross-checked by us.
+                A callback will be sent to the user's website immediately.
+              </p>
+            </div>
+
+            <div className="w-full max-w-sm text-left mb-4">
+              <label className="block text-sm font-semibold mb-1">Enter UTR</label>
+              <input
+                type="text"
+                placeholder="e.g., 1234567890"
+                className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-blue-500"
+                value={upiUtr}
+                onChange={(e) => setUpiUtr(e.target.value)}
+              />
+            </div>
+
+            <div className="w-full max-w-sm text-left mb-6">
+              <label className="block text-sm font-semibold mb-1">Remark</label>
+              <input
+                type="text"
+                placeholder="e.g., Manual update"
+                className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-blue-500"
+                value={upiRemark}
+                onChange={(e) => setUpiRemark(e.target.value)}
+              />
+            </div>
+
+            <div className="w-full max-w-sm flex justify-between gap-3">
+              <button
+                className="flex-1 bg-gray-200 text-gray-800 rounded py-2 text-sm font-semibold hover:bg-gray-300"
+                onClick={() => {
+                  setUpiPopupOpen(false);
+                  setUpiUtr("");
+                  setUpiRemark("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 bg-red-500 text-white rounded py-2 text-sm font-semibold hover:bg-red-600"
+                onClick={async () => {
+                  try {
+                    const rowData = upiPopupParams?.row?.original;
+                    const payload = {
+                      id: rowData?._id || rowData?.id,
+                      utr: upiUtr,
+                      remark: upiRemark,
+                      status: "Failed",
+                      tranxId: rowData?.tranxId,
+                      orderId: rowData?.orderId
+                    };
+                    const response = await api.post('/payment/manual-upi-failed', payload, { withCredentials: true });
+                    toast.success(response.data.message || 'Status updated to Failed');
+                    setUpiPopupOpen(false);
+                    setUpiUtr("");
+                    setUpiRemark("");
+                    handleGetReportData();
+                  } catch (error: any) {
+                    toast.error(error?.response?.data?.message || error.message);
+                  }
+                }}
+              >
+                Make Failed
+              </button>
+              <button
+                className="flex-1 bg-green-500 text-white rounded py-2 text-sm font-semibold hover:bg-green-600"
+                onClick={async () => {
+                  if (!upiUtr) {
+                    toast.error("UTR is required for Success");
+                    return;
+                  }
+                  try {
+                    const rowData = upiPopupParams?.row?.original;
+                    const payload = {
+                      id: rowData?._id || rowData?.id,
+                      status: "SUCCESS",
+                      userId: rowData?.userId,
+                      amount: rowData?.amount,
+                      utr: upiUtr,
+                      remark1: 19,
+                      remark2: 771,
+                      remark: upiRemark,
+                      order_id: rowData?.tranxId
+                    };
+                    const response = await api.post('/payment/updateUserWalletBalance', payload, { withCredentials: true });
+                    toast.success(response.data.message || 'Status updated to Success');
+                    setUpiPopupOpen(false);
+                    setUpiUtr("");
+                    setUpiRemark("");
+                    handleGetReportData();
+                  } catch (error: any) {
+                    toast.error(error?.response?.data?.message || error.message);
+                  }
+                }}
+              >
+                Make Success
+              </button>
+            </div>
+          </div>
+        </Popup>
+      )}
     </DefaultLayout>
   );
 };
