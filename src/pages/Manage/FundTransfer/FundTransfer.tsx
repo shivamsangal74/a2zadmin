@@ -174,20 +174,7 @@ const ManageFundTransfer = () => {
     {
       header: "Remaining",
       accessorKey: "total",
-    },
-    {
-      header: "Received",
-      cell: (row: any) => (
-        <Button
-          size="small"
-          onClick={() => handleRecivedCredit(row.row.original)}
-          variant="outlined"
-          startIcon={<IoAdd />}
-        >
-          Recieved
-        </Button>
-      ),
-    },
+    }
   ];
 
   const [selectedFund, setSelectedFund] = useState<string | null>(null);
