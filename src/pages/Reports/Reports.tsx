@@ -326,9 +326,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
 
-
-
-
   async function handleCheckStatusApes(params: any) {
     setLoading(true);
     debugger;
