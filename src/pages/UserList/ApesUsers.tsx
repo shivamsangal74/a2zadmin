@@ -484,7 +484,7 @@ export const ApesUsers = () => {
 </div>
                 <Box mt={2}>
                   <Typography variant="subtitle1">Bank Accounts</Typography>
-                  {merchant.bankAccounts.length > 0 ? (
+                  {merchant.bankAccount.length > 0 ? (
                     <TableContainer component={Paper} sx={{ mt: 1 }}>
                       <Table size="small">
                         <TableHead>

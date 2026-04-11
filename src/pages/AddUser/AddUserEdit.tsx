@@ -135,6 +135,7 @@ const schema = z
     minBalanceAlert: z.number().nullable().optional(),
     minBalanceAutoRefill: z.number().nullable().optional(),
     userRole: z.string().nullable().optional().default(""),
+    isPanVerified: z.boolean().nullable().optional(),
   })
   .refine((data) => {
     const errors = [];
@@ -318,15 +319,25 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
       const response = await validateOTP(code, reqID.toString());
       const address = generateAddress(response);
       setProfile(response?.response?.data?.profile_image);
+      const name_user = getValues("fullName")
+      const isPanVerified = getValues("isPanVerified")
       const aadharData = {
         address: address,
         fullName: response.response.data.full_name,
-        fatherName: response.response.data.care_of.split(":")[1],
+        fatherName: response.response.data.care_of,
         pinCode: response.response.data.zip,
         city: response.response.data.address.po,
         state: response.response.data.address.state,
         DOB: response.response.data.dob,
       };
+
+      if(name_user && isPanVerified){
+        if(name_user.toLowerCase() !== aadharData.fullName.toLowerCase()){
+          toast.error("Aadhar name and pan name does not match.");
+          setOpenAuth(false);
+          return;
+        }
+      }
 
       if (response.status == "error") {
         toast.error(response?.message);
@@ -513,6 +524,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
                     { showvalue: "Api User", value: "apiuser" },
 
                     { showvalue: "Referal", value: "Referal" },
+                    { showvalue: "Signup User", value: "signupuser" },
                   ]}
                   error={errors.userType?.message}
                   name="userType"

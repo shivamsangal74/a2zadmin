@@ -420,9 +420,11 @@ const Risk = ({ userid }) => {
                           <TableBody>
                             {categorys.map((category: any) => {
                               debugger;
-                              const currentCategories =
+                              let currentCategories =
                                 JSON.parse(service.categorys) || [];
-
+                              if(typeof(currentCategories) == "string"){
+                                currentCategories = JSON.parse(currentCategories);
+                              }
                               const existingCategory = currentCategories.find(
                                 (cat: any) => cat.id === category.id
                               );
