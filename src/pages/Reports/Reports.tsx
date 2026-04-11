@@ -304,8 +304,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     try {
       let tranx = params.row.original.tranxId;
       let date = params.row.original.createdDate;
+      let report_type =   params.row.original.report_type;
       const response = await api.get(`/payment/checkStatus`, {
-        params: { tranx, date },
+        params: { tranx, date,report_type },
         withCredentials: true,
       });
       // if (response.data.status == 'Success') {
