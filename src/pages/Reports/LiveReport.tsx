@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import DefaultLayout from "../../layout/DefaultLayout";
 import BasicTable from "../../components/BasicTable/BasicTable";
 import Loader from "../../common/Loader";
@@ -31,10 +31,20 @@ interface LiveReportsProps {
   report_id: string;
 }
 
+/** Backend returns newest-first; a small window drops rows when traffic exceeds this per poll. */
+const LIVE_REPORT_ROW_LIMIT = 500;
+
+function rowDedupeKey(row: TableData): string {
+  const id = row?.refid ?? row?.requestId;
+  if (id != null && String(id).length > 0) return String(id);
+  return `${row?.createdDate ?? ""}:${row?.amount ?? ""}:${row?.status ?? ""}`;
+}
+
 const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [loading, setLoading] = useState(true);
+  const livePollInFlight = useRef(false);
 
   const handleLast30DaysDateRange = useCallback(() => {
     const startDate = moment().startOf("day");
@@ -61,37 +71,57 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
       const response = await api.post(`${apiUrl}/report/getReportData`, {
         report_id,
         Entity: entity,
-        filters: { limits: 10 },
+        filters: { limits: LIVE_REPORT_ROW_LIMIT },
         dateRange: handleLast30DaysDateRange(),
-        limits: 10,
+        limits: LIVE_REPORT_ROW_LIMIT,
       });
-      setTableData(response.data);
+      const payload = response.data;
+      if (Array.isArray(payload)) {
+        setTableData(payload);
+      } else if (payload?.message === "No Record Found") {
+        setTableData([]);
+      }
     } catch (error) {
       console.error("Error fetching table data:", error);
     }
   }, [entity, report_id, handleLast30DaysDateRange]);
 
   const fetchLiveTransactions = useCallback(async () => {
+    if (livePollInFlight.current) return;
+    livePollInFlight.current = true;
     try {
       const response = await api.post(`${apiUrl}/report/getReportData`, {
         report_id,
         Entity: entity,
-        filters: { limits: 10 },
+        filters: { limits: LIVE_REPORT_ROW_LIMIT },
         dateRange: handleLast30DaysDateRange(),
-        limits: 10,
+        limits: LIVE_REPORT_ROW_LIMIT,
       });
 
-      if(response.data.message === "No Record Found") return;
+      const payload = response.data;
+      if (!payload || payload?.message === "No Record Found") return;
+
+      const incoming = Array.isArray(payload) ? payload : [];
+      if (incoming.length === 0) return;
+
       setTableData((prevData) => {
-        const newTransactions = response.data.filter(
-          (newTx: any) => !prevData.some((existingTx) => existingTx.txnid
-          === newTx.txnid
-        )
-        );
-        return [...newTransactions, ...prevData]; // Add new transactions to the top
+        const incomingByKey = new Map(incoming.map((tx: TableData) => [rowDedupeKey(tx), tx]));
+
+        const refreshed = prevData.map((row) => {
+          const key = rowDedupeKey(row);
+          const newer = incomingByKey.get(key);
+          return newer ?? row;
+        });
+
+        const prevKeys = new Set(prevData.map(rowDedupeKey));
+        const brandNew = incoming.filter((tx: TableData) => !prevKeys.has(rowDedupeKey(tx)));
+
+        return [...brandNew, ...refreshed];
       });
     } catch (error) {
       console.error("Error fetching live transactions:", error);
+    } finally {
+      livePollInFlight.current = false;
     }
   }, [entity, report_id, handleLast30DaysDateRange]);
 
@@ -108,9 +138,9 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchLiveTransactions();
-    }, 1000); // Fetch new transactions every 5 seconds
+    }, 2000);
 
-    return () => clearInterval(interval); // Cleanup on component unmount
+    return () => clearInterval(interval);
   }, [fetchLiveTransactions]);
 
   const renderStatus = (status: string) => {
