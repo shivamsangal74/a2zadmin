@@ -5,7 +5,9 @@ import Loader from "../../common/Loader";
 import moment from "moment";
 import { apiUrl } from "../../Utills/constantt";
 import { Loyalty, CheckCircle, HourglassEmpty, Error, Refresh, TransferWithinAStation } from "@mui/icons-material";
-import { BsGlobe } from "react-icons/bs";
+import { BsEye, BsGlobe } from "react-icons/bs";
+import { IconButton, Typography } from "@mui/material";
+import Popup from "../../components/Model/Model";
 import api from "../../Services/Axios/api";
 import Breadcrumb from "../../components/Breadcrumbs/Breadcrumb";
 import StatsDisplay from "../../components/DisplatStats";
@@ -45,6 +47,17 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [loading, setLoading] = useState(true);
   const livePollInFlight = useRef(false);
+
+  // Eye Popup State
+  const [eyePopupOpen, setEyePopupOpen] = useState(false);
+  const [eyePopupData, setEyePopupData] = useState("");
+  const [eyePopupTitle, setEyePopupTitle] = useState("");
+
+  const handleOpenEyePopup = (data: any, title: string) => {
+    setEyePopupData(data);
+    setEyePopupTitle(title);
+    setEyePopupOpen(true);
+  };
 
   const handleLast30DaysDateRange = useCallback(() => {
     const startDate = moment().startOf("day");
@@ -223,6 +236,23 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
         };
       }
 
+      if (col.prop === "logs") {
+        return {
+          ...baseConfig,
+          size: 100,
+          cell: (info: any) => {
+            const value = info.getValue();
+            return (
+              <div style={{ textAlign: "center" }}>
+                <IconButton onClick={() => handleOpenEyePopup(value, "logs")}>
+                  <BsEye size={20} />
+                </IconButton>
+              </div>
+            );
+          },
+        };
+      }
+
       return baseConfig;
     });
   }, [reportData]);
@@ -282,6 +312,59 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
     return totals;
   }
 
+  const renderEyePopupContent = (data: string) => {
+    if (!data) return null;
+
+    if (!data.includes("<b>") && !data.includes("<br/>")) {
+      try {
+        return (
+          <pre className="whitespace-pre-wrap break-all text-sm font-mono text-gray-800">
+            {JSON.stringify(JSON.parse(data), null, 2)}
+          </pre>
+        );
+      } catch (e) {
+        return (
+          <pre className="whitespace-pre-wrap break-all text-sm font-mono text-gray-800">
+            {data}
+          </pre>
+        );
+      }
+    }
+
+    const parts = data.split(/<br\s*\/?>/i);
+    return (
+      <div className="flex flex-col gap-4">
+        {parts.map((part, index) => {
+          const match = part.match(/<b>(.*?)<\/b>(.*)/i);
+          if (match) {
+            const tag = match[1];
+            let content = match[2].trim();
+            try {
+              content = JSON.stringify(JSON.parse(content), null, 2);
+            } catch (e) {}
+
+            return (
+              <div key={index} className="flex flex-col gap-1">
+                <Typography
+                  variant="subtitle2"
+                  className="font-bold text-blue-600"
+                >
+                  {tag}
+                </Typography>
+                <div className="p-3 bg-gray-100 rounded-md border border-gray-200">
+                  <pre className="whitespace-pre-wrap break-all text-xs font-mono text-gray-700 m-0">
+                    {content}
+                  </pre>
+                </div>
+              </div>
+            );
+          }
+          return <div key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+        })}
+      </div>
+    );
+  };
+
   const totalAmount =
     tableData &&
     tableData.length > 0 &&
@@ -312,9 +395,24 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
         isFilters={true}
         filter={[]}
         isSeachable={false}
-        isReport={false}
+        isReport={true}
         report_id={report_id}
       />
+      {eyePopupOpen && (
+        <Popup
+          title={eyePopupTitle.toUpperCase()}
+          isOpen={eyePopupOpen}
+          onClose={() => {
+            setEyePopupOpen(false);
+            setEyePopupData("");
+            setEyePopupTitle("");
+          }}
+        >
+          <div className="p-4 bg-gray-50 rounded-lg max-h-[60vh] overflow-auto">
+            {renderEyePopupContent(eyePopupData)}
+          </div>
+        </Popup>
+      )}
     </DefaultLayout>
   );
 };

@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import moment from "moment";
 import TextInput from "../../components/Input/TextInput";
 import { apiUrl } from "../../Utills/constantt";
+import { BsEye, BsGlobe } from "react-icons/bs";
 import DropDownCheakBox from "../../components/DropDown/DropDownCheakBox";
 import {
   Close,
@@ -19,7 +20,6 @@ import {
   SendOutlined,
   ContentCopy,
 } from "@mui/icons-material";
-import { BsGlobe } from "react-icons/bs";
 import api from "../../Services/Axios/api";
 import { toast } from "react-toastify";
 import { Select, Option, Textarea, Spinner } from "@material-tailwind/react";
@@ -58,6 +58,18 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [upiUtr, setUpiUtr] = useState("");
   const [upiRemark, setUpiRemark] = useState("");
   const [timeRange, setTimeange] = useState("");
+
+  // Eye Popup State
+  const [eyePopupOpen, setEyePopupOpen] = useState(false);
+  const [eyePopupData, setEyePopupData] = useState("");
+  const [eyePopupTitle, setEyePopupTitle] = useState("");
+
+  const handleOpenEyePopup = (data: any, title: string) => {
+    setEyePopupData(data);
+    setEyePopupTitle(title);
+    setEyePopupOpen(true);
+  };
+
 
   const last30Days = () => {
     let startDate = dayjs().startOf("day");
@@ -304,9 +316,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     try {
       let tranx = params.row.original.tranxId;
       let date = params.row.original.createdDate;
-      let report_type =   params.row.original.report_type;
+      let report_type = params.row.original.report_type;
       const response = await api.get(`/payment/checkStatus`, {
-        params: { tranx, date,report_type },
+        params: { tranx, date, report_type },
         withCredentials: true,
       });
       // if (response.data.status == 'Success') {
@@ -587,7 +599,21 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         accessorKey: col.prop,
         size: 190,
       };
+      if (report_id === "2_4" && col.prop === "logs") {
+        columnConfig.size = 100;
+        columnConfig.cell = (info) => {
+          const value = info.getValue();
+          return (
+            <div style={{ textAlign: "center" }}>
+              <IconButton onClick={() => handleOpenEyePopup(value, "logs")}>
+                <BsEye size={20} />
+              </IconButton>
+            </div>
+          );
+        };
+      }
       if (col.prop == "createdDate") {
+
         columnConfig.size = 120;
         columnConfig.cell = (info) => (
           <div
@@ -1310,6 +1336,59 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     return totals;
   }
 
+  const renderEyePopupContent = (data: string) => {
+    if (!data) return null;
+
+    if (!data.includes("<b>") && !data.includes("<br/>")) {
+      try {
+        return (
+          <pre className="whitespace-pre-wrap break-all text-sm font-mono text-gray-800">
+            {JSON.stringify(JSON.parse(data), null, 2)}
+          </pre>
+        );
+      } catch (e) {
+        return (
+          <pre className="whitespace-pre-wrap break-all text-sm font-mono text-gray-800">
+            {data}
+          </pre>
+        );
+      }
+    }
+
+    const parts = data.split(/<br\s*\/?>/i);
+    return (
+      <div className="flex flex-col gap-4">
+        {parts.map((part, index) => {
+          const match = part.match(/<b>(.*?)<\/b>(.*)/i);
+          if (match) {
+            const tag = match[1];
+            let content = match[2].trim();
+            try {
+              content = JSON.stringify(JSON.parse(content), null, 2);
+            } catch (e) {}
+
+            return (
+              <div key={index} className="flex flex-col gap-1">
+                <Typography
+                  variant="subtitle2"
+                  className="font-bold text-blue-600"
+                >
+                  {tag}
+                </Typography>
+                <div className="p-3 bg-gray-100 rounded-md border border-gray-200">
+                  <pre className="whitespace-pre-wrap break-all text-xs font-mono text-gray-700 m-0">
+                    {content}
+                  </pre>
+                </div>
+              </div>
+            );
+          }
+          return <div key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+        })}
+      </div>
+    );
+  };
+
   const totalAmount =
     tableData &&
     tableData.length > 0 &&
@@ -1605,6 +1684,22 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           </div>
         </Popup>
       )}
+      {eyePopupOpen && (
+        <Popup
+          title={eyePopupTitle.toUpperCase()}
+          isOpen={eyePopupOpen}
+          onClose={() => {
+            setEyePopupOpen(false);
+            setEyePopupData("");
+            setEyePopupTitle("");
+          }}
+        >
+          <div className="p-4 bg-gray-50 rounded-lg max-h-[60vh] overflow-auto">
+            {renderEyePopupContent(eyePopupData)}
+          </div>
+        </Popup>
+      )}
+
     </DefaultLayout>
   );
 };

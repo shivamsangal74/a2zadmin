@@ -53,7 +53,8 @@ const BasicTable: React.FC<BasicTableProps> = ({
     const hasMessageCol = Array.isArray(columns)
       ? columns.some((c: any) => c?.accessorKey === "message" || c?.id === "message")
       : false;
-    return isReport && hasMessageCol ? { message: false } : {};
+    const isForcedReport = report_id === "2_4" || report_id === "2_10" || report_id === "123";
+    return isReport && (hasMessageCol || isForcedReport) ? { message: false } : {};
   });
   const [pageSize, setPageSize] = useState(10); // State for page size
   const handleColumnFilterChange = (accessor: string, value: string) => {
@@ -296,9 +297,10 @@ const BasicTable: React.FC<BasicTableProps> = ({
 
   const hasMessageColumn = useMemo(() => {
     if (!Array.isArray(extendedColumns)) return false;
-    return extendedColumns.some(
+    const hasCol = extendedColumns.some(
       (c: any) => c?.accessorKey === "message" || c?.id === "message"
     );
+    return hasCol || report_id === "2_4" || report_id === "2_10" || report_id === "123";
   }, [extendedColumns]);
 
   const getRowMessage = (original: any) => {
