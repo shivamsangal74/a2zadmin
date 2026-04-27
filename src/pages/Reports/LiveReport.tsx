@@ -4,7 +4,8 @@ import BasicTable from "../../components/BasicTable/BasicTable";
 import Loader from "../../common/Loader";
 import moment from "moment";
 import { apiUrl } from "../../Utills/constantt";
-import { Loyalty, CheckCircle, HourglassEmpty, Error, Refresh, TransferWithinAStation } from "@mui/icons-material";
+import { Loyalty, CheckCircle, HourglassEmpty, Error, Refresh, TransferWithinAStation, ContentCopy } from "@mui/icons-material";
+import { toast } from "react-toastify";
 import { BsEye, BsGlobe } from "react-icons/bs";
 import { IconButton, Typography } from "@mui/material";
 import Popup from "../../components/Model/Model";
@@ -247,6 +248,193 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
                 <IconButton onClick={() => handleOpenEyePopup(value, "logs")}>
                   <BsEye size={20} />
                 </IconButton>
+              </div>
+            );
+          },
+        };
+      }
+
+      if (
+        col.prop === "refid" ||
+        col.prop === "refId" ||
+        col.prop === "TranxId" ||
+        col.prop === "tranxId" ||
+        col.prop === "TraxId" ||
+        col.prop === "txnid"
+      ) {
+        return {
+          ...baseConfig,
+          size: 200,
+          cell: (info: any) => {
+            const [copied, setCopied] = useState(false);
+            const value = info.getValue();
+
+            const handleCopy = () => {
+              if (value === undefined || value === null) return;
+              if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard
+                  .writeText(String(value))
+                  .then(() => {
+                    setCopied(true);
+                    toast.success("Copied to clipboard");
+                    setTimeout(() => setCopied(false), 1500);
+                  })
+                  .catch(() => {});
+              }
+            };
+
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
+              >
+                <span style={{ fontSize: "0.8rem" }}>{value}</span>
+                <span
+                  onClick={handleCopy}
+                  title={copied ? "Copied" : "Copy"}
+                  style={{
+                    cursor: value ? "pointer" : "default",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    color: copied ? "#2e7d32" : "#1976d2",
+                  }}
+                >
+                  {copied ? (
+                    <CheckCircle sx={{ fontSize: 14 }} />
+                  ) : (
+                    <ContentCopy sx={{ fontSize: 14 }} />
+                  )}
+                </span>
+              </div>
+            );
+          },
+        };
+      }
+
+      if (col.prop === "ReqId" || col.prop === "oprId") {
+        return {
+          ...baseConfig,
+          size: 220,
+          cell: (info: any) => {
+            const [copiedPrimary, setCopiedPrimary] = useState(false);
+            const [copiedSecondary, setCopiedSecondary] = useState(false);
+            const raw = info.getValue();
+
+            let primary = "";
+            let secondary = "";
+
+            if (Array.isArray(raw)) {
+              primary = raw[0] ?? "";
+              secondary = raw[1] ?? "";
+            } else if (typeof raw === "string") {
+              const parts = raw
+                .split(/[\s,/]+/)
+                .map((p) => p.trim())
+                .filter(Boolean);
+              primary = parts[0] ?? "";
+              secondary = parts[1] ?? "";
+            } else if (raw && typeof raw === "object") {
+              primary = raw.primary ?? raw.main ?? "";
+              secondary = raw.secondary ?? raw.alt ?? "";
+            }
+
+            const copyValue = (value: string, setCopied: (v: boolean) => void) => {
+              if (!value) return;
+              if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard
+                  .writeText(String(value))
+                  .then(() => {
+                    setCopied(true);
+                    toast.success("Copied to clipboard");
+                    setTimeout(() => setCopied(false), 1500);
+                  })
+                  .catch(() => {});
+              }
+            };
+
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  justifyContent: "center",
+                  gap: "3px",
+                }}
+              >
+                {primary && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "#111827",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {primary}
+                    </span>
+                    <span
+                      onClick={() => copyValue(primary, setCopiedPrimary)}
+                      title={copiedPrimary ? "Copied" : "Copy"}
+                      style={{
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        color: copiedPrimary ? "#2e7d32" : "#1976d2",
+                      }}
+                    >
+                      {copiedPrimary ? (
+                        <CheckCircle sx={{ fontSize: 13 }} />
+                      ) : (
+                        <ContentCopy sx={{ fontSize: 13 }} />
+                      )}
+                    </span>
+                  </div>
+                )}
+                {secondary && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "#6b7280",
+                      }}
+                    >
+                      {secondary}
+                    </span>
+                    <span
+                      onClick={() => copyValue(secondary, setCopiedSecondary)}
+                      title={copiedSecondary ? "Copied" : "Copy"}
+                      style={{
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        color: copiedSecondary ? "#2e7d32" : "#9ca3af",
+                      }}
+                    >
+                      {copiedSecondary ? (
+                        <CheckCircle sx={{ fontSize: 12 }} />
+                      ) : (
+                        <ContentCopy sx={{ fontSize: 12 }} />
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           },

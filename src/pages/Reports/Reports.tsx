@@ -729,7 +729,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           );
         };
       }
-      if (col.prop === "SystemId" || col.prop === "systemId") {
+      if (col.prop === "ReqId" || col.prop === "oprId") {
         columnConfig.size = 220;
         columnConfig.cell = (info) => {
           const [copiedPrimary, setCopiedPrimary] = useState(false);
