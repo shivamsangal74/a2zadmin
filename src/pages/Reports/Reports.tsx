@@ -89,9 +89,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     }
     const date = new Date(dateString);
 
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
     const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
+    const month = months[date.getMonth()];
+    const year = String(date.getFullYear()).slice(2); // last 2 digits
 
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, "0");
@@ -101,10 +106,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     hours = hours % 12 || 12;
     const formattedHours = String(hours).padStart(2, "0");
 
-    const formattedDate = `${day}-${month}-${year}`;
-    const formattedTime = `${formattedHours}:${minutes}:${seconds} ${ampm}`;
-
-    return `${formattedDate} ${formattedTime}`;
+    // Format: 28 Apr 26 12:00:00 AM
+    return `${day} ${month} ${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
   }
   const { startDate, endDate, value: last30DaysDateRange } = last30Days();
 
@@ -614,7 +617,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       }
       if (col.prop == "createdDate") {
 
-        columnConfig.size = 120;
+        columnConfig.size = 180;
         columnConfig.cell = (info) => (
           <div
             style={{
@@ -789,7 +792,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   <span
                     style={{
                       fontSize: "0.85rem",
-                      color: "#111827",
+                      // color: "#111827",
                       fontWeight: 500,
                     }}
                   >
@@ -802,7 +805,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      color: copiedPrimary ? "#2e7d32" : "#6b7280",
+                      color: copiedPrimary ? "#d1d5db" : "#d1d5db",
                     }}
                   >
                     {copiedPrimary ? (
@@ -825,7 +828,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   <span
                     style={{
                       fontSize: "0.75rem",
-                      color: "#6b7280",
+                      color: "#d1d5db", // lighter gray (Tailwind gray-300)
                     }}
                   >
                     {secondary}
@@ -837,7 +840,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      color: copiedSecondary ? "#2e7d32" : "#9ca3af",
+                      color: copiedSecondary ? "#d1d5db" : "#d1d5db",
                     }}
                   >
                     {copiedSecondary ? (
@@ -1034,7 +1037,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         };
       }
       if (col.prop == "status") {
-        columnConfig.size = 150;
+        columnConfig.size = 100;
         columnConfig.cell = (info) => (
           <div
             style={{
