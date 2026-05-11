@@ -160,41 +160,41 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
   const renderStatus = (status: string) => {
     const statusMap: { [key: string]: JSX.Element } = {
       Success: (
-        <div className="flex items-center gap-2 text-green-600">
+        <div className="flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-green-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
           <CheckCircle />
-          <span>Success</span>
+          <span className="font-semibold tracking-wide">Success</span>
         </div>
       ),
       Pending: (
-        <div className="flex items-center gap-2 text-yellow-500">
+        <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
           <HourglassEmpty />
-          <span>Pending</span>
+          <span className="font-semibold tracking-wide">Pending</span>
         </div>
       ),
       Failed: (
-        <div className="flex items-center gap-2 text-red-600">
+        <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
           <Error />
-          <span>Failed</span>
+          <span className="font-semibold tracking-wide">Failed</span>
         </div>
       ),
       Reverse: (
-        <div className="flex items-center gap-2 text-blue-600">
+        <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
           <Refresh />
-          <span>Reverse</span>
+          <span className="font-semibold tracking-wide">Reverse</span>
         </div>
       ),
       Transfer: (
-        <div className="flex items-center gap-2 text-green-600">
+        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
           <TransferWithinAStation />
-          <span>Transfer</span>
+          <span className="font-semibold tracking-wide">Transfer</span>
         </div>
       ),
     };
 
     return statusMap[status] || (
-      <div className="flex items-center gap-2 text-pink-500">
+      <div className="flex items-center gap-2 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-fuchsia-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
         <Loyalty />
-        <span>{status}</span>
+        <span className="font-semibold tracking-wide">{status}</span>
       </div>
     );
   };
@@ -211,7 +211,60 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
         return {
           ...baseConfig,
           size: 120,
-          cell: (info: any) => <div style={{ textAlign: "center" }}>{info.getValue()}</div>,
+          cell: (info: any) => (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "0.84rem",
+                fontWeight: 600,
+                letterSpacing: "0.2px",
+                color: "#334155",
+              }}
+            >
+              {info.getValue()}
+            </div>
+          ),
+        };
+      }
+
+      if (col.prop === "amount" || col.prop === "apiBal") {
+        return {
+          ...baseConfig,
+          size: 120,
+          cell: (info: any) => (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "0.86rem",
+                fontWeight: 700,
+                color: "#0f766e",
+                letterSpacing: "0.2px",
+              }}
+            >
+              {info.getValue()}
+            </div>
+          ),
+        };
+      }
+
+      if (col.prop === "mobile") {
+        return {
+          ...baseConfig,
+          size: 120,
+          cell: (info: any) => (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: "0.84rem",
+                fontWeight: 600,
+                fontFamily: "Geist Mono, Geist Mono Fallback, monospace",
+                color: "#16163a",
+                letterSpacing: "0.2px",
+              }}
+            >
+              {info.getValue()}
+            </div>
+          ),
         };
       }
 
@@ -292,7 +345,17 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
                   gap: "6px",
                 }}
               >
-                <span style={{ fontSize: "0.8rem" }}>{value}</span>
+                <span
+                  style={{
+                    fontSize: "0.8rem",
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                    letterSpacing: "0.3px",
+                    color: "#0f172a",
+                    fontWeight: 600,
+                  }}
+                >
+                  {value}
+                </span>
                 <span
                   onClick={handleCopy}
                   title={copied ? "Copied" : "Copy"}
@@ -575,6 +638,21 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
   return (
     <DefaultLayout isList>
       <Breadcrumb pageName={`Live ${reportData?.Report.ReportName}`} />
+      {/* <div className="mb-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-white via-emerald-50 to-cyan-50 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-800">
+              Live {reportData?.Report.ReportName}
+            </h2>
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              Real-time updates with improved readability and clarity.
+            </p>
+          </div>
+          <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-700 animate-pulse">
+            Live
+          </span>
+        </div>
+      </div> */}
       {report_id != "2_15" && <StatsDisplay stats={totalAmount} />}
 
       <BasicTable

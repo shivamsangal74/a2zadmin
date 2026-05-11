@@ -17,7 +17,8 @@ import { Popover } from "antd";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
-import { TextField } from "@mui/material";
+import { TextField, InputAdornment } from "@mui/material";
+import SearchOutlined from "@mui/icons-material/SearchOutlined";
 interface TableColumn {
   header: string;
   accessorKey: string;
@@ -47,7 +48,9 @@ const BasicTable: React.FC<BasicTableProps> = ({
   isShowSeq = false,
 }) => {
   const [sorting, setSorting] = useState([]);
-  const [columnFilter, setColumnFilter] = useState([]);
+  const [columnFilter, setColumnFilter] = useState<{ id: string; value: string }[]>(
+    []
+  );
   const [globalFilterValue, setGlobalFilterValue] = useState("");
   const [columnVisibility, setColumnVisibility] = useState(() => {
     const hasMessageCol = Array.isArray(columns)
@@ -58,13 +61,12 @@ const BasicTable: React.FC<BasicTableProps> = ({
   });
   const [pageSize, setPageSize] = useState(10); // State for page size
   const handleColumnFilterChange = (accessor: string, value: string) => {
-    setColumnFilter((prev) => {
-      //const accessorKey = prev.find((filter) => filter.id === accessor)?.value;
-
-      return prev.concat({
-        id: accessor,
-        value: value,
-      });
+    setColumnFilter((prev: { id: string; value: string }[]) => {
+      const rest = prev.filter((f) => f.id !== accessor);
+      if (value === "" || value === null || value === undefined) {
+        return rest;
+      }
+      return [...rest, { id: accessor, value }];
     });
   };
 
@@ -354,161 +356,293 @@ const BasicTable: React.FC<BasicTableProps> = ({
           )}
         </div>
       )}
-      <div className="rounded-sm border border-stroke bg-white  pt-3 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark  xl:pb-1">
-        <div className="" style={{ minHeight: "75vh" }}>
-          <div className="flex justify-between mt-3">
-            {isSeachable && (
-              <div className="">
-                <div className="m-2">
-                  <TextField
-                    size="small"
-                    name="search"
-                    label="Search"
-                    onChange={(e) => setGlobalFilterValue(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2 m-2">
+      <div
+        className={
+          isReport
+            ? "overflow-hidden rounded-xl border border-slate-200/90 bg-white pt-0 pb-2.5 shadow-md shadow-slate-200/30 dark:border-strokedark dark:bg-boxdark xl:pb-1"
+            : "rounded-sm border border-stroke bg-white pt-3 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark xl:pb-1"
+        }
+      >
+        <div className="" style={{ minHeight: isReport ? "auto" : "75vh" }}>
+          {isReport ? (
+            <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-indigo-50/25 px-3 py-3 dark:border-strokedark">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                  {isSeachable && (
+                    <TextField
+                      size="small"
+                      name="search"
+                      placeholder="Search table…"
+                      value={globalFilterValue}
+                      onChange={(e) => setGlobalFilterValue(e.target.value)}
+                      className="sm:max-w-[280px]"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchOutlined
+                              sx={{ color: "action.active", fontSize: 20 }}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                      variant="outlined"
+                    />
+                  )}
                   {isFilters &&
                     columns
-                      .filter((col) => filter.includes(col.accessorKey))
+                      .filter(
+                        (col) =>
+                          filter.includes(col.accessorKey) &&
+                          col.accessorKey !== "status"
+                      )
                       .map((column) => (
-                        <div key={column.accessorKey}>
-                          {column.accessorKey === "status" ? (
-                            <div className="flex items-center gap-3">
-                              <div key={"fnd"} className="form-check">
-                                <input
-                                  type="radio"
-                                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                                  name="statusFilter"
-                                  id={`status-${"hfghgf"}`}
-                                  value={""}
-                                  onChange={(e) =>
-                                    handleColumnFilterChange(
-                                      column.accessorKey,
-                                      ""
-                                    )
-                                  }
-                                />
-                                <label
-                                  className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                                  htmlFor={`status-${"fdf"}`}>
-                                  All
-                                </label>
-                              </div>
-                              {getUniqueValues(
-                                column.accessorKey.toLowerCase()
-                              ).map((value, index) => (
-                                <div key={index} className="flex items-center">
-                                  <input
-                                    type="radio"
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                                    name="statusFilter"
-                                    id={`status-${index}`}
-                                    value={value}
-                                    onChange={(e) =>
-                                      handleColumnFilterChange(
-                                        column.accessorKey,
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                  <label
-                                    className={`className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"}`}
-                                    htmlFor={`status-${index}`}>
-                                    {value}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            ""
-                          )}
-                        </div>
-                      ))}
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2">
-              {isFilters &&
-                columns
-                  .filter((col) => filter.includes(col.accessorKey))
-                  .map((column) => (
-                    <div key={column.accessorKey} className="mb-2">
-                      {column.accessorKey === "status" ? (
-                        ""
-                      ) : (
-                        <select
-                          onChange={(e) =>
-                            handleColumnFilterChange(
-                              column.accessorKey,
-                              e.target.value
-                            )
-                          }
-                          className="form-select">
-                          <option selected value="">
-                            Select{" "}
+                        <div
+                          key={column.accessorKey}
+                          className="min-w-[140px] flex-1 sm:min-w-[180px] sm:max-w-[240px]"
+                        >
+                          <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-bodydark">
                             {capitalizeFirstLetter(
                               column.accessorKey
                                 .replace(/([A-Z])/g, " $1")
                                 .trim()
                             )}
-                          </option>
-                          {getUniqueValues(column.accessorKey).map(
-                            (value, index) => (
-                              <option key={index} value={value}>
+                          </label>
+                          <select
+                            defaultValue=""
+                            onChange={(e) =>
+                              handleColumnFilterChange(
+                                column.accessorKey,
+                                e.target.value
+                              )
+                            }
+                            className="form-select w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 dark:border-strokedark"
+                          >
+                            <option value="">
+                              All{" "}
+                              {capitalizeFirstLetter(
+                                column.accessorKey
+                                  .replace(/([A-Z])/g, " $1")
+                                  .trim()
+                              )}
+                            </option>
+                            {getUniqueValues(column.accessorKey).map(
+                              (value, index) => (
+                                <option key={index} value={value}>
+                                  {value}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </div>
+                      ))}
+                  {isFilters &&
+                    filter.includes("status") &&
+                    columns.some((c) => c.accessorKey === "status") && (
+                      <div className="min-w-0 sm:max-w-full">
+                        <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-bodydark">
+                          Status
+                        </span>
+                        <div
+                          className="inline-flex max-w-full flex-wrap gap-1 rounded-lg bg-slate-200/70 p-1 dark:bg-meta-4"
+                          role="group"
+                          aria-label="Filter by status"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleColumnFilterChange("status", "")}
+                            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                              (columnFilter.find((f: any) => f.id === "status")
+                                ?.value ?? "") === ""
+                                ? "bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200 dark:bg-boxdark-2 dark:text-white dark:ring-strokedark"
+                                : "text-slate-600 hover:bg-white/90 dark:text-bodydark"
+                            }`}
+                          >
+                            All
+                          </button>
+                          {getUniqueValues("status").map((value, index) => {
+                            const active =
+                              (columnFilter.find((f: any) => f.id === "status")
+                                ?.value ?? "") === value;
+                            return (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() =>
+                                  handleColumnFilterChange("status", value)
+                                }
+                                className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize transition-all duration-200 ${
+                                  active
+                                    ? "bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200 dark:bg-boxdark-2 dark:text-white dark:ring-strokedark"
+                                    : "text-slate-600 hover:bg-white/90 dark:text-bodydark"
+                                }`}
+                              >
                                 {value}
-                              </option>
-                            )
-                          )}
-                        </select>
-                      )}
-                    </div>
-                  ))}
-            </div>
-            {data.length > 0 && isReport && (
-              <div className="flex justify-end gap-3 mr-3">
-                <div
-                  className="flex items-center justify-center rounded cursor-pointer"
-                  style={{
-                    backgroundColor: "green",
-                    width: "40px",
-                    height: "40px",
-                  }}>
-                  <SiMicrosoftexcel
-                    fontSize={25}
-                    color="white"
-                    onClick={() => exportExcel2(table, "report")}
-                  />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                 </div>
-                <div
-                  className="flex items-center justify-center rounded cursor-pointer"
-                  style={{
-                    backgroundColor: "#f77e17",
-                    width: "40px",
-                    height: "40px",
-                  }}
-                  onClick={() => exportExcel(table.getFilteredRowModel().rows)}>
-                  <GrDocumentCsv fontSize={25} color="white" />
-                </div>
-                <div
-                  className="flex items-center justify-center rounded cursor-pointer"
-                  style={{
-                    backgroundColor: "#1E40AF",
-                    width: "40px",
-                    height: "40px",
-                  }}>
-                  <Popover
-                    placement="leftBottom"
-                    title={
-                      "Choose which columns you want to display by default"
-                    }
-                    content={content}>
-                    <FaFilter fontSize={25} color="white" />
-                  </Popover>
-                </div>
+                {data.length > 0 && isReport && (
+                  <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-100/90 pt-3 sm:border-0 sm:pt-0">
+                    <button
+                      type="button"
+                      title="Export Excel"
+                      aria-label="Export Excel"
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md transition-all duration-200 hover:scale-105 hover:bg-emerald-700 hover:shadow-lg active:scale-95"
+                      onClick={() => exportExcel2(table, "report")}
+                    >
+                      <SiMicrosoftexcel fontSize={22} color="white" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Export CSV"
+                      aria-label="Export CSV"
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md transition-all duration-200 hover:scale-105 hover:bg-amber-600 hover:shadow-lg active:scale-95"
+                      onClick={() =>
+                        exportExcel(table.getFilteredRowModel().rows)
+                      }
+                    >
+                      <GrDocumentCsv fontSize={22} color="white" />
+                    </button>
+                    <Popover
+                      placement="leftBottom"
+                      title="Choose which columns you want to display by default"
+                      content={content}
+                    >
+                      <button
+                        type="button"
+                        title="Columns"
+                        aria-label="Column visibility"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md transition-all duration-200 hover:scale-105 hover:bg-indigo-700 hover:shadow-lg active:scale-95"
+                      >
+                        <FaFilter fontSize={22} color="white" />
+                      </button>
+                    </Popover>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="mt-3 flex justify-between">
+              {isSeachable && (
+                <div className="">
+                  <div className="m-2">
+                    <TextField
+                      size="small"
+                      name="search"
+                      label="Search"
+                      onChange={(e) => setGlobalFilterValue(e.target.value)}
+                    />
+                  </div>
+                  <div className="m-2 flex gap-2">
+                    {isFilters &&
+                      columns
+                        .filter((col) => filter.includes(col.accessorKey))
+                        .map((column) => (
+                          <div key={column.accessorKey}>
+                            {column.accessorKey === "status" ? (
+                              <div className="flex items-center gap-3">
+                                <div key={"fnd"} className="form-check">
+                                  <input
+                                    type="radio"
+                                    className="w-4 h-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-600 dark:ring-offset-gray-700 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-700"
+                                    name="statusFilter"
+                                    id={`status-${"hfghgf"}`}
+                                    value={""}
+                                    onChange={() =>
+                                      handleColumnFilterChange(
+                                        column.accessorKey,
+                                        ""
+                                      )
+                                    }
+                                  />
+                                  <label
+                                    className="ms-2 w-full py-1.5 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                    htmlFor={`status-${"fdf"}`}
+                                  >
+                                    All
+                                  </label>
+                                </div>
+                                {getUniqueValues(
+                                  column.accessorKey.toLowerCase()
+                                ).map((value, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center"
+                                  >
+                                    <input
+                                      type="radio"
+                                      className="w-4 h-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-600 dark:ring-offset-gray-700 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-700"
+                                      name="statusFilter"
+                                      id={`status-${index}`}
+                                      value={value}
+                                      onChange={(e) =>
+                                        handleColumnFilterChange(
+                                          column.accessorKey,
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                    <label
+                                      className="ms-2 w-full py-1.5 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                      htmlFor={`status-${index}`}
+                                    >
+                                      {value}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                        ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2">
+                {isFilters &&
+                  columns
+                    .filter((col) => filter.includes(col.accessorKey))
+                    .map((column) => (
+                      <div key={column.accessorKey} className="mb-2">
+                        {column.accessorKey === "status" ? (
+                          ""
+                        ) : (
+                          <select
+                            defaultValue=""
+                            onChange={(e) =>
+                              handleColumnFilterChange(
+                                column.accessorKey,
+                                e.target.value
+                              )
+                            }
+                            className="form-select"
+                          >
+                            <option value="">
+                              Select{" "}
+                              {capitalizeFirstLetter(
+                                column.accessorKey
+                                  .replace(/([A-Z])/g, " $1")
+                                  .trim()
+                              )}
+                            </option>
+                            {getUniqueValues(column.accessorKey).map(
+                              (value, index) => (
+                                <option key={index} value={value}>
+                                  {value}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        )}
+                      </div>
+                    ))}
+              </div>
+            </div>
+          )}
           <div
             className="max-w-full overflow-x-auto"
             style={{ minHeight: "64vh" }}>
@@ -517,8 +651,13 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr
                     key={headerGroup.id}
-                    className="bg-gray-2 text-left dark:bg-meta-4"
-                    style={{ backgroundColor: "#f5f5f5" }}>
+                    className={`bg-gray-2 text-left dark:bg-meta-4 ${
+                      isReport ? "shadow-sm" : ""
+                    }`}
+                    style={{
+                      backgroundColor: isReport ? "#e8eef5" : "#f5f5f5",
+                    }}
+                  >
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
@@ -559,8 +698,6 @@ const BasicTable: React.FC<BasicTableProps> = ({
                     <React.Fragment key={row.id}>
                       <tr>
                         {row.getVisibleCells().map((cell) => {
-                          console.log(row.original.status);
-
                           return (
                             <td
                               key={cell.id}
@@ -601,15 +738,16 @@ const BasicTable: React.FC<BasicTableProps> = ({
                         <tr key={`${row.id}-message`}>
                           <td
                             colSpan={row.getVisibleCells().length}
-                            className="border-b border-[#eee] py-1 px-3 dark:border-strokedark"
+                            className="border-b border-[#eee] py-1.5 px-3 dark:border-strokedark"
                             style={{
                               textAlign: "left",
-                              color: "#b71c1c",
+                              color: "#9f1239",
                               fontSize: "11px",
                               fontFamily:
                                 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
                               paddingLeft: "14px",
-                              backgroundColor: "#f5f0f1",
+                              background:
+                                "linear-gradient(90deg, #fff1f2 0%, #fff 100%)",
                             }}
                           >
                             {rowMessage}
