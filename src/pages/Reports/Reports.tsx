@@ -42,6 +42,19 @@ interface reportsProps {
   report_id: string;
 }
 
+/** Matches backend date fields: createdDate, transactionDate, DateModel filter column, created_at, etc. */
+function isReportDateColumn(
+  prop: string | undefined,
+  dateModel: string | undefined
+): boolean {
+  if (!prop) return false;
+  if (dateModel && prop === dateModel) return true;
+  const lower = prop.toLowerCase();
+  if (lower.includes("date")) return true;
+  if (/_at$/.test(lower)) return true;
+  return false;
+}
+
 const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [reportData, setReportData] = useState([]);
   const [tableData, setTableData] = useState([]);
@@ -521,7 +534,41 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   if (loading) {
     return (
       <DefaultLayout isList>
-        <Loader />
+        <div className="mx-auto mt-6 w-full max-w-6xl animate-fadeIn">
+          <div className="mb-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50 to-indigo-50 p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="h-6 w-56 animate-pulse rounded-md bg-blue-200/70" />
+                <div className="mt-2 h-4 w-80 animate-pulse rounded-md bg-slate-200/80" />
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5">
+                <span className="h-2.5 w-2.5 animate-ping rounded-full bg-blue-500" />
+                <span className="text-xs font-semibold tracking-wide text-blue-700">
+                  Loading report data...
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+                <div className="mt-3 h-8 w-36 animate-pulse rounded bg-slate-300/80" />
+                <div className="mt-2 h-3 w-28 animate-pulse rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-center py-6">
+              <Loader />
+            </div>
+          </div>
+        </div>
       </DefaultLayout>
     );
   }
@@ -529,44 +576,46 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     switch (status.toLowerCase()) {
       case "success":
         return (
-          <div className="flex items-center gap-2 text-green-600">
+          <div className="flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-green-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <CheckCircle />
-            <span>Success</span>
+            <span className="font-semibold tracking-wide">Success</span>
           </div>
         );
       case "pending":
         return (
-          <div className="flex items-center gap-2 text-yellow-500">
+          <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <HourglassEmpty />
-            <span>Pending</span>
+            <span className="font-semibold tracking-wide">Pending</span>
           </div>
         );
       case "failed":
+      case "fail":
+      case "failure":
         return (
-          <div className="flex items-center gap-2 text-red-600">
+          <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <Error />
-            <span>Failed</span>
+            <span className="font-semibold tracking-wide">Failed</span>
           </div>
         );
       case "reverse":
         return (
-          <div className="flex items-center gap-2 text-blue-600">
+          <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <Refresh />
-            <span>Reverse</span>
+            <span className="font-semibold tracking-wide">Reverse</span>
           </div>
         );
       case "transfer":
         return (
-          <div className="flex items-center gap-2 text-green-600">
+          <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <TransferWithinAStation />
-            <span>Transfer</span>
+            <span className="font-semibold tracking-wide">Transfer</span>
           </div>
         );
       default:
         return (
-          <div className="flex items-center gap-2 text-pink-500">
+          <div className="flex items-center gap-2 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-fuchsia-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <Loyalty />
-            <span>{status}</span>
+            <span className="font-semibold tracking-wide">{status}</span>
           </div>
         );
     }
@@ -615,13 +664,49 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           );
         };
       }
-      if (col.prop == "createdDate") {
-
+      if (report_id === "2_4" && col.prop?.toLowerCase() === "operatorimage") {
+        columnConfig.size = 160;
+        columnConfig.cell = (info) => {
+          const row = info.row.original;
+          const operatorImage =
+            row?.operatorImage ?? row?.OperatorImage;
+          const label = info.getValue();
+          return (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {operatorImage ? (
+                <img
+                  crossOrigin="anonymous"
+                  height={36}
+                  width={36}
+                  src={`${operatorImage}`}
+                  alt=""
+                />
+              ) : (
+                <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>—</span>
+              )}      
+            </div>
+          );
+        };
+      }
+      if (
+        isReportDateColumn(col.prop, reportData?.Report?.DateModel)
+      ) {
         columnConfig.size = 180;
         columnConfig.cell = (info) => (
           <div
             style={{
               textAlign: "center",
+              fontSize: "0.84rem",
+              fontWeight: 600,
+              letterSpacing: "0.2px",
+              color: "#0369a1",
             }}
           >
             <div>{formatDateString(info.getValue())}</div>
@@ -669,6 +754,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           <div
             style={{
               textAlign: "center",
+              fontSize: "0.84rem",
+              fontWeight: 500,
+              color: "#334155",
             }}
           >
             {info.getValue()}
@@ -711,7 +799,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                 gap: "6px",
               }}
             >
-              <span style={{ fontSize: "0.8rem" }}>{value}</span>
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                  letterSpacing: "0.3px",
+                  color: "#0f172a",
+                  fontWeight: 600,
+                }}
+              >
+                {value}
+              </span>
               <span
                 onClick={handleCopy}
                 title={copied ? "Copied" : "Copy"}
@@ -792,8 +890,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   <span
                     style={{
                       fontSize: "0.85rem",
-                      // color: "#111827",
-                      fontWeight: 500,
+                      color: "#334155",
+                      fontWeight: 600,
                     }}
                   >
                     {primary}
@@ -828,7 +926,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   <span
                     style={{
                       fontSize: "0.75rem",
-                      color: "#d1d5db", // lighter gray (Tailwind gray-300)
+                      color: "#aaafb5", // lighter gray (Tailwind gray-300)
                     }}
                   >
                     {secondary}
@@ -985,7 +1083,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   {popupMode === "UPI" && (
                     <div className="mt-2 mb-4">
                       <Typography variant="body1" className="mb-2">
-                        Status: <span className={`font-semibold ${selectedStatus === "Success" ? "text-green-600" : "text-red-600"}`}>{selectedStatus}</span>
+                        Status: <span className={`font-semibold ${selectedStatus === "Success" ? "" : ""}`}>{selectedStatus}</span>
                       </Typography>
                     </div>
                   )}
@@ -1228,19 +1326,46 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         );
       }
 
+      if (col.prop == "mobile") {
+        columnConfig.size = 120;
+        columnConfig.cell = (info) => (
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: "0.84rem",
+              fontWeight: 600,
+              fontFamily:
+              'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+              color: "#16163a",
+              letterSpacing: "0.2px",
+            }}
+          >
+            {info.getValue()}
+          </div>
+        );
+      }
+
       if (
         col.prop == "OpName" ||
         col.prop == "amount" ||
-        col.prop == "gst" ||
-        col.prop == "tds" ||
-        col.prop == "apiBal" ||
-        col.prop == "reportType"
+        col.prop == "apiBalance" 
       ) {
         columnConfig.size = 100;
         columnConfig.cell = (info) => (
           <div
             style={{
               textAlign: "center",
+              fontSize:
+                col.prop === "amount"  ? "0.86rem" : "0.84rem",
+              fontWeight:
+                col.prop === "amount"  ? 700 : 600,
+              fontFamily:
+                'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+              color:
+                col.prop === "amount"
+                  ? "#0369a1"
+                  : "#009966",
+              letterSpacing: "0.2px",
             }}
           >
             {info.getValue()}
@@ -1418,29 +1543,41 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   return (
     <DefaultLayout isList>
-      <div className="flex-1">
-        <h1 className="text-dark-400">{reportData?.Report?.ReportName}</h1>
-      </div>
-      <div className="flex gap-5 w-full justify-between items-center mt-4 mb-2">
-        <div className="flex gap-5 flex-wrap" style={{ flex: 2 }}>
+      <div className="mb-2 rounded-xl border border-slate-200/90 bg-gradient-to-r from-white via-slate-50 to-blue-50 px-3 py-2 shadow-sm ring-1 ring-slate-100/70 transition-shadow duration-300 hover:shadow-md dark:border-slate-700 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 dark:ring-slate-800/80">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h1 className="max-w-full basis-full text-sm font-semibold leading-tight tracking-tight text-slate-900 sm:basis-auto sm:max-w-[11rem] md:max-w-[14rem] sm:truncate sm:shrink-0 dark:text-slate-100">
+            {reportData?.Report?.ReportName}
+          </h1>
           <ButtonLabel
+            style={{
+              height: "32px",
+              minHeight: "32px",
+              minWidth: "4.5rem",
+              padding: "0 10px",
+              fontSize: "12px",
+            }}
             label="Row"
             onClick={async () => {
               if (!tableData || tableData.length === 0) {
-                toast.warn('No row found');
+                toast.warn("No row found");
                 return;
               }
               const tranxId = tableData[0];
 
-              if (window.confirm('Are you sure you want to perform this action for the first row?')) {
+              if (
+                window.confirm(
+                  "Are you sure you want to perform this action for the first row?"
+                )
+              ) {
                 await deleteFirstRow(tranxId.TraxId);
               }
             }}
           />
           {report_id != "2_15" && (
-            <div className="mb-2">
+            <div className="min-w-[min(100%,200px)] flex-1 sm:max-w-sm sm:flex-initial">
               <RangePicker
-                style={{ height: "45px" }}
+                size="small"
+                style={{ width: "100%" }}
                 presets={[
                   {
                     label: (
@@ -1462,9 +1599,10 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             </div>
           )}
           {report_id == "2_15" && (
-            <div>
+            <div className="min-w-[140px] max-w-[200px]">
               <DatePicker
-                style={{ height: "45px" }}
+                size="small"
+                style={{ width: "100%" }}
                 onChange={(val) => {
                   if (val) {
                     onChangeMonth(DateModel, val);
@@ -1475,74 +1613,97 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               />
             </div>
           )}
-          {filterableColumns.map((filterName, index) => (
-            <div
-              key={filterName}
-              className="mb-2"
-              style={{ width: filterName.includes("userId") ? "35%" : "18%" }}
-            >
-              {filterName == "tm.paymentType" || filterName == "tm.status" ? (
-                <DropDownCheakBox
-                  label={filterableDisplayColumns[index]}
-                  place2={filterName}
-                  drop={index}
-                  isLoading={false}
-                  isFilter={true}
-                  options={[...dropdownValues[index]]}
-                  value={finalMultipleValue(index)}
-                  onChange={handleMultiFilterChange}
+          <div className="ml-auto shrink-0">
+            <ButtonLabel
+              style={{
+                height: "32px",
+                minHeight: "32px",
+                minWidth: "5.5rem",
+                padding: "0 12px",
+                fontSize: "12px",
+              }}
+              label="Get Data"
+              onClick={handleGetReportData}
+            />
+          </div>
+        </div>
+
+        {(filterableColumns.length > 0 ||
+          _search ||
+          report_id == "2_10" ||
+          report_id == "2_17") && (
+          <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-lg border border-slate-200/80 bg-white/85 p-2 md:grid-cols-4 xl:grid-cols-6 dark:border-slate-700 dark:bg-slate-900/60">
+            {filterableColumns.map((filterName, index) => (
+              <div
+                key={filterName}
+                className={`min-w-0 ${
+                  filterName.includes("userId")
+                    ? "col-span-2 md:col-span-2"
+                    : ""
+                }`}
+              >
+                {filterName == "tm.paymentType" ||
+                filterName == "tm.status" ? (
+                  <DropDownCheakBox
+                    label={filterableDisplayColumns[index]}
+                    place2={filterName}
+                    drop={index}
+                    isLoading={false}
+                    isFilter={true}
+                    options={[...dropdownValues[index]]}
+                    value={finalMultipleValue(index)}
+                    onChange={handleMultiFilterChange}
+                  />
+                ) : (
+                  <DropSearch
+                    value={finalValue(index) || ""}
+                    place2={filterName}
+                    onchange={handleFilterChange}
+                    placeholder={filterableDisplayColumns[index]}
+                    drop={index}
+                    options={[...dropdownValues[index]]}
+                    error={""}
+                    isFilter={true}
+                  />
+                )}
+              </div>
+            ))}
+
+            {_search && (
+              <div className="col-span-2 min-w-0 md:col-span-2 xl:col-span-2">
+                <TextInput
+                  value={searchCondition}
+                  label={"Search"}
+                  name={"Search"}
+                  onChange={setSearchCondition}
+                  isModel={false}
                 />
-              ) : (
+              </div>
+            )}
+            {(report_id == "2_10" || report_id == "2_17") && (
+              <div className="col-span-2 min-w-0 md:col-span-4 xl:col-span-3">
                 <DropSearch
-                  value={finalValue(index) || ""}
-                  place2={filterName}
-                  onchange={handleFilterChange}
-                  placeholder={filterableDisplayColumns[index]}
-                  drop={index}
-                  options={[...dropdownValues[index]]}
+                  value={JSON.stringify(timeRange) || ""}
+                  place2={"timeRange"}
+                  onchange={(name: any, value: any) => {
+                    setTimeange(JSON.parse(value));
+                  }}
+                  placeholder={"Select TimeRange"}
+                  options={timeOptions.map((opt) => ({
+                    showvalue: opt.showvalue,
+                    value: JSON.stringify(opt.value),
+                  }))}
                   error={""}
                   isFilter={true}
                 />
-              )}
-            </div>
-          ))}
-
-          {_search && (
-            <div className="mb-2">
-              <TextInput
-                value={searchCondition}
-                label={"Search"}
-                name={"Search"}
-                onChange={setSearchCondition}
-                isModel={false}
-              />
-            </div>
-          )}
-          {(report_id == "2_10" || report_id == "2_17") && (
-            <div style={{ width: "35%" }}>
-              <DropSearch
-                value={JSON.stringify(timeRange) || ""}
-                place2={"timeRange"}
-                onchange={(name: any, value: any) => {
-                  setTimeange(JSON.parse(value));
-                }}
-                placeholder={"Select TimeRange"}
-                options={timeOptions.map((opt) => ({
-                  showvalue: opt.showvalue,
-                  value: JSON.stringify(opt.value), // serialize for transport
-                }))}
-                error={""}
-                isFilter={true}
-              />
-            </div>
-          )}
-          <ButtonLabel label="Get Data" onClick={handleGetReportData} />
-
-
-        </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {report_id != "2_15" && <StatsDisplay stats={totalAmount} />}
+
 
       <BasicTable
         data={tableData}
