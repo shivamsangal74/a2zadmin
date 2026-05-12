@@ -53,11 +53,11 @@ const StatsDisplay = ({ stats }) => {
   ];
 
   return (
-    <div className="mb-2 rounded-lg border border-slate-200/90 bg-white p-2 shadow-sm ring-1 ring-slate-100/50">
+    <div className="mb-2 rounded-xl border border-slate-200/90 bg-gradient-to-r from-white via-slate-50 to-blue-50 p-2.5 shadow-sm ring-1 ring-slate-100/70 dark:border-slate-700 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 dark:ring-slate-800/80">
       {stats && (
         <>
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Transaction summary
             </h2>
           </div>
@@ -68,7 +68,7 @@ const StatsDisplay = ({ stats }) => {
               return (
               <div
                 key={card.key}
-                className={`group relative overflow-hidden rounded-lg border border-slate-100/90 pl-1 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md ${card.accent} border-l-[3px] ${card.cardClass}`}
+                className={`group relative overflow-hidden rounded-lg border border-slate-200/90 pl-1 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 ${card.accent} border-l-[3px] ${card.cardClass}`}
               >
                 <div className="flex items-start justify-between gap-2 px-2 pb-1 pt-1.5">
                   <div className="flex min-w-0 items-center gap-2">

@@ -659,7 +659,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               fontSize: "0.84rem",
               fontWeight: 600,
               letterSpacing: "0.2px",
-              color: "#334155",
+              color: "#0369a1",
             }}
           >
             <div>{formatDateString(info.getValue())}</div>
@@ -709,7 +709,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               textAlign: "center",
               fontSize: "0.84rem",
               fontWeight: 500,
-              color: "#1e293b",
+              color: "#334155",
             }}
           >
             {info.getValue()}
@@ -843,8 +843,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   <span
                     style={{
                       fontSize: "0.85rem",
-                      // color: "#111827",
-                      fontWeight: 500,
+                      color: "#334155",
+                      fontWeight: 600,
                     }}
                   >
                     {primary}
@@ -879,7 +879,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   <span
                     style={{
                       fontSize: "0.75rem",
-                      color: "#d1d5db", // lighter gray (Tailwind gray-300)
+                      color: "#aaafb5", // lighter gray (Tailwind gray-300)
                     }}
                   >
                     {secondary}
@@ -1036,7 +1036,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   {popupMode === "UPI" && (
                     <div className="mt-2 mb-4">
                       <Typography variant="body1" className="mb-2">
-                        Status: <span className={`font-semibold ${selectedStatus === "Success" ? "text-green-600" : "text-red-600"}`}>{selectedStatus}</span>
+                        Status: <span className={`font-semibold ${selectedStatus === "Success" ? "" : ""}`}>{selectedStatus}</span>
                       </Typography>
                     </div>
                   )}
@@ -1287,7 +1287,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               textAlign: "center",
               fontSize: "0.84rem",
               fontWeight: 600,
-              fontFamily: "Geist Mono, Geist Mono Fallback, monospace",
+              fontFamily:
+              'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
               color: "#16163a",
               letterSpacing: "0.2px",
             }}
@@ -1300,10 +1301,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       if (
         col.prop == "OpName" ||
         col.prop == "amount" ||
-        col.prop == "gst" ||
-        col.prop == "tds" ||
-        col.prop == "apiBalance" ||
-        col.prop == "reportType"
+        col.prop == "apiBalance" 
       ) {
         columnConfig.size = 100;
         columnConfig.cell = (info) => (
@@ -1311,14 +1309,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             style={{
               textAlign: "center",
               fontSize:
-                col.prop === "amount" || col.prop === "apiBal" ? "0.86rem" : "0.84rem",
+                col.prop === "amount"  ? "0.86rem" : "0.84rem",
               fontWeight:
-                col.prop === "amount" || col.prop === "apiBal" ? 700 : 600,
+                col.prop === "amount"  ? 700 : 600,
               fontFamily:
                 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
               color:
-                col.prop === "amount" || col.prop === "apiBal"
-                  ? "#0f766e"
+                col.prop === "amount"
+                  ? "#0369a1"
                   : "#009966",
               letterSpacing: "0.2px",
             }}
@@ -1498,9 +1496,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   return (
     <DefaultLayout isList>
-      <div className="mb-2 rounded-md border border-slate-200/90 bg-white px-2 py-1 shadow-sm ring-1 ring-slate-100/40 transition-shadow duration-300 hover:shadow-md">
+      <div className="mb-2 rounded-xl border border-slate-200/90 bg-gradient-to-r from-white via-slate-50 to-blue-50 px-3 py-2 shadow-sm ring-1 ring-slate-100/70 transition-shadow duration-300 hover:shadow-md dark:border-slate-700 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 dark:ring-slate-800/80">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h1 className="max-w-full basis-full text-sm font-semibold leading-tight tracking-tight text-slate-800 sm:basis-auto sm:max-w-[11rem] md:max-w-[14rem] sm:truncate sm:shrink-0">
+          <h1 className="max-w-full basis-full text-sm font-semibold leading-tight tracking-tight text-slate-900 sm:basis-auto sm:max-w-[11rem] md:max-w-[14rem] sm:truncate sm:shrink-0 dark:text-slate-100">
             {reportData?.Report?.ReportName}
           </h1>
           <ButtonLabel
@@ -1587,7 +1585,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           _search ||
           report_id == "2_10" ||
           report_id == "2_17") && (
-          <div className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1.5 border-t border-slate-100 pt-1.5 md:grid-cols-4 xl:grid-cols-6">
+          <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-lg border border-slate-200/80 bg-white/85 p-2 md:grid-cols-4 xl:grid-cols-6 dark:border-slate-700 dark:bg-slate-900/60">
             {filterableColumns.map((filterName, index) => (
               <div
                 key={filterName}

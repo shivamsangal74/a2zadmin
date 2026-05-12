@@ -359,13 +359,13 @@ const BasicTable: React.FC<BasicTableProps> = ({
       <div
         className={
           isReport
-            ? "overflow-hidden rounded-xl border border-slate-200/90 bg-white pt-0 pb-2.5 shadow-md shadow-slate-200/30 dark:border-strokedark dark:bg-boxdark xl:pb-1"
+            ? "overflow-hidden rounded-xl border border-slate-200/90 bg-white pt-0 pb-2.5 shadow-md shadow-slate-200/30 ring-1 ring-slate-100/70 dark:border-slate-700 dark:bg-slate-900 dark:ring-slate-800/80 xl:pb-1"
             : "rounded-sm border border-stroke bg-white pt-3 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark xl:pb-1"
         }
       >
         <div className="" style={{ minHeight: isReport ? "auto" : "75vh" }}>
           {isReport ? (
-            <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-indigo-50/25 px-3 py-3 dark:border-strokedark">
+            <div className="border-b border-slate-200/80 bg-gradient-to-r from-white via-slate-50 to-blue-50 px-3 py-3 dark:border-slate-700 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                 <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                   {isSeachable && (
@@ -375,7 +375,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                       placeholder="Search table…"
                       value={globalFilterValue}
                       onChange={(e) => setGlobalFilterValue(e.target.value)}
-                      className="sm:max-w-[280px]"
+                      className="sm:max-w-[300px]"
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -415,7 +415,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                                 e.target.value
                               )
                             }
-                            className="form-select w-full rounded-lg border-slate-200 text-sm shadow-sm focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 dark:border-strokedark"
+                            className="form-select w-full rounded-lg border-slate-300 bg-white text-sm shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                           >
                             <option value="">
                               All{" "}
@@ -443,7 +443,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                           Status
                         </span>
                         <div
-                          className="inline-flex max-w-full flex-wrap gap-1 rounded-lg bg-slate-200/70 p-1 dark:bg-meta-4"
+                          className="inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 dark:border-slate-700 dark:bg-slate-800"
                           role="group"
                           aria-label="Filter by status"
                         >
@@ -485,7 +485,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                     )}
                 </div>
                 {data.length > 0 && isReport && (
-                  <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-100/90 pt-3 sm:border-0 sm:pt-0">
+                  <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-100/90 pt-3 dark:border-slate-700 sm:border-0 sm:pt-0">
                     <button
                       type="button"
                       title="Export Excel"
@@ -646,17 +646,16 @@ const BasicTable: React.FC<BasicTableProps> = ({
           <div
             className="max-w-full overflow-x-auto"
             style={{ minHeight: "64vh" }}>
-            <table className="w-full table-auto mt-2">
+            <table className="mt-2 w-full table-auto">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr
                     key={headerGroup.id}
-                    className={`bg-gray-2 text-left dark:bg-meta-4 ${
-                      isReport ? "shadow-sm" : ""
+                    className={`text-left ${
+                      isReport
+                        ? "bg-slate-100 shadow-sm dark:bg-slate-800"
+                        : "bg-slate-50 dark:bg-slate-800"
                     }`}
-                    style={{
-                      backgroundColor: isReport ? "#e8eef5" : "#f5f5f5",
-                    }}
                   >
                     {headerGroup.headers.map((header) => (
                       <th
@@ -668,7 +667,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                           padding: "10px 20px",
                           textWrap: "nowrap",
                         }}
-                        className="py-4 px-4 font-large text-black dark:text-white">
+                        className="px-4 py-4 font-large text-slate-900 dark:text-white">
                         <div className="flex items-center justify-center gap-2">
                           {flexRender(
                             header.column.columnDef.header,
@@ -724,7 +723,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                                     : ""
                                 }`,
                               }}
-                              className={`border-b border-[#eee] py-1 px-3 dark:border-strokedark `}>
+                              className={`border-b border-slate-200/80 bg-white py-1 px-3 dark:border-slate-700 dark:bg-slate-900 `}>
                               {flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()
@@ -738,7 +737,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                         <tr key={`${row.id}-message`}>
                           <td
                             colSpan={row.getVisibleCells().length}
-                            className="border-b border-[#eee] py-1.5 px-3 dark:border-strokedark"
+                            className="border-b border-[#eee] py-1.5 px-3 dark:border-slate-700"
                             style={{
                               textAlign: "left",
                               color: "#9f1239",
