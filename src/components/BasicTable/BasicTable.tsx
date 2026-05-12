@@ -19,6 +19,11 @@ import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import { TextField, InputAdornment } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
+
+/** Matches report amount / OpName / apiBalance column styling in Reports.tsx */
+const REPORT_TABLE_FONT_FAMILY =
+  'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+
 interface TableColumn {
   header: string;
   accessorKey: string;
@@ -646,7 +651,11 @@ const BasicTable: React.FC<BasicTableProps> = ({
           <div
             className="max-w-full overflow-x-auto"
             style={{ minHeight: "64vh" }}>
-            <table className="mt-2 w-full table-auto">
+            <table
+              className="mt-2 w-full table-auto"
+              style={
+                isReport ? { fontFamily: REPORT_TABLE_FONT_FAMILY } : undefined
+              }>
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr
@@ -667,7 +676,11 @@ const BasicTable: React.FC<BasicTableProps> = ({
                           padding: "10px 20px",
                           textWrap: "nowrap",
                         }}
-                        className="px-4 py-4 font-large text-slate-900 dark:text-white">
+                        className={
+                          isReport
+                            ? "px-4 py-4 text-center text-[0.8rem] font-semibold text-slate-800 dark:text-slate-100"
+                            : "px-4 py-4 font-large text-center text-slate-900 dark:text-white"
+                        }>
                         <div className="flex items-center justify-center gap-2">
                           {flexRender(
                             header.column.columnDef.header,
@@ -704,26 +717,12 @@ const BasicTable: React.FC<BasicTableProps> = ({
                                 minWidth: cell.column.getSize(),
                                 fontSize: "0.8rem",
                                 textAlign: "center",
-                                color: `${
-                                  row?.original?.status
-                                    ?.toString()
-                                    ?.toLowerCase() == "success" &&
-                                  report_id != "1_3"
-                                    ? "green"
-                                    : row?.original?.status
-                                        ?.toString()
-                                        ?.toLowerCase() == "failed" &&
-                                      report_id != "1_3"
-                                    ? "red"
-                                    : row?.original?.status
-                                        ?.toString()
-                                        ?.toLowerCase() == "pending" &&
-                                      report_id != "1_3"
-                                    ? "orange"
-                                    : ""
-                                }`,
                               }}
-                              className={`border-b border-slate-200/80 bg-white py-1 px-3 dark:border-slate-700 dark:bg-slate-900 `}>
+                              className={`border-b border-slate-200/80 bg-white py-1 px-3 dark:border-slate-700 ${
+                                isReport
+                                  ? "dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                                  : "dark:bg-slate-900 text-black dark:text-white"
+                              }`}>
                               {flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()
@@ -737,16 +736,13 @@ const BasicTable: React.FC<BasicTableProps> = ({
                         <tr key={`${row.id}-message`}>
                           <td
                             colSpan={row.getVisibleCells().length}
-                            className="border-b border-[#eee] py-1.5 px-3 dark:border-slate-700"
+                            className="border-b border-[#eee] bg-gradient-to-r from-rose-50/90 to-white py-1.5 px-3 text-rose-950 dark:border-slate-700 dark:from-rose-950/40 dark:to-slate-900 dark:text-rose-100"
                             style={{
                               textAlign: "left",
-                              color: "#9f1239",
                               fontSize: "11px",
                               fontFamily:
                                 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
                               paddingLeft: "14px",
-                              background:
-                                "linear-gradient(90deg, #fff1f2 0%, #fff 100%)",
                             }}
                           >
                             {rowMessage}

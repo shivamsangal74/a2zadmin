@@ -42,6 +42,19 @@ interface reportsProps {
   report_id: string;
 }
 
+/** Matches backend date fields: createdDate, transactionDate, DateModel filter column, created_at, etc. */
+function isReportDateColumn(
+  prop: string | undefined,
+  dateModel: string | undefined
+): boolean {
+  if (!prop) return false;
+  if (dateModel && prop === dateModel) return true;
+  const lower = prop.toLowerCase();
+  if (lower.includes("date")) return true;
+  if (/_at$/.test(lower)) return true;
+  return false;
+}
+
 const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [reportData, setReportData] = useState([]);
   const [tableData, setTableData] = useState([]);
@@ -576,6 +589,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           </div>
         );
       case "failed":
+      case "fail":
+      case "failure":
         return (
           <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
             <Error />
@@ -649,8 +664,40 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           );
         };
       }
-      if (col.prop == "createdDate") {
-
+      if (report_id === "2_4" && col.prop?.toLowerCase() === "operatorimage") {
+        columnConfig.size = 160;
+        columnConfig.cell = (info) => {
+          const row = info.row.original;
+          const operatorImage =
+            row?.operatorImage ?? row?.OperatorImage;
+          const label = info.getValue();
+          return (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {operatorImage ? (
+                <img
+                  crossOrigin="anonymous"
+                  height={36}
+                  width={36}
+                  src={`${operatorImage}`}
+                  alt=""
+                />
+              ) : (
+                <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>—</span>
+              )}      
+            </div>
+          );
+        };
+      }
+      if (
+        isReportDateColumn(col.prop, reportData?.Report?.DateModel)
+      ) {
         columnConfig.size = 180;
         columnConfig.cell = (info) => (
           <div

@@ -22,7 +22,41 @@ interface ReportData {
   Report: {
     DisplayColumns: ReportColumn[];
     ReportName: string;
+    DateModel?: string;
   };
+}
+
+function isReportDateColumn(
+  prop: string | undefined,
+  dateModel: string | undefined
+): boolean {
+  if (!prop) return false;
+  if (dateModel && prop === dateModel) return true;
+  const lower = prop.toLowerCase();
+  if (lower.includes("date")) return true;
+  if (/_at$/.test(lower)) return true;
+  return false;
+}
+
+function formatReportDateDisplay(dateString: any, report_id: string) {
+  if (report_id == "1_3") {
+    return dateString;
+  }
+  const date = new Date(dateString);
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = months[date.getMonth()];
+  const year = String(date.getFullYear()).slice(2);
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  const formattedHours = String(hours).padStart(2, "0");
+  return `${day} ${month} ${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
 }
 
 interface TableData {
@@ -177,6 +211,18 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
           <span className="font-semibold tracking-wide">Failed</span>
         </div>
       ),
+      Fail: (
+        <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
+          <Error />
+          <span className="font-semibold tracking-wide">Failed</span>
+        </div>
+      ),
+      FAILURE: (
+        <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
+          <Error />
+          <span className="font-semibold tracking-wide">Failed</span>
+        </div>
+      ),
       Reverse: (
         <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
           <Refresh />
@@ -207,10 +253,46 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
         accessorKey: col.prop,
       };
 
-      if (col.prop === "createdDate") {
+      if (report_id === "2_4" && col.prop?.toLowerCase() === "operatorimage") {
         return {
           ...baseConfig,
-          size: 120,
+          size: 160,
+          cell: (info: any) => {
+            const row = info.row.original;
+            const operatorImage =
+              row?.operatorImage ?? row?.OperatorImage;
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                {operatorImage ? (
+                  <img
+                    crossOrigin="anonymous"
+                    height={36}
+                    width={36}
+                    src={`${operatorImage}`}
+                    alt=""
+                  />
+                ) : (
+                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                    —
+                  </span>
+                )}
+              </div>
+            );
+          },
+        };
+      }
+
+      if (isReportDateColumn(col.prop, reportData.Report.DateModel)) {
+        return {
+          ...baseConfig,
+          size: 180,
           cell: (info: any) => (
             <div
               style={{
@@ -218,10 +300,10 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
                 fontSize: "0.84rem",
                 fontWeight: 600,
                 letterSpacing: "0.2px",
-                color: "#334155",
+                color: "#0369a1",
               }}
             >
-              {info.getValue()}
+              {formatReportDateDisplay(info.getValue(), report_id)}
             </div>
           ),
         };
@@ -506,7 +588,7 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
 
       return baseConfig;
     });
-  }, [reportData]);
+  }, [reportData, report_id]);
 
   
   function calculateStatusAndAmountTotals(dataArray: any) {
