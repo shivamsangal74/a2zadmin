@@ -651,7 +651,20 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         accessorKey: col.prop,
         size: 190,
       };
-      if (report_id === "2_4" && col.prop === "logs") {
+      if (report_id === "2_4"  && col.prop === "logs") {
+        columnConfig.size = 100;
+        columnConfig.cell = (info) => {
+          const value = info.getValue();
+          return (
+            <div style={{ textAlign: "center" }}>
+              <IconButton onClick={() => handleOpenEyePopup(value, "logs")}>
+                <BsEye size={20} />
+              </IconButton>
+            </div>
+          );
+        };
+      }
+      if (report_id === "2_14"  && col.prop === "logs") {
         columnConfig.size = 100;
         columnConfig.cell = (info) => {
           const value = info.getValue();

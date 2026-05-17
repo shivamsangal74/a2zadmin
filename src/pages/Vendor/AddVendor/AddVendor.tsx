@@ -81,6 +81,7 @@ const AddVendor = () => {
   const [loading, setLoading] = useState(false);
   const [value1, setValue] = useState(0);
   const [deletId, setDeleteId] = useState("");
+  const [opCode, setOpCode] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [fileName, setFileName] = useState("");
   const [gstDoc, setGstDoc] = useState<File | null>(null);
@@ -222,8 +223,9 @@ const AddVendor = () => {
     setCashAmounts(cashAmounts);
   };
 
-  async function openDeleteModal(id: string) {
+  async function openDeleteModal(id: string,opCode1: string) {
     setDeleteId(id);
+    setOpCode(opCode1)
     setShowModal(true);
   }
   async function handleStockPayment() {
@@ -306,6 +308,10 @@ const AddVendor = () => {
       accessorKey: "operator",
     },
     {
+      header: "OperatorCode",
+      accessorKey: "operatorCode",
+    },
+    {
       header: "Vendor",
       accessorKey: "vendor",
     },
@@ -321,7 +327,7 @@ const AddVendor = () => {
             <BsTrash
               fontSize={18}
               color="red"
-              onClick={() => openDeleteModal(row.row.original.lappuId)}
+              onClick={() => openDeleteModal(row.row.original.lappuId,row.row.original.operatorCode)}
             />
           </div>
           {showModal && (
@@ -335,7 +341,7 @@ const AddVendor = () => {
                     className="px-4 py-2 mr-2 bg-red-500 text-white rounded"
                     onClick={() => {
                       setShowModal(false);
-                      deleteLappu(deletId);
+                      deleteLappu(deletId,opCode);
                     }}
                   >
                     Delete
@@ -595,9 +601,9 @@ const AddVendor = () => {
     setOpenGstInfo(true);
   };
 
-  const deleteLappu = async (lappuId: any) => {
+  const deleteLappu = async (lappuId: any,opertorCode: any ) => {
     try {
-      await deleteLappuId(lappuId);
+      await deleteLappuId(lappuId,opertorCode);
       toast.success("Lappu deleted successfully.");
       refetch();
     } catch (e) {
