@@ -104,10 +104,10 @@ export const getLappu = async () => {
   }
 };
 
-export const deleteLappuId = async (lappuId: any) => {
+export const deleteLappuId = async (lappuId: any,opertorCode:any) => {
   try {
     const response = await api.delete(
-      `${apiUrl}/vendor/lappu/${lappuId}`, // Include lappuId in the URL
+      `${apiUrl}/vendor/lappu/${lappuId}?opertorCode=${opertorCode}`, // Include lappuId and opertorCode in the URL 
       {
         withCredentials: true,
       }
