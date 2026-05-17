@@ -1678,80 +1678,99 @@ const AddVendor = () => {
         isOpen={openInputLapu}
         onClose={() => setOpenInputLapu(false)}
         title="Add Amount in Lapu Numbers"
+        width="xxl"
       >
-        <table style={{ borderCollapse: "collapse", width: "100%" }}>
-          <thead>
-            <tr>
-              <th style={{ border: "1px solid black", padding: "8px" }}>
-                Lappu ID
-              </th>
-              <th style={{ border: "1px solid black", padding: "8px" }}>
-                Lappu Name
-              </th>
-              <th style={{ border: "1px solid black", padding: "8px" }}>
-                Operator
-              </th>
-              <th style={{ border: "1px solid black", padding: "8px" }}>
-                Amount
-              </th>
-              <th style={{ border: "1px solid black", padding: "8px" }}>
-                Refrence No
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {userLapus.map((lapu, index) => (
-              <tr key={lapu.lappuId}>
-                <td style={{ border: "1px solid black", padding: "8px" }}>
-                  {lapu.lappuId}
-                </td>
-                <td style={{ border: "1px solid black", padding: "8px" }}>
-                  {lapu.lappuName}
-                </td>
-                <td style={{ border: "1px solid black", padding: "8px" }}>
-                  {lapu.operator}
-                </td>
-                <td style={{ border: "1px solid black", padding: "8px" }}>
-                  <input
-                    type="number"
-                    name="amount"
-                    placeholder="Amount"
-                    value={lapu.amount || ""}
-                    onChange={(event) => handleLappuChange(index, event)}
-                    style={{ width: "100%", border: "1px solid black" }}
-                  />
-                </td>
-                <td
-                  style={{
-                    border: "1px solid black",
-                    padding: "8px",
-                  }}
-                >
-                  <input
-                    type="text"
-                    name="RefrenceNo"
-                    placeholder="RefrenceNo"
-                    value={lapu.RefrenceNo || ""}
-                    onChange={(event) => handleLappuChange(index, event)}
-                    style={{ width: "100%", border: "1px solid black" }}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <Button
-          size="large"
-          style={{
-            marginTop: "1rem",
-            padding: "0.5rem 1rem",
-          }}
-          onClick={handleLappuSubmit}
-          type="submit"
-          variant="outlined"
-        >
-          Submit
-        </Button>
+        <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4">
+          <p className="text-sm text-slate-600">
+            Enter amount and reference for each lapu ({userLapus.length}{" "}
+            {userLapus.length === 1 ? "row" : "rows"}).
+          </p>
+
+          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50/50">
+            <div className="max-h-[min(52vh,420px)] overflow-auto">
+              <table className="w-full min-w-[640px] table-auto border-collapse text-sm">
+                <thead className="sticky top-0 z-10 bg-slate-100 shadow-sm">
+                  <tr>
+                    <th className="whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Lapu ID
+                    </th>
+                    <th className="whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Lapu Name
+                    </th>
+                    <th className="whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Operator
+                    </th>
+                    <th className="min-w-[120px] whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Amount
+                    </th>
+                    <th className="min-w-[140px] whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Reference No
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userLapus.map((lapu, index) => (
+                    <tr
+                      key={lapu.lappuId}
+                      className="border-b border-slate-200/80 bg-white even:bg-slate-50/40"
+                    >
+                      <td className="whitespace-nowrap px-3 py-2.5 font-medium text-slate-900">
+                        {lapu.lappuId}
+                      </td>
+                      <td className="max-w-[160px] truncate px-3 py-2.5 text-slate-800" title={lapu.lappuName}>
+                        {lapu.lappuName}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-slate-700">
+                        {lapu.operator}
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          name="amount"
+                          placeholder="0.00"
+                          min="0"
+                          step="any"
+                          value={lapu.amount || ""}
+                          onChange={(event) => handleLappuChange(index, event)}
+                          className="w-full min-w-[100px] rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          name="RefrenceNo"
+                          placeholder="Reference"
+                          value={lapu.RefrenceNo || ""}
+                          onChange={(event) => handleLappuChange(index, event)}
+                          className="w-full min-w-[120px] rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+            <p className="text-sm font-medium text-slate-700">
+              Total amount:{" "}
+              <span className="text-base font-semibold text-slate-900">
+                {userLapus
+                  .reduce(
+                    (acc, lapu) => acc + parseFloat(lapu.amount || 0),
+                    0
+                  )
+                  .toFixed(2)}
+              </span>
+            </p>
+            <ButtonLabel
+              type="button"
+              label="Submit"
+              onClick={handleLappuSubmit}
+            />
+          </div>
+        </div>
       </Popup>
 
       {/* show gst info  */}
