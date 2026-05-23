@@ -286,7 +286,7 @@ const Risk = ({ userid }) => {
                       onChange={(e) =>
                         handleLimitChange(index, "monthlyLimit", e.target.value)
                       }
-                      // disabled={!service.enabled}
+                    // disabled={!service.enabled}
                     />
                   </TableCell>
                   <TableCell>
@@ -422,7 +422,7 @@ const Risk = ({ userid }) => {
                               debugger;
                               let currentCategories =
                                 JSON.parse(service.categorys) || [];
-                              if(typeof(currentCategories) == "string"){
+                              if (typeof (currentCategories) == "string") {
                                 currentCategories = JSON.parse(currentCategories);
                               }
                               const existingCategory = currentCategories.find(
