@@ -368,7 +368,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           withCredentials: true,
         }
       );
-      
+
       let resp = response.data;
       if (resp.status == "Success") {
         await apesStatusChange("Success", params);
@@ -651,7 +651,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         accessorKey: col.prop,
         size: 190,
       };
-      if (report_id === "2_4"  && col.prop === "logs") {
+      if (report_id === "2_4" && col.prop === "logs") {
         columnConfig.size = 100;
         columnConfig.cell = (info) => {
           const value = info.getValue();
@@ -664,7 +664,20 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           );
         };
       }
-      if (report_id === "2_14"  && col.prop === "logs") {
+      if (report_id === "2_14" && col.prop === "logs") {
+        columnConfig.size = 100;
+        columnConfig.cell = (info) => {
+          const value = info.getValue();
+          return (
+            <div style={{ textAlign: "center" }}>
+              <IconButton onClick={() => handleOpenEyePopup(value, "logs")}>
+                <BsEye size={20} />
+              </IconButton>
+            </div>
+          );
+        };
+      }
+      if (report_id === "2_10" && col.prop === "logs") {
         columnConfig.size = 100;
         columnConfig.cell = (info) => {
           const value = info.getValue();
@@ -703,7 +716,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                 />
               ) : (
                 <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>—</span>
-              )}      
+              )}
             </div>
           );
         };
@@ -1348,7 +1361,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               fontSize: "0.84rem",
               fontWeight: 600,
               fontFamily:
-              'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+                'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
               color: "#16163a",
               letterSpacing: "0.2px",
             }}
@@ -1361,7 +1374,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       if (
         col.prop == "OpName" ||
         col.prop == "amount" ||
-        col.prop == "apiBalance" 
+        col.prop == "apiBalance"
       ) {
         columnConfig.size = 100;
         columnConfig.cell = (info) => (
@@ -1369,9 +1382,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             style={{
               textAlign: "center",
               fontSize:
-                col.prop === "amount"  ? "0.86rem" : "0.84rem",
+                col.prop === "amount" ? "0.86rem" : "0.84rem",
               fontWeight:
-                col.prop === "amount"  ? 700 : 600,
+                col.prop === "amount" ? 700 : 600,
               fontFamily:
                 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
               color:
@@ -1506,7 +1519,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             let content = match[2].trim();
             try {
               content = JSON.stringify(JSON.parse(content), null, 2);
-            } catch (e) {}
+            } catch (e) { }
 
             return (
               <div key={index} className="flex flex-col gap-1">
@@ -1645,74 +1658,73 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           _search ||
           report_id == "2_10" ||
           report_id == "2_17") && (
-          <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-lg border border-slate-200/80 bg-white/85 p-2 md:grid-cols-4 xl:grid-cols-6 dark:border-slate-700 dark:bg-slate-900/60">
-            {filterableColumns.map((filterName, index) => (
-              <div
-                key={filterName}
-                className={`min-w-0 ${
-                  filterName.includes("userId")
+            <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-lg border border-slate-200/80 bg-white/85 p-2 md:grid-cols-4 xl:grid-cols-6 dark:border-slate-700 dark:bg-slate-900/60">
+              {filterableColumns.map((filterName, index) => (
+                <div
+                  key={filterName}
+                  className={`min-w-0 ${filterName.includes("userId")
                     ? "col-span-2 md:col-span-2"
                     : ""
-                }`}
-              >
-                {filterName == "tm.paymentType" ||
-                filterName == "tm.status" ? (
-                  <DropDownCheakBox
-                    label={filterableDisplayColumns[index]}
-                    place2={filterName}
-                    drop={index}
-                    isLoading={false}
-                    isFilter={true}
-                    options={[...dropdownValues[index]]}
-                    value={finalMultipleValue(index)}
-                    onChange={handleMultiFilterChange}
+                    }`}
+                >
+                  {filterName == "tm.paymentType" ||
+                    filterName == "tm.status" ? (
+                    <DropDownCheakBox
+                      label={filterableDisplayColumns[index]}
+                      place2={filterName}
+                      drop={index}
+                      isLoading={false}
+                      isFilter={true}
+                      options={[...dropdownValues[index]]}
+                      value={finalMultipleValue(index)}
+                      onChange={handleMultiFilterChange}
+                    />
+                  ) : (
+                    <DropSearch
+                      value={finalValue(index) || ""}
+                      place2={filterName}
+                      onchange={handleFilterChange}
+                      placeholder={filterableDisplayColumns[index]}
+                      drop={index}
+                      options={[...dropdownValues[index]]}
+                      error={""}
+                      isFilter={true}
+                    />
+                  )}
+                </div>
+              ))}
+
+              {_search && (
+                <div className="col-span-2 min-w-0 md:col-span-2 xl:col-span-2">
+                  <TextInput
+                    value={searchCondition}
+                    label={"Search"}
+                    name={"Search"}
+                    onChange={setSearchCondition}
+                    isModel={false}
                   />
-                ) : (
+                </div>
+              )}
+              {(report_id == "2_10" || report_id == "2_17") && (
+                <div className="col-span-2 min-w-0 md:col-span-4 xl:col-span-3">
                   <DropSearch
-                    value={finalValue(index) || ""}
-                    place2={filterName}
-                    onchange={handleFilterChange}
-                    placeholder={filterableDisplayColumns[index]}
-                    drop={index}
-                    options={[...dropdownValues[index]]}
+                    value={JSON.stringify(timeRange) || ""}
+                    place2={"timeRange"}
+                    onchange={(name: any, value: any) => {
+                      setTimeange(JSON.parse(value));
+                    }}
+                    placeholder={"Select TimeRange"}
+                    options={timeOptions.map((opt) => ({
+                      showvalue: opt.showvalue,
+                      value: JSON.stringify(opt.value),
+                    }))}
                     error={""}
                     isFilter={true}
                   />
-                )}
-              </div>
-            ))}
-
-            {_search && (
-              <div className="col-span-2 min-w-0 md:col-span-2 xl:col-span-2">
-                <TextInput
-                  value={searchCondition}
-                  label={"Search"}
-                  name={"Search"}
-                  onChange={setSearchCondition}
-                  isModel={false}
-                />
-              </div>
-            )}
-            {(report_id == "2_10" || report_id == "2_17") && (
-              <div className="col-span-2 min-w-0 md:col-span-4 xl:col-span-3">
-                <DropSearch
-                  value={JSON.stringify(timeRange) || ""}
-                  place2={"timeRange"}
-                  onchange={(name: any, value: any) => {
-                    setTimeange(JSON.parse(value));
-                  }}
-                  placeholder={"Select TimeRange"}
-                  options={timeOptions.map((opt) => ({
-                    showvalue: opt.showvalue,
-                    value: JSON.stringify(opt.value),
-                  }))}
-                  error={""}
-                  isFilter={true}
-                />
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              )}
+            </div>
+          )}
       </div>
 
       {report_id != "2_15" && <StatsDisplay stats={totalAmount} />}
