@@ -254,15 +254,15 @@ const AddUser = () => {
     try {
       const response = await validateOTP(code, reqID.toString());
       const address = generateAddress(response);
-      setProfile(response.data.profile_image);
+      setProfile(response.response.data.profile_image);
       const aadharData = {
         address: address,
-        fullName: response.data.full_name,
-        fatherName: response.data.care_of.split(":")[1],
-        pinCode: response.data.zip,
-        city: response.data.address.po,
-        state: response.data.address.state,
-        DOB: response.data.dob,
+        fullName: response.response.data.full_name,
+        fatherName: response.response.data.care_of.split(":")[1],
+        pinCode: response.response.data.zip,
+        city: response.response.data.address.po,
+        state: response.response.data.address.state,
+        DOB: response.response.data.dob,
       };
 
       if (response.status == "error") {
