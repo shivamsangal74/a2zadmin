@@ -314,6 +314,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
   }
 
   async function valiadateOTP(code: string, reqID: String) {
+    debugger
     console.log("verifction code", code, reqID);
     try {
       const response = await validateOTP(code, reqID.toString());
@@ -331,8 +332,8 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
         DOB: response.response.data.dob,
       };
 
-      if(name_user && isPanVerified){
-        if(name_user.toLowerCase() !== aadharData.fullName.toLowerCase()){
+      if (name_user && isPanVerified) {
+        if (name_user.toLowerCase() !== aadharData.fullName.toLowerCase()) {
           toast.error("Aadhar name and pan name does not match.");
           setOpenAuth(false);
           return;
@@ -1043,7 +1044,7 @@ const AddUserEdit = ({ userid, userInfo, edit, setOpen }) => {
           {currentStep != 5 && (
             <div className="flex gap-3">
               <ButtonLabel
-                onClick={() => {}}
+                onClick={() => { }}
                 type="submit"
                 loader={isSubmitting}
                 disabled={isSubmitting}

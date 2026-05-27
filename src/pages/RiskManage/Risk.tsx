@@ -39,8 +39,22 @@ interface Service {
   purchaseStatus: string;
   userId: string;
   perMaxLimit: string;
-  categorys: any;
 }
+
+const safeParseCategories = (categorysInput: any): any[] => {
+  if (!categorysInput) return [];
+  if (Array.isArray(categorysInput)) return categorysInput;
+  try {
+    let parsed = typeof categorysInput === "string" ? JSON.parse(categorysInput) : categorysInput;
+    if (typeof parsed === "string") {
+      parsed = JSON.parse(parsed);
+    }
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Failed to parse categorys:", error);
+    return [];
+  }
+};
 
 const Risk = ({ userid }) => {
   const [services, setServices] = useState<Service[]>([]);
@@ -136,12 +150,11 @@ const Risk = ({ userid }) => {
     }
   }
 
-  // Function to handle adding/removing the category ID
   const handleCategoryId = (serviceIndex: number, categoryId: string) => {
     const updatedServices = [...services];
     const selectedService = updatedServices[serviceIndex];
 
-    let currentCategories: any[] = JSON.parse(selectedService.categorys) || [];
+    let currentCategories: any[] = safeParseCategories(selectedService.categorys);
 
     const existingCategoryIndex = currentCategories.findIndex(
       (category) => category.id === categoryId
@@ -163,7 +176,6 @@ const Risk = ({ userid }) => {
     setServices(updatedServices);
   };
 
-  // Function to handle updating the outlet ID
   const handleOutletId = (
     serviceIndex: number,
     categoryId: string,
@@ -172,7 +184,7 @@ const Risk = ({ userid }) => {
     const updatedServices = [...services];
     const selectedService = updatedServices[serviceIndex];
 
-    let currentCategories: any[] = JSON.parse(selectedService.categorys) || [];
+    let currentCategories: any[] = safeParseCategories(selectedService.categorys);
 
     const existingCategoryIndex = currentCategories.findIndex(
       (category) => category.id === categoryId
@@ -187,7 +199,6 @@ const Risk = ({ userid }) => {
     setServices(updatedServices);
   };
 
-  // Function to handle toggling the registration status
   const handleRegistrationStatus = (
     serviceIndex: number,
     categoryId: string,
@@ -196,7 +207,7 @@ const Risk = ({ userid }) => {
     const updatedServices = [...services];
     const selectedService = updatedServices[serviceIndex];
 
-    let currentCategories: any[] = JSON.parse(selectedService.categorys) || [];
+    let currentCategories: any[] = safeParseCategories(selectedService.categorys);
 
     const existingCategoryIndex = currentCategories.findIndex(
       (category) => category.id === categoryId
@@ -420,11 +431,7 @@ const Risk = ({ userid }) => {
                           <TableBody>
                             {categorys.map((category: any) => {
                               debugger;
-                              let currentCategories =
-                                JSON.parse(service.categorys) || [];
-                              if (typeof (currentCategories) == "string") {
-                                currentCategories = JSON.parse(currentCategories);
-                              }
+                              const currentCategories = safeParseCategories(service.categorys);
                               const existingCategory = currentCategories.find(
                                 (cat: any) => cat.id === category.id
                               );

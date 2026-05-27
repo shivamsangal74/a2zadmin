@@ -357,7 +357,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   async function handleCheckStatusApes(params: any) {
     setLoading(true);
-    debugger;
     try {
       let tranx = params.row.original.refId;
       let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD");
@@ -369,6 +368,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           withCredentials: true,
         }
       );
+      
       let resp = response.data;
       if (resp.status == "Success") {
         await apesStatusChange("Success", params);
