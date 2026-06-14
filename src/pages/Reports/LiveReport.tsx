@@ -12,6 +12,7 @@ import Popup from "../../components/Model/Model";
 import api from "../../Services/Axios/api";
 import Breadcrumb from "../../components/Breadcrumbs/Breadcrumb";
 import StatsDisplay from "../../components/DisplatStats";
+import { renderTransactionStatus } from "../../components/StatusBadge/StatusBadge";
 
 interface ReportColumn {
   name: string;
@@ -191,59 +192,7 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
     return () => clearInterval(interval);
   }, [fetchLiveTransactions]);
 
-  const renderStatus = (status: string) => {
-    const statusMap: { [key: string]: JSX.Element } = {
-      Success: (
-        <div className="flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-green-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <CheckCircle />
-          <span className="font-semibold tracking-wide">Success</span>
-        </div>
-      ),
-      Pending: (
-        <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <HourglassEmpty />
-          <span className="font-semibold tracking-wide">Pending</span>
-        </div>
-      ),
-      Failed: (
-        <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <Error />
-          <span className="font-semibold tracking-wide">Failed</span>
-        </div>
-      ),
-      Fail: (
-        <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <Error />
-          <span className="font-semibold tracking-wide">Failed</span>
-        </div>
-      ),
-      FAILURE: (
-        <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <Error />
-          <span className="font-semibold tracking-wide">Failed</span>
-        </div>
-      ),
-      Reverse: (
-        <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <Refresh />
-          <span className="font-semibold tracking-wide">Reverse</span>
-        </div>
-      ),
-      Transfer: (
-        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-          <TransferWithinAStation />
-          <span className="font-semibold tracking-wide">Transfer</span>
-        </div>
-      ),
-    };
-
-    return statusMap[status] || (
-      <div className="flex items-center gap-2 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-fuchsia-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-        <Loyalty />
-        <span className="font-semibold tracking-wide">{status}</span>
-      </div>
-    );
-  };
+  const renderStatus = (status: string) => renderTransactionStatus(status);
 
   const columns = useMemo(() => {
     if (!reportData) return [];
@@ -756,7 +705,7 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
             setEyePopupTitle("");
           }}
         >
-          <div className="p-4 bg-gray-50 rounded-lg max-h-[60vh] overflow-auto">
+          <div className="max-h-[60vh] overflow-auto rounded-lg bg-gray-50 p-4 dark:bg-form-input dark:text-bodydark1">
             {renderEyePopupContent(eyePopupData)}
           </div>
         </Popup>

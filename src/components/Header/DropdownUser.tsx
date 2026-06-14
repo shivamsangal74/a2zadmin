@@ -1,28 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import type { PopconfirmProps } from 'antd';
-import { Button, message, Popconfirm } from 'antd';
-import UserOne from '../../images/user/user-01.png';
-import ConfirmBox from '../Confirmation/ConfirmBox';
-import Popup from '../Model/Model';
-import { jwtDecode } from 'jwt-decode';
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import type { PopconfirmProps } from "antd";
+import { message, Popconfirm } from "antd";
+import UserOne from "../../images/user/user-01.png";
+import { jwtDecode } from "jwt-decode";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const trigger = useRef<any>(null);
-  const dropdown = useRef<any>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const dropdown = useRef<HTMLDivElement>(null);
 
-  const navigate = useNavigate()
-  const decode = jwtDecode(localStorage.getItem("token"))
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const decode = token ? jwtDecode<{ fullName?: string; userType?: string }>(token) : null;
   // close on click outside
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
       if (!dropdown.current) return;
       if (
         !dropdownOpen ||
-        dropdown.current.contains(target) ||
-        trigger.current.contains(target)
+        dropdown.current.contains(target as Node) ||
+        trigger.current?.contains(target as Node)
       )
         return;
       setDropdownOpen(false);
@@ -40,39 +39,39 @@ const DropdownUser = () => {
     document.addEventListener('keydown', keyHandler);
     return () => document.removeEventListener('keydown', keyHandler);
   });
-const [openPopUp,setOpenPopUp] = useState(false);
-
-const confirm: PopconfirmProps['onConfirm'] = (e) => {
-  console.log(e);
+  const confirm: PopconfirmProps["onConfirm"] = () => {
   localStorage.clear();
-  navigate("/")
+  navigate("/");
 };
 
-const cancel: PopconfirmProps['onCancel'] = (e) => {
-  console.log(e);
+const cancel: PopconfirmProps["onCancel"] = () => {
   message.error('Click on No');
 };
   return (
-    <><div className="relative">
-      <Link
+    <div className="relative">
+      <button
         ref={trigger}
+        type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex items-center gap-4"
-        to="#"
+        className="flex items-center gap-2 rounded-xl border border-stroke bg-gray py-1 pl-1 pr-2.5 transition-colors hover:border-primary/30 hover:bg-whiter dark:border-strokedark dark:bg-meta-4 dark:hover:border-primary/40 sm:gap-2.5 sm:pr-3"
       >
-        <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-black dark:text-white text-cap text-transform: capitalize">
-           {decode ? decode.fullName : ""}
-          </span>
-          <span className="block text-xs">{decode ? decode.userType : ""}</span>
+        <span className="h-8 w-8 shrink-0 overflow-hidden rounded-lg ring-2 ring-primary/15">
+          <img src={UserOne} alt="User" className="h-full w-full object-cover" />
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-          <img src={UserOne} alt="User" />
+        <span className="hidden min-w-0 text-left md:block">
+          <span className="block truncate text-xs font-semibold capitalize text-black dark:text-white">
+            {decode?.fullName ?? "User"}
+          </span>
+          <span className="block truncate text-[10px] capitalize text-body dark:text-bodydark">
+            {decode?.userType ?? ""}
+          </span>
         </span>
 
         <svg
-          className="hidden fill-current sm:block"
+          className={`hidden shrink-0 fill-current text-body transition-transform dark:text-bodydark md:block ${
+            dropdownOpen ? "rotate-180" : ""
+          }`}
           width="12"
           height="8"
           viewBox="0 0 12 8"
@@ -86,15 +85,15 @@ const cancel: PopconfirmProps['onCancel'] = (e) => {
             fill=""
           />
         </svg>
-      </Link>
+      </button>
 
       {/* <!-- Dropdown Start --> */}
       <div
         ref={dropdown}
         onFocus={() => setDropdownOpen(true)}
         onBlur={() => setDropdownOpen(false)}
-        className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark ${
-          dropdownOpen === true ? 'block' : 'hidden'
+        className={`absolute right-0 z-50 mt-2 flex w-62.5 flex-col overflow-hidden rounded-xl border border-stroke bg-white shadow-lg dark:border-strokedark dark:bg-boxdark ${
+          dropdownOpen === true ? "block" : "hidden"
         }`}
       >
         <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-7.5 dark:border-strokedark">
@@ -203,11 +202,7 @@ const cancel: PopconfirmProps['onCancel'] = (e) => {
           </Popconfirm>
        
       </div>
-      {/* <!-- Dropdown End --> */}
-      
     </div>
-   
-    </>
   );
 };
 

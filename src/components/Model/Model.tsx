@@ -22,14 +22,22 @@ const Popup = ({ isOpen, onClose, title, children, width, styles }) => {
         maxHeight: "-webkit-fill-available;",
       }}
     >
-      <div className="absolute inset-0 bg-black opacity-50"></div>
+      <div className="absolute inset-0 bg-black/60"></div>
       <div
-        className={`relative z-50 flex w-full max-h-[90vh] flex-col overflow-hidden rounded-lg bg-white p-5 shadow-lg ${widthClass}`}
+        className={`relative z-50 flex w-full max-h-[90vh] flex-col overflow-hidden rounded-lg bg-white p-5 shadow-lg dark:border dark:border-strokedark dark:bg-boxdark dark:text-bodydark1 ${widthClass}`}
         style={{ ...styles }}
       >
         <div className="mb-4 flex shrink-0 items-center justify-between">
-          {title && <h2 className="text-lg font-bold">{title}</h2>}
-          <button className="text-gray-600" onClick={onClose} type="button">
+          {title && (
+            <h2 className="text-lg font-bold text-black dark:text-white">
+              {title}
+            </h2>
+          )}
+          <button
+            className="text-gray-600 hover:text-gray-900 dark:text-bodydark dark:hover:text-white"
+            onClick={onClose}
+            type="button"
+          >
             <IoClose />
           </button>
         </div>

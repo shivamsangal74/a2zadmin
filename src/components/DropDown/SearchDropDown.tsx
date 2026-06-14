@@ -26,7 +26,7 @@ export const SearchDropDown = <
   const { controlProp, options, name,error,disabledProp=false,required=false } = props;
   return (
     <div className="w-full">
-      <FormControl fullWidth className="bg-white">
+      <FormControl fullWidth className="bg-transparent dark:bg-transparent">
 
       <Controller
       name={name}

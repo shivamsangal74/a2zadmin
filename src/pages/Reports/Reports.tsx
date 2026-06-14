@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useSearchParams } from "react-router-dom";
 import DefaultLayout from "../../layout/DefaultLayout";
 import BasicTable from "../../components/BasicTable/BasicTable";
 import { DropSearch } from "../../components/DropDown/DropSearch";
@@ -36,6 +37,7 @@ import DropDown from "../../components/DropDown/DropDown";
 import CheckBox from "@mui/icons-material/CheckBox";
 import StatsDisplay from "../../components/DisplatStats";
 import Popup from "../../components/Model/Model";
+import { renderTransactionStatus } from "../../components/StatusBadge/StatusBadge";
 
 interface reportsProps {
   entity: string;
@@ -55,8 +57,50 @@ function isReportDateColumn(
   return false;
 }
 
+/** Multi-select dropdown filters use IN (...) SQL syntax. */
+const MULTI_SELECT_FILTER_COLUMNS = new Set(["tm.paymentType", "tm.status"]);
+
+function findStatusColumnIndex(dropDowns: string[]) {
+  return dropDowns.findIndex(
+    (column) =>
+      column.toLowerCase() === "status" ||
+      column.toLowerCase().endsWith(".status")
+  );
+}
+
+function buildStatusFilterEntry(
+  columnName: string,
+  statusValue: string,
+  dropIndex: number
+) {
+  const key = `dropdown[${dropIndex}]`;
+  if (MULTI_SELECT_FILTER_COLUMNS.has(columnName)) {
+    return { [key]: `${columnName} IN ('${statusValue}')` };
+  }
+  return { [key]: `${columnName} = '${statusValue}'` };
+}
+
+function parseFilterValue(rawFilter: string) {
+  if (!rawFilter) return "";
+
+  const inMatch = rawFilter.match(/IN\s*\(([^)]+)\)/i);
+  if (inMatch) {
+    return inMatch[1].replace(/'/g, "").trim();
+  }
+
+  const eqParts = rawFilter.split("=");
+  if (eqParts.length > 1) {
+    return eqParts.slice(1).join("=").replace(/'/g, "").trim();
+  }
+
+  return rawFilter;
+}
+
 const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
-  const [reportData, setReportData] = useState([]);
+  const [searchParams] = useSearchParams();
+  const urlStatus = searchParams.get("status");
+  const urlPeriod = searchParams.get("period");
+  const [reportData, setReportData] = useState<any>(null);
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -125,6 +169,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const { startDate, endDate, value: last30DaysDateRange } = last30Days();
 
   const [dateRange, setDateRange] = useState(last30DaysDateRange);
+  const [rangePickerValue, setRangePickerValue] = useState<
+    [dayjs.Dayjs, dayjs.Dayjs]
+  >([startDate, endDate]);
   const { RangePicker } = DatePicker;
 
   const rangePresets: TimeRangePickerProps["presets"] = [
@@ -133,6 +180,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     { label: "Last 14 Days", value: [dayjs().add(-14, "d"), dayjs()] },
     { label: "Last 30 Days", value: [dayjs().add(-30, "d"), dayjs()] },
     { label: "Last 90 Days", value: [dayjs().add(-90, "d"), dayjs()] },
+    { label: "Current Month", value: [dayjs().startOf("month"), dayjs()] },
   ];
 
   const handleLast30DaysDateRange = () => {
@@ -187,7 +235,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         }
       } catch (error) {
         console.error("Error fetching report data:", error);
-      } finally {
         setLoading(false);
       }
     };
@@ -196,14 +243,28 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }, [entity, report_id]);
 
   useEffect(() => {
-    if (!reportData) return;
-    const handleGetReportData = async () => {
+    if (!reportData?.Report) return;
+
+    const { initialFilters, initialDateRange, initialPickerValue } =
+      buildInitialReportQuery(reportData);
+    const hasUrlFilters = Boolean(urlStatus || urlPeriod === "month");
+
+    if (hasUrlFilters) {
+      setFilters(initialFilters);
+      setDateRange(initialDateRange);
+      setRangePickerValue(initialPickerValue);
+    }
+
+    const fetchInitialReportData = async () => {
       try {
+        setLoading(true);
         const response = await api.post(apiUrl + "/report/getReportData", {
           report_id: report_id,
           Entity: entity,
-          filters: filters,
-          dateRange: handleLast30DaysDateRange(),
+          filters: hasUrlFilters ? initialFilters : {},
+          dateRange: hasUrlFilters
+            ? initialDateRange
+            : handleLast30DaysDateRange(),
         });
         setTableData(response.data ?? []);
       } catch (error) {
@@ -212,8 +273,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         setLoading(false);
       }
     };
-    handleGetReportData();
-  }, [reportData]);
+
+    fetchInitialReportData();
+  }, [reportData, entity, report_id, urlStatus, urlPeriod]);
 
   const handleFilterChange = (
     filterName: string,
@@ -247,6 +309,48 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     const end = moment(endDate.$d).endOf("day").format("YYYY-MM-DD HH:mm:ss");
     const value = `${DateModel} between '${start}' and '${end}'`;
     setDateRange(value);
+    setRangePickerValue([dayjs(startDate.$d), dayjs(endDate.$d)]);
+  };
+
+  const buildInitialReportQuery = (reportConfig: any) => {
+    const dropDowns: string[] = reportConfig?.Report?.DropDowns ?? [];
+    const dropdownOptions = reportConfig?.DropDowns?.[0] ?? {};
+    const dateModel = reportConfig?.Report?.DateModel ?? "createdDate";
+    let initialFilters: Record<string, string> = {};
+    let initialDateRange = handleLast30DaysDateRange();
+    let initialPickerValue: [dayjs.Dayjs, dayjs.Dayjs] = [
+      dayjs().subtract(30, "day").startOf("day"),
+      dayjs().endOf("day"),
+    ];
+
+    if (urlStatus) {
+      const statusIndex = findStatusColumnIndex(dropDowns);
+      if (statusIndex >= 0) {
+        const columnName = dropDowns[statusIndex];
+        const options = dropdownOptions[statusIndex] ?? [];
+        const matchedOption = options.find(
+          (opt: { value: string }) =>
+            String(opt.value).toLowerCase() === urlStatus.toLowerCase()
+        );
+        const statusValue = matchedOption?.value ?? urlStatus;
+        initialFilters = buildStatusFilterEntry(
+          columnName,
+          statusValue,
+          statusIndex
+        );
+      }
+    }
+
+    if (urlPeriod === "month") {
+      const rangeStart = dayjs().startOf("month");
+      const rangeEnd = dayjs().endOf("day");
+      initialDateRange = `${dateModel} between '${rangeStart.format(
+        "YYYY-MM-DD HH:mm:ss"
+      )}' and '${rangeEnd.format("YYYY-MM-DD HH:mm:ss")}'`;
+      initialPickerValue = [rangeStart, rangeEnd];
+    }
+
+    return { initialFilters, initialDateRange, initialPickerValue };
   };
 
   async function settlementStatusChange(value: any, params: any, options: any) {
@@ -563,7 +667,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-boxdark">
             <div className="flex items-center justify-center py-6">
               <Loader />
             </div>
@@ -572,70 +676,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       </DefaultLayout>
     );
   }
-  const renderStatus = (status: any) => {
-    switch (status.toLowerCase()) {
-      case "success":
-        return (
-          <div className="flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-green-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-            <CheckCircle />
-            <span className="font-semibold tracking-wide">Success</span>
-          </div>
-        );
-      case "pending":
-        return (
-          <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-            <HourglassEmpty />
-            <span className="font-semibold tracking-wide">Pending</span>
-          </div>
-        );
-      case "failed":
-      case "fail":
-      case "failure":
-        return (
-          <div className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-            <Error />
-            <span className="font-semibold tracking-wide">Failed</span>
-          </div>
-        );
-      case "reverse":
-        return (
-          <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-blue-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-            <Refresh />
-            <span className="font-semibold tracking-wide">Reverse</span>
-          </div>
-        );
-      case "transfer":
-        return (
-          <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-            <TransferWithinAStation />
-            <span className="font-semibold tracking-wide">Transfer</span>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center gap-2 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-fuchsia-700 shadow-sm transition-all duration-300 hover:scale-[1.02]">
-            <Loyalty />
-            <span className="font-semibold tracking-wide">{status}</span>
-          </div>
-        );
-    }
-  };
-
-  function finalValue(index: any) {
-    let value = filters[`dropdown[${index}]`]
-      ? filters[`dropdown[${index}]`].split("=")[1].replace(/'/g, "").trim()
-      : "";
-
-    return isNaN(value) ? value : Number(value);
-  }
-
-  function finalMultipleValue(index: any) {
-    let value = filters[`dropdown[${index}]`]
-      ? filters[`dropdown[${index}]`]
-      : "";
-
-    return isNaN(value) ? value : Number(value);
-  }
+  const renderStatus = (status: any) => renderTransactionStatus(status);
 
   const maskAadhaar = async (aadhaar: string) => {
     const maskedAadhaar =
@@ -1412,11 +1453,14 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const dropdownValues = reportData?.DropDowns?.[0] ?? {};
 
   function finalValue(index: any) {
-    let value = filters[`dropdown[${index}]`]
-      ? filters[`dropdown[${index}]`].split("=")[1].replace(/'/g, "").trim()
-      : "";
+    const rawFilter = filters[`dropdown[${index}]`];
+    const value = parseFilterValue(rawFilter);
+    return isNaN(Number(value)) ? value : Number(value);
+  }
 
-    return isNaN(value) ? value : Number(value);
+  function finalMultipleValue(index: any) {
+    const rawFilter = filters[`dropdown[${index}]`];
+    return parseFilterValue(rawFilter);
   }
 
   const onChangeMonth: DatePickerProps["onChange"] = (
@@ -1620,7 +1664,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                     handleDateRange(DateModel, startDate, endDate);
                   }
                 }}
-                defaultValue={[startDate, endDate]}
+                value={rangePickerValue}
               />
             </div>
           )}
@@ -1883,7 +1927,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             setEyePopupTitle("");
           }}
         >
-          <div className="p-4 bg-gray-50 rounded-lg max-h-[60vh] overflow-auto">
+          <div className="max-h-[60vh] overflow-auto rounded-lg bg-gray-50 p-4 dark:bg-form-input dark:text-bodydark1">
             {renderEyePopupContent(eyePopupData)}
           </div>
         </Popup>

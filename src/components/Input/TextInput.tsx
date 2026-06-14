@@ -73,7 +73,7 @@ const TextInput: React.FC<TextInputProps> = ({
   return (
     <div>
       <StyledEngineProvider>
-        <FormControl fullWidth className="bg-white">
+        <FormControl fullWidth className="bg-transparent dark:bg-transparent">
           <TextField
             inputRef={inputRef}
             id="outlined-basic"
@@ -85,17 +85,10 @@ const TextInput: React.FC<TextInputProps> = ({
             {...registerAction}
             variant="outlined"
             InputLabelProps={{
-              className: `block text-black  dark:${
-                isModel ? "text-Black" : "text-white"
-              } ${required ? "required-label" : ""}`,
+              className: `${required ? "required-label" : ""}`,
             }}
             value={value}
             className="w-full"
-            inputProps={{
-              className: `bg-slate-50	 border border-gray-300 text-gray-900 text-s rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full !p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400  dark:focus:ring-blue-500 dark:focus:border-blue-500  ${
-                !isModel ? "dark:bg-form-input dark:text-white " : ""
-              }`,
-            }}
             onChange={(e) => handleInputChange(e.target.value)}
             InputProps={{
               startAdornment: Icon && Icon,

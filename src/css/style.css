@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply font-satoshi font-normal text-base text-body bg-whiten relative z-1;
+    @apply font-satoshi font-normal text-base text-body bg-whiten relative z-1 dark:bg-boxdark-2 dark:text-bodydark;
   }
 }
 
@@ -212,4 +212,30 @@ span.flatpickr-weekday,
 
 [x-cloak] {
   display: none !important;
+}
+
+/* Ant Design popups inherit dark tokens from ConfigProvider; ensure portal surfaces match */
+.dark .ant-select-dropdown,
+.dark .ant-picker-dropdown,
+.dark .ant-dropdown-menu,
+.dark .ant-popover-inner {
+  color-scheme: dark;
+}
+
+.dark .MuiAutocomplete-popper .MuiPaper-root,
+.dark .MuiPopover-paper,
+.dark .MuiMenu-paper {
+  background-color: #24303f !important;
+  color: #dee4ee !important;
+  border: 1px solid #2e3a47;
+}
+
+.dark .MuiAutocomplete-popper .MuiAutocomplete-option,
+.dark .MuiMenuItem-root {
+  color: #dee4ee;
+}
+
+.dark .MuiAutocomplete-popper .MuiAutocomplete-option:hover,
+.dark .MuiMenuItem-root:hover {
+  background-color: #313d4a !important;
 }

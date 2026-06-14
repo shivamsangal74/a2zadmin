@@ -16,11 +16,13 @@ const StatsDisplay = ({ stats }) => {
       count: stats?.success?.count ?? 0,
       accent: "border-l-emerald-500",
       cardClass:
-        "border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-white",
-      labelClass: "text-emerald-800",
-      amountClass: "text-emerald-900",
-      pillClass: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200/80",
-      iconWrap: "bg-emerald-100 text-emerald-700",
+        "border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-white dark:border-emerald-900/60 dark:from-emerald-950/50 dark:via-boxdark dark:to-boxdark",
+      labelClass: "text-emerald-800 dark:text-emerald-300",
+      amountClass: "text-emerald-900 dark:text-emerald-100",
+      pillClass:
+        "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200/80 dark:bg-emerald-950/70 dark:text-emerald-200 dark:ring-emerald-800/60",
+      iconWrap:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300",
     },
     {
       key: "pending",
@@ -30,11 +32,13 @@ const StatsDisplay = ({ stats }) => {
       count: stats?.pending?.count ?? 0,
       accent: "border-l-amber-500",
       cardClass:
-        "border-amber-200/80 bg-gradient-to-br from-amber-50/95 via-white to-white",
-      labelClass: "text-amber-900",
-      amountClass: "text-amber-950",
-      pillClass: "bg-amber-100 text-amber-900 ring-1 ring-amber-200/80",
-      iconWrap: "bg-amber-100 text-amber-800",
+        "border-amber-200/80 bg-gradient-to-br from-amber-50/95 via-white to-white dark:border-amber-900/60 dark:from-amber-950/50 dark:via-boxdark dark:to-boxdark",
+      labelClass: "text-amber-900 dark:text-amber-300",
+      amountClass: "text-amber-950 dark:text-amber-100",
+      pillClass:
+        "bg-amber-100 text-amber-900 ring-1 ring-amber-200/80 dark:bg-amber-950/70 dark:text-amber-200 dark:ring-amber-800/60",
+      iconWrap:
+        "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300",
     },
     {
       key: "fail",
@@ -44,11 +48,13 @@ const StatsDisplay = ({ stats }) => {
       count: stats?.fail?.count ?? 0,
       accent: "border-l-rose-500",
       cardClass:
-        "border-rose-200/80 bg-gradient-to-br from-rose-50/95 via-white to-white",
-      labelClass: "text-rose-800",
-      amountClass: "text-rose-950",
-      pillClass: "bg-rose-100 text-rose-900 ring-1 ring-rose-200/80",
-      iconWrap: "bg-rose-100 text-rose-800",
+        "border-rose-200/80 bg-gradient-to-br from-rose-50/95 via-white to-white dark:border-rose-900/60 dark:from-rose-950/50 dark:via-boxdark dark:to-boxdark",
+      labelClass: "text-rose-800 dark:text-rose-300",
+      amountClass: "text-rose-950 dark:text-rose-100",
+      pillClass:
+        "bg-rose-100 text-rose-900 ring-1 ring-rose-200/80 dark:bg-rose-950/70 dark:text-rose-200 dark:ring-rose-800/60",
+      iconWrap:
+        "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300",
     },
   ];
 

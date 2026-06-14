@@ -32,7 +32,7 @@ export const DropSearch = <O extends { value: string; showvalue: string }>(
 
   return (
     <div className="w-full">
-      <FormControl fullWidth className="bg-white">
+      <FormControl fullWidth className="bg-transparent dark:bg-transparent">
         <Autocomplete
           loading={isLoading}
           disabled={isLoading}

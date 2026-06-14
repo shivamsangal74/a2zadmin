@@ -68,7 +68,7 @@ export default function DropDownCheakBox({
 
   return (
     <div className="w-full">
-      <FormControl fullWidth className="bg-white">
+      <FormControl fullWidth className="bg-transparent dark:bg-transparent">
         <Autocomplete
           multiple
           loading={isLoading}

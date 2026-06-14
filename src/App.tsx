@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Loader from "./common/Loader";
 import PageTitle from "./components/PageTitle";
 import Chart from "./pages/Chart";
@@ -51,6 +51,12 @@ import LiveReports from "./pages/Reports/LiveReport";
 import { ApesUsers } from "./pages/UserList/ApesUsers";
 
 const queryClient = new QueryClient();
+
+function ReportRedirect({ target }: { target: string }) {
+  const { search } = useLocation();
+  return <Navigate to={`${target}${search}`} replace />;
+}
+
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const { pathname } = useLocation();
@@ -396,6 +402,14 @@ function App() {
                 <Settings />
               </>
             }
+          />
+          <Route
+            path="/recharge-report"
+            element={<ReportRedirect target="/report/recharge-report" />}
+          />
+          <Route
+            path="/apes-report"
+            element={<ReportRedirect target="/report/apes-report" />}
           />
           <Route
             path="/chart"

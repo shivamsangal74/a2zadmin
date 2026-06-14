@@ -7,23 +7,15 @@ import "./css/satoshi.css";
 import "jsvectormap/dist/css/jsvectormap.css";
 import "flatpickr/dist/flatpickr.min.css";
 import { ThemeProvider } from "@material-tailwind/react";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ColorModeProvider } from "./context/ColorModeProvider";
+import "react-toastify/dist/ReactToastify.css";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  
-    <Router>
-      <ThemeProvider>
+  <Router>
+    <ThemeProvider>
+      <ColorModeProvider>
         <App />
-        <ToastContainer position="top-right"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light" />
-      </ThemeProvider>
-    </Router>
+      </ColorModeProvider>
+    </ThemeProvider>
+  </Router>
 );

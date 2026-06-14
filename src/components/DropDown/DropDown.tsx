@@ -38,7 +38,7 @@ const DropDown: React.FC<DropDownProps> = ({
   const [isOptionSelected, setIsOptionSelected] = useState<boolean>(true);
   return (
     <div>
-      <FormControl fullWidth className="bg-white">
+      <FormControl fullWidth className="bg-transparent dark:bg-transparent">
         <InputLabel
         size="small"
           id="demo-simple-select-label"

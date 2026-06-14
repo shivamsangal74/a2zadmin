@@ -158,7 +158,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
 
   let content = (
     <div
-      className="flex border border-black shadow rounded flex-wrap"
+      className="flex flex-wrap rounded border border-stroke bg-white shadow dark:border-strokedark dark:bg-boxdark dark:text-bodydark1"
       style={{ width: "700px" }}>
       <div
         style={{
@@ -757,10 +757,10 @@ const BasicTable: React.FC<BasicTableProps> = ({
           </div>
 
           {data.length > 10 && (
-            <div className="flex justify-between items-center p-5">
+            <div className="flex items-center justify-between p-5 dark:text-bodydark1">
               <div className="flex space-x-2">
                 <button
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  className="rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400 disabled:cursor-not-allowed disabled:bg-gray-200 dark:bg-meta-4 dark:text-white dark:hover:bg-graydark dark:disabled:bg-boxdark"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}>
                   Previous
@@ -769,13 +769,13 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 {generatePagination().map((page, index, arr) => (
                   <React.Fragment key={page}>
                     {index > 0 && page !== arr[index - 1] + 1 && (
-                      <span>...</span>
+                      <span className="text-body dark:text-bodydark">...</span>
                     )}
                     <button
-                      className={`px-4 py-2 rounded ${
+                      className={`rounded px-4 py-2 ${
                         table.getState().pagination.pageIndex === page - 1
                           ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-boxdark dark:text-bodydark1 dark:hover:bg-meta-4"
                       }`}
                       onClick={() => table.setPageIndex(page - 1)}>
                       {page}
@@ -784,7 +784,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 ))}
 
                 <button
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  className="rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400 disabled:cursor-not-allowed disabled:bg-gray-200 dark:bg-meta-4 dark:text-white dark:hover:bg-graydark dark:disabled:bg-boxdark"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}>
                   Next
@@ -792,7 +792,9 @@ const BasicTable: React.FC<BasicTableProps> = ({
               </div>
 
               <div className="flex items-center space-x-2">
-                <label htmlFor="pageSizeSelect" className="text-gray-700">
+                <label
+                  htmlFor="pageSizeSelect"
+                  className="text-gray-700 dark:text-bodydark">
                   Page Size:
                 </label>
                 <select
@@ -811,7 +813,7 @@ const BasicTable: React.FC<BasicTableProps> = ({
                       table.setPageSize(size);
                     }
                   }}
-                  className="px-2 py-1 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="rounded border border-gray-300 bg-white px-2 py-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-strokedark dark:bg-form-input dark:text-white">
                   {["All", 5, 10, 20, 50, 100].map((size) => (
                     <option key={size} value={size}>
                       {size}

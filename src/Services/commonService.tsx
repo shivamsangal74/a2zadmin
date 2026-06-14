@@ -264,3 +264,44 @@ export async function getLogslistById(fromDate: any, toDate: any, id: any) {
     return { error: true, message: errorMessage };
   }
 }
+
+export type PendingReportItem = {
+  source_table: "recharge" | "apes";
+  pending_transaction_count: number;
+};
+
+export type PendingReportCounts = {
+  recharge: number;
+  apes: number;
+  total: number;
+};
+
+export const mapPendingCounts = (
+  data: PendingReportItem[]
+): PendingReportCounts => ({
+  recharge:
+    data.find((d) => d.source_table === "recharge")?.pending_transaction_count ??
+    0,
+  apes:
+    data.find((d) => d.source_table === "apes")?.pending_transaction_count ?? 0,
+  total: data.reduce(
+    (sum, d) => sum + Number(d.pending_transaction_count),
+    0
+  ),
+});
+
+export async function getPendingReportCount(): Promise<PendingReportCounts> {
+  try {
+    const response = await api.get("/common/get-pending-report-count", {
+      withCredentials: true,
+    });
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return mapPendingCounts(data);
+    }
+    return { recharge: 0, apes: 0, total: 0 };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
