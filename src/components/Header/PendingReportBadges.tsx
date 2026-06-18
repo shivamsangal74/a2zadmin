@@ -7,7 +7,7 @@ import {
   type PendingReportCounts,
 } from "../../Services/commonService";
 
-const POLL_INTERVAL_MS = 5 * 60 * 1000;
+const POLL_INTERVAL_MS =  3000;
 
 const defaultCounts: PendingReportCounts = {
   recharge: 0,
