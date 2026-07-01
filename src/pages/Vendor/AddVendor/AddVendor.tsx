@@ -1700,6 +1700,9 @@ const AddVendor = () => {
                     <th className="whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                       Operator
                     </th>
+                    <th className="whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Closing Balance
+                    </th>
                     <th className="min-w-[120px] whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                       Amount
                     </th>
@@ -1722,6 +1725,9 @@ const AddVendor = () => {
                       </td>
                       <td className="whitespace-nowrap px-3 py-2.5 text-slate-700">
                         {lapu.operator}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-slate-700">
+                        {lapu.l_closingBal}
                       </td>
                       <td className="px-3 py-2">
                         <input
