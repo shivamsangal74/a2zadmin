@@ -14,6 +14,7 @@ import {
   getLappu,
   getOprators,
   getStockLedger,
+  getDueLedger,
   getVendorBanks,
   getVendorPayments,
   getVendors,
@@ -131,14 +132,17 @@ const AddVendor = () => {
   const [isBankVisible, setIsBankVisble] = useState(false);
   const [transferMode, setTransferMode] = useState("");
   const [stockLedger, setStockLedger] = useState([]);
+  const [dueLedger, setDueLedger] = useState([]);
 
   const [isRecivedModalOpen, setIsRecivedModalOpen] = useState(false);
+
+  const [selectedVendorDue, setSelectedVendorDue] = useState("");
 
   //payments
   const [stockAmount, setStockAmount] = useState(0);
   const [opraterID, setOpraterID] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [payments, setPayments] = useState([]);
+  const [payments, setPayments] = useState([]); 
   const [cashAmounts, setCashAmounts] = useState<CashAmounts>({
     note1000: 0,
     note500: 0,
@@ -541,6 +545,51 @@ const AddVendor = () => {
     // },
   ];
 
+  const columnsDueLedger = [
+    {
+      header: "Date",
+      accessorKey: "createdDate",
+    },
+    {
+      header: "Vendor",
+      accessorKey: "vendorName",
+    },
+    {
+      header: "Type",
+      accessorKey: "tranxType",
+      cell: (row: any) => {
+        const type = row.row.original.tranxType;
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+            type === "CR" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}>
+            {type}
+          </span>
+        );
+      }
+    },
+    {
+      header: "Txn ID",
+      accessorKey: "tranxId",
+    },
+    {
+      header: "Opening Bal",
+      accessorKey: "openingBalance",
+    },
+    {
+      header: "Amount",
+      accessorKey: "amount",
+    },
+    {
+      header: "Closing Bal",
+      accessorKey: "closingBalance",
+    },
+    {
+      header: "Remarks",
+      accessorKey: "remarks",
+    },
+  ];
+
   const { refetch: paymentsRefetch } = useQuery({
     queryKey: ["payments"],
     queryFn: async () => {
@@ -708,17 +757,20 @@ const AddVendor = () => {
       try {
         const vendorsData = await getVendors();
         const lappuData = await getLappu();
+        const dueLedgerData = await getDueLedger();
         setLappu(lappuData);
+        setDueLedger(dueLedgerData);
 
         let _dataOP: any = [];
         if (vendorsData.length > 0) {
           vendorsData.forEach((op: any) => {
             _dataOP.push({
-              showvalue: `${op?.fullName} - ${op?.mobileno}`,
+              showvalue: `${op?.fullName} - ${op?.mobileno} - ${op?.dueAmount}`,
               value: op?.vendorUniqueId,
               commissionType: op?.commissiontype,
               commissionValue: op?.commissionvalue,
               vendorApi: op?.vendorApi,
+              dueAmount: op?.dueAmount,
             });
           });
         }
@@ -1100,10 +1152,11 @@ const AddVendor = () => {
                   onClick={() => setOpenLapu(true)}
                   {...a11yProps(3)}
                 />
+                <Tab label="Due Ledger" {...a11yProps(4)} />
                 <Tab
                   label="Add Bank Acc"
                   onClick={fetchDataAndOpenPopup}
-                  {...a11yProps(4)}
+                  {...a11yProps(5)}
                 />
               </Tabs>
             </div>
@@ -1319,10 +1372,23 @@ const AddVendor = () => {
                 { showvalue: "CREDIT", value: "536" },
                 { showvalue: "WALLET", value: "100" },
                 { showvalue: "PAYOUT", value: "PAYOUT" },
+                { showvalue: "Vendor Due", value: "197" },
               ]}
               error={""}
             />
           </div>
+          {
+            receiverPaymentType == "197" && (
+              <>  <div> <DropSearch
+              value={selectedVendorDue}
+              onchange={(val) => setSelectedVendorDue(val)}
+              placeholder="Vendor Due"
+              options={[...vendorData]}
+              error={""}
+            /></div>
+            </>
+              )
+            }
           {isVisible && (
             <>
               <div>
@@ -1619,6 +1685,15 @@ const AddVendor = () => {
           <Loader />
         ) : (
           <BasicTable data={lappu} columns={lappuColumns} />
+        )}
+      </CustomTabPanel>
+
+      {/* Due Ledger screen */}
+      <CustomTabPanel value={value1} index={4}>
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <BasicTable data={dueLedger} columns={columnsDueLedger} />
         )}
       </CustomTabPanel>
 
