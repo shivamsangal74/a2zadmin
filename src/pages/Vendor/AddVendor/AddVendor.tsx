@@ -573,6 +573,10 @@ const AddVendor = () => {
       accessorKey: "tranxId",
     },
     {
+      header: "Operator ID",
+      accessorKey: "operatorId",
+    },
+    {
       header: "Opening Bal",
       accessorKey: "openingBalance",
     },
