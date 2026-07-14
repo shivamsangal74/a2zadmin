@@ -14,6 +14,7 @@ import {
   getLappu,
   getOprators,
   getStockLedger,
+  getDueLedger,
   getVendorBanks,
   getVendorPayments,
   getVendors,
@@ -21,6 +22,7 @@ import {
   reverseStockServices,
   saveLappuNo,
   saveVendor,
+  updateVendor,
   verifyGst,
 } from "../../../Services/vendorService";
 import { useQuery } from "@tanstack/react-query";
@@ -81,6 +83,8 @@ const AddVendor = () => {
   const [loading, setLoading] = useState(false);
   const [value1, setValue] = useState(0);
   const [deletId, setDeleteId] = useState("");
+  const [isEditingVendor, setIsEditingVendor] = useState(false);
+  const [editingVendorId, setEditingVendorId] = useState("");
   const [opCode, setOpCode] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -113,7 +117,7 @@ const AddVendor = () => {
   const [ifsc, setIfsc] = useState("");
   const [account, setAccount] = useState("");
   //Add Stock
-  const [vendorData, setVendorData] = useState([]);
+  const [vendorData, setVendorData] = useState<any[]>([]);
   const [usersData, setUsersData] = useState([]);
   const [fundData, setFundsData] = useState([]);
   const [fundPayoutData, setFundPayoutData] = useState([]);
@@ -131,8 +135,17 @@ const AddVendor = () => {
   const [isBankVisible, setIsBankVisble] = useState(false);
   const [transferMode, setTransferMode] = useState("");
   const [stockLedger, setStockLedger] = useState([]);
+  const [dueLedger, setDueLedger] = useState([]);
+  const [filterDueVendor, setFilterDueVendor] = useState("");
+  const [filterDueStartDate, setFilterDueStartDate] = useState("");
+  const [filterDueEndDate, setFilterDueEndDate] = useState("");
+  const [appliedDueVendor, setAppliedDueVendor] = useState("");
+  const [appliedDueStartDate, setAppliedDueStartDate] = useState("");
+  const [appliedDueEndDate, setAppliedDueEndDate] = useState("");
 
   const [isRecivedModalOpen, setIsRecivedModalOpen] = useState(false);
+
+  const [selectedVendorDue, setSelectedVendorDue] = useState("");
 
   //payments
   const [stockAmount, setStockAmount] = useState(0);
@@ -174,6 +187,22 @@ const AddVendor = () => {
   }, [amount]);
 
   async function handleAddStocks() {
+    let receiverValue = "";
+    if (receiverPaymentType === "PAYOUT") {
+      receiverValue = selectedBank;
+    } else if (receiverPaymentType === "436") {
+      receiverValue = "436";
+    } else if (receiverPaymentType === "197") {
+      receiverValue = "197";
+    } else {
+      receiverValue = receiverUser;
+    }
+
+    if (addStockApi && receiverValue && String(addStockApi) === String(receiverValue)) {
+      toast.error("Stock Add API and Receiver cannot be the same.");
+      return;
+    }
+
     const filteredLapus = userLapus.filter(
       (lappu: any) => lappu?.amount !== undefined && lappu?.amount !== null
     );
@@ -213,6 +242,7 @@ const AddVendor = () => {
       toast.success("stock added successfully.");
       paymentsRefetch();
       ledgerRefetch();
+      refetchDueLedger();
       reset();
     } catch (error) {
       toast.error(`${error}`);
@@ -223,7 +253,7 @@ const AddVendor = () => {
     setCashAmounts(cashAmounts);
   };
 
-  async function openDeleteModal(id: string,opCode1: string) {
+  async function openDeleteModal(id: string, opCode1: string) {
     setDeleteId(id);
     setOpCode(opCode1)
     setShowModal(true);
@@ -257,6 +287,8 @@ const AddVendor = () => {
       } else {
         toast.success("Fund Received successfully.");
         paymentsRefetch();
+        refetchDueLedger();
+        refetch();
         reset();
       }
     } catch (error) {
@@ -327,7 +359,7 @@ const AddVendor = () => {
             <BsTrash
               fontSize={18}
               color="red"
-              onClick={() => openDeleteModal(row.row.original.lappuId,row.row.original.operatorCode)}
+              onClick={() => openDeleteModal(row.row.original.lappuId, row.row.original.operatorCode)}
             />
           </div>
           {showModal && (
@@ -341,7 +373,7 @@ const AddVendor = () => {
                     className="px-4 py-2 mr-2 bg-red-500 text-white rounded"
                     onClick={() => {
                       setShowModal(false);
-                      deleteLappu(deletId,opCode);
+                      deleteLappu(deletId, opCode);
                     }}
                   >
                     Delete
@@ -395,7 +427,7 @@ const AddVendor = () => {
             <BsPencil
               fontSize={18}
               color="blue"
-              onClick={() => showGstInfo(row.row.original.vendorUniqueId)}
+              onClick={() => handleEditVendorClick(row.row.original)}
             />
           </div>
           <div className="cursor-pointer" title="Delete Operator">
@@ -541,6 +573,54 @@ const AddVendor = () => {
     // },
   ];
 
+  const columnsDueLedger = [
+    {
+      header: "Date",
+      accessorKey: "createdDate",
+    },
+    {
+      header: "Vendor",
+      accessorKey: "vendorName",
+    },
+    {
+      header: "Type",
+      accessorKey: "tranxType",
+      cell: (row: any) => {
+        const type = row.row.original.tranxType;
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-semibold ${type === "CR" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            }`}>
+            {type}
+          </span>
+        );
+      }
+    },
+    {
+      header: "Txn ID",
+      accessorKey: "tranxId",
+    },
+    {
+      header: "Operator ID",
+      accessorKey: "operatorId",
+    },
+    {
+      header: "Opening Bal",
+      accessorKey: "openingBalance",
+    },
+    {
+      header: "Amount",
+      accessorKey: "amount",
+    },
+    {
+      header: "Closing Bal",
+      accessorKey: "closingBalance",
+    },
+    {
+      header: "Remarks",
+      accessorKey: "remarks",
+    },
+  ];
+
   const { refetch: paymentsRefetch } = useQuery({
     queryKey: ["payments"],
     queryFn: async () => {
@@ -601,11 +681,12 @@ const AddVendor = () => {
     setOpenGstInfo(true);
   };
 
-  const deleteLappu = async (lappuId: any,opertorCode: any ) => {
+  const deleteLappu = async (lappuId: any, opertorCode: any) => {
     try {
-      await deleteLappuId(lappuId,opertorCode);
+      await deleteLappuId(lappuId, opertorCode);
       toast.success("Lappu deleted successfully.");
       refetch();
+      refetchDueLedger();
     } catch (e) {
       toast.error("Something went wrong");
     }
@@ -616,6 +697,7 @@ const AddVendor = () => {
       await deleteVendorId(vendorId);
       toast.success("Vendor deleted successfully.");
       refetch();
+      refetchDueLedger();
     } catch (e) {
       toast.error("Something went wrong");
     }
@@ -629,6 +711,7 @@ const AddVendor = () => {
     reset();
     refetch();
     paymentsRefetch();
+    refetchDueLedger();
   };
 
   function a11yProps(index: number) {
@@ -684,8 +767,58 @@ const AddVendor = () => {
       reset();
       toast.success("Vendor created successfully.");
       refetch();
+      refetchDueLedger();
     } catch (e) {
       toast.error("Failed to create vendor.");
+    }
+  };
+
+  const handleEditVendorClick = (vendor: any) => {
+    setIsEditingVendor(true);
+    setEditingVendorId(vendor.vendorUniqueId);
+    setFullName(vendor.fullName ?? "");
+    setMobileNo(vendor.mobileno ?? "");
+    setCommissionType(vendor.commissiontype ?? "");
+    setCommissionValue(vendor.commissionvalue ?? "");
+    setAddStockApi(vendor.vendorApi ?? "");
+    setGstin(vendor.gstin ?? "");
+    setValue(2); // Switch to Add Vendor tab (index 2)
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingVendor(false);
+    setEditingVendorId("");
+    reset();
+  };
+
+  const handleUpdateVendor = async () => {
+    const data = {
+      fullName,
+      mobileno,
+      commissiontype: commissionType,
+      commissionvalue: commissionValue,
+      vendorApi: addStockApi,
+      gstin,
+      ...gstRes,
+    };
+
+    if (!data.fullName || !data.mobileno) {
+      toast.error("Please fill required fields.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await updateVendor(editingVendorId, data);
+      setIsEditingVendor(false);
+      setEditingVendorId("");
+      reset();
+      toast.success("Vendor updated successfully.");
+      refetch();
+    } catch (e) {
+      toast.error("Failed to update vendor.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -714,11 +847,12 @@ const AddVendor = () => {
         if (vendorsData.length > 0) {
           vendorsData.forEach((op: any) => {
             _dataOP.push({
-              showvalue: `${op?.fullName} - ${op?.mobileno}`,
+              showvalue: `${op?.fullName} - ${op?.mobileno} - ${op?.dueAmount}`,
               value: op?.vendorUniqueId,
               commissionType: op?.commissiontype,
               commissionValue: op?.commissionvalue,
               vendorApi: op?.vendorApi,
+              dueAmount: op?.dueAmount,
             });
           });
         }
@@ -728,6 +862,20 @@ const AddVendor = () => {
         return vendorsData;
       } catch (error) {
         toast.error("Something went wrong!");
+      }
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const { isLoading: isDueLedgerLoading, refetch: refetchDueLedger } = useQuery({
+    queryKey: ["dueLedger", appliedDueVendor, appliedDueStartDate, appliedDueEndDate],
+    queryFn: async () => {
+      try {
+        const dueLedgerData = await getDueLedger(appliedDueVendor, appliedDueStartDate, appliedDueEndDate);
+        setDueLedger(dueLedgerData);
+        return dueLedgerData;
+      } catch (error) {
+        toast.error("Failed to fetch due ledger");
       }
     },
     refetchOnWindowFocus: false,
@@ -787,7 +935,7 @@ const AddVendor = () => {
       }
 
       if (vendorDetails.vendorApi) {
-        setAddStockApi(Number(vendorDetails.vendorApi));
+        setAddStockApi(String(vendorDetails.vendorApi));
       }
 
       if (vendorDetails.commissionValue) {
@@ -802,7 +950,7 @@ const AddVendor = () => {
         setUserLapus(filteredLappus);
         if (filteredLappus.length > 0) setOpenInputLapu(true);
       }
-      const bankResponse = await getVendorBanks(value);
+      const bankResponse = await getVendorBanks(value as string);
       let formattedBank: any = [];
       if (bankResponse.length > 0) {
         bankResponse.forEach((bank: any) => {
@@ -939,6 +1087,7 @@ const AddVendor = () => {
         reset();
         toast.success("Lappu No added successfully.");
         refetch();
+        refetchDueLedger();
       } catch (e) {
         toast.error("Failed to create Lappu No.");
       }
@@ -1003,6 +1152,9 @@ const AddVendor = () => {
     setAddStockApi(value);
     if (value == "436") {
       setIsModalOpen(true);
+    }
+    if (value == "197") {
+      setCommissionValue("0");
     }
   }
   async function handleReceiverPaymentType(value: any) {
@@ -1100,10 +1252,11 @@ const AddVendor = () => {
                   onClick={() => setOpenLapu(true)}
                   {...a11yProps(3)}
                 />
+                <Tab label="Due Ledger" {...a11yProps(4)} />
                 <Tab
                   label="Add Bank Acc"
                   onClick={fetchDataAndOpenPopup}
-                  {...a11yProps(4)}
+                  {...a11yProps(5)}
                 />
               </Tabs>
             </div>
@@ -1213,14 +1366,33 @@ const AddVendor = () => {
             </div>
           </div>
 
-          <div className="ml-8">
-            <ButtonLabel
-              type="button"
-              loader={loading}
-              disabled={loading}
-              onClick={() => handleAddVendor()}
-              label="Add Vendor"
-            />
+          <div className="ml-8 flex gap-4">
+            {isEditingVendor ? (
+              <>
+                <ButtonLabel
+                  type="button"
+                  loader={loading}
+                  disabled={loading}
+                  onClick={() => handleUpdateVendor()}
+                  label="Update Vendor"
+                />
+                <ButtonLabel
+                  type="button"
+                  loader={loading}
+                  disabled={loading}
+                  onClick={() => handleCancelEdit()}
+                  label="Cancel"
+                />
+              </>
+            ) : (
+              <ButtonLabel
+                type="button"
+                loader={loading}
+                disabled={loading}
+                onClick={() => handleAddVendor()}
+                label="Add Vendor"
+              />
+            )}
           </div>
         </div>
 
@@ -1319,10 +1491,23 @@ const AddVendor = () => {
                 { showvalue: "CREDIT", value: "536" },
                 { showvalue: "WALLET", value: "100" },
                 { showvalue: "PAYOUT", value: "PAYOUT" },
+                { showvalue: "Vendor Due", value: "197" },
               ]}
               error={""}
             />
           </div>
+          {
+            receiverPaymentType == "197" && (
+              <>  <div> <DropSearch
+                value={selectedVendorDue}
+                onchange={(val) => setSelectedVendorDue(val)}
+                placeholder="Vendor Due"
+                options={[...vendorData]}
+                error={""}
+              /></div>
+              </>
+            )
+          }
           {isVisible && (
             <>
               <div>
@@ -1619,6 +1804,95 @@ const AddVendor = () => {
           <Loader />
         ) : (
           <BasicTable data={lappu} columns={lappuColumns} />
+        )}
+      </CustomTabPanel>
+
+      {/* Due Ledger screen */}
+      <CustomTabPanel value={value1} index={4}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
+              Filter by Vendor
+            </label>
+            <DropSearch
+              value={filterDueVendor}
+              onchange={(val) => setFilterDueVendor(val || "")}
+              placeholder="Select Vendor"
+              options={[...vendorData]}
+              error={""}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={filterDueStartDate}
+              onChange={(e) => setFilterDueStartDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-black focus:border-black dark:focus:ring-white dark:focus:border-white h-[40px] shadow-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">
+              End Date
+            </label>
+            <input
+              type="date"
+              value={filterDueEndDate}
+              onChange={(e) => setFilterDueEndDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-1 focus:ring-black focus:border-black dark:focus:ring-white dark:focus:border-white h-[40px] shadow-sm"
+            />
+          </div>
+          <div className="flex gap-2.5">
+            <Button
+              variant="contained"
+              onClick={() => {
+                setAppliedDueVendor(filterDueVendor);
+                setAppliedDueStartDate(filterDueStartDate);
+                setAppliedDueEndDate(filterDueEndDate);
+              }}
+              sx={{
+                height: "40px",
+                backgroundColor: "black",
+                color: "white",
+                textTransform: "none",
+                fontWeight: "medium",
+                flexGrow: 1,
+                "&:hover": { backgroundColor: "#222" },
+              }}
+            >
+              Filter
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setFilterDueVendor("");
+                setFilterDueStartDate("");
+                setFilterDueEndDate("");
+                setAppliedDueVendor("");
+                setAppliedDueStartDate("");
+                setAppliedDueEndDate("");
+              }}
+              sx={{
+                height: "40px",
+                borderColor: "rgba(0,0,0,0.23)",
+                color: "rgba(0,0,0,0.87)",
+                textTransform: "none",
+                fontWeight: "medium",
+                flexGrow: 1,
+                "&:hover": { borderColor: "black", backgroundColor: "rgba(0,0,0,0.04)" },
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
+
+        {isDueLedgerLoading ? (
+          <Loader />
+        ) : (
+          <BasicTable data={dueLedger} columns={columnsDueLedger} />
         )}
       </CustomTabPanel>
 

@@ -219,3 +219,33 @@ export const handleStocksPay = async (data: any) => {
     return { error: true, message: errorMessage };
   }
 };
+
+export const getDueLedger = async (vendorId?: string, startDate?: string, endDate?: string) => {
+  try {
+    const response = await api.get(`${apiUrl}/vendor/due-ledger`, {
+      params: {
+        vendorId,
+        startDate,
+        endDate,
+      },
+      withCredentials: true,
+    });
+    return response.data.dueData?.dueLedger || [];
+  } catch (error) {
+    console.error("Error fetching due ledger:", error);
+    throw error;
+  }
+};
+
+export const updateVendor = async (vendorId: string, vendorData: any) => {
+  try {
+    const response = await api.put(`${apiUrl}/vendor/${vendorId}`, vendorData, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
