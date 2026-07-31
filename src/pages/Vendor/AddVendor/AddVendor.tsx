@@ -933,9 +933,9 @@ const AddVendor = () => {
       if (vendorDetails.commissionType) {
         setCommissionType(vendorDetails.commissionType);
       }
-
+      debugger
       if (vendorDetails.vendorApi) {
-        setAddStockApi(String(vendorDetails.vendorApi));
+        setAddStockApi(Number(vendorDetails.vendorApi));
       }
 
       if (vendorDetails.commissionValue) {
