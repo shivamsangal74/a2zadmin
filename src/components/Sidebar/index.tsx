@@ -382,6 +382,12 @@ const Sidebar: React.FC = () => {
             "/vendor/",
             <PersonAddAltOutlinedIcon style={{ fontSize: 18 }} />
           ),
+        getItem(
+          "Lapu List",
+          "16b",
+          "/vendor/lapu-list",
+          <SimCardOutlinedIcon style={{ fontSize: 18 }} />
+        ),
       ].filter(Boolean)
     ),
     getItem(

@@ -13,6 +13,7 @@ interface SearchDropDownProps<O extends { value: string; showvalue: string }> {
   isLoading?: boolean;
   drop?: number;
   place2?: string;
+  onOpen?: () => void;
 }
 
 export const DropSearch = <O extends { value: string; showvalue: string }>(
@@ -28,6 +29,7 @@ export const DropSearch = <O extends { value: string; showvalue: string }>(
     isFilter = false,
     drop = 0,
     place2 = undefined,
+    onOpen,
   } = props;
 
   return (
@@ -36,6 +38,7 @@ export const DropSearch = <O extends { value: string; showvalue: string }>(
         <Autocomplete
           loading={isLoading}
           disabled={isLoading}
+          onOpen={onOpen}
           value={
             value
               ? options.find((option) => {

@@ -26,6 +26,7 @@ import SmsTemplate from "./pages/SmsTemplate/SmsTemplate";
 import Reports from "./pages/Reports/Reports";
 import CreateApi from "./pages/Manage/Api/CreateApi";
 import AddVendor from "./pages/Vendor/AddVendor/AddVendor";
+import LapuList from "./pages/Vendor/LapuList/LapuList";
 import AmountFilter from "./pages/Filter/Amount";
 import CircleFilter from "./pages/Filter/Circle";
 import UserWiseFilter from "./pages/Filter/UserWise";
@@ -271,6 +272,7 @@ function App() {
               <>
                 <Routes>
                   <Route path="/" element={<AddVendor />} />
+                  <Route path="/lapu-list" element={<LapuList />} />
                 </Routes>
               </>
             }
@@ -410,6 +412,10 @@ function App() {
           <Route
             path="/apes-report"
             element={<ReportRedirect target="/report/apes-report" />}
+          />
+          <Route
+            path="/settlement-report"
+            element={<ReportRedirect target="/report/settlement-report" />}
           />
           <Route
             path="/chart"

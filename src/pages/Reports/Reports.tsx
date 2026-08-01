@@ -247,7 +247,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
     const { initialFilters, initialDateRange, initialPickerValue } =
       buildInitialReportQuery(reportData);
-    const hasUrlFilters = Boolean(urlStatus || urlPeriod === "month");
+    const hasUrlFilters = Boolean(
+      urlStatus || urlPeriod === "30d" || urlPeriod === "month"
+    );
 
     if (hasUrlFilters) {
       setFilters(initialFilters);
@@ -341,8 +343,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       }
     }
 
-    if (urlPeriod === "month") {
-      const rangeStart = dayjs().startOf("month");
+    if (urlPeriod === "30d" || urlPeriod === "month") {
+      const rangeStart =
+        urlPeriod === "month"
+          ? dayjs().startOf("month")
+          : dayjs().subtract(30, "day").startOf("day");
       const rangeEnd = dayjs().endOf("day");
       initialDateRange = `${dateModel} between '${rangeStart.format(
         "YYYY-MM-DD HH:mm:ss"

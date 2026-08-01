@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
 import { BsBank } from "react-icons/bs";
 import {
   getPendingReportCount,
   type PendingReportCounts,
 } from "../../Services/commonService";
 
-const POLL_INTERVAL_MS =  3000;
+const POLL_INTERVAL_MS = 3000;
+const PENDING_QUERY = "status=Pending&period=30d";
 
 const defaultCounts: PendingReportCounts = {
   recharge: 0,
-  apes: 0,
+  aeps: 0,
+  settlement: 0,
   total: 0,
 };
 
@@ -93,8 +96,8 @@ const PendingReportBadges = () => {
         Pending
       </span>
       <PendingBadgeLink
-        to="/report/recharge-report?status=Pending&period=month"
-        title="Pending recharge requests (current month)"
+        to={`/report/recharge-report?${PENDING_QUERY}`}
+        title="Pending recharge requests (last 30 days)"
         label="Recharge"
         count={counts.recharge}
         loading={loading}
@@ -102,13 +105,22 @@ const PendingReportBadges = () => {
         icon={<AccountBalanceWalletOutlinedIcon sx={{ fontSize: 16 }} />}
       />
       <PendingBadgeLink
-        to="/report/apes-report?status=Pending&period=month"
-        title="Pending AEPS requests (current month)"
+        to={`/report/apes-report?${PENDING_QUERY}`}
+        title="Pending AEPS requests (last 30 days)"
         label="AEPS"
-        count={counts.apes}
+        count={counts.aeps}
         loading={loading}
         accentClass="border-meta-3/30 bg-meta-3/5 text-[#0d9668] hover:border-meta-3/50 hover:bg-meta-3/10 dark:border-meta-3/30 dark:bg-meta-3/10 dark:text-meta-3"
         icon={<BsBank size={15} />}
+      />
+      <PendingBadgeLink
+        to={`/report/settlement-report?${PENDING_QUERY}`}
+        title="Pending settlement requests (last 30 days)"
+        label="Settlement"
+        count={counts.settlement}
+        loading={loading}
+        accentClass="border-meta-5/30 bg-meta-5/5 text-meta-5 hover:border-meta-5/50 hover:bg-meta-5/10 dark:border-meta-5/30 dark:bg-meta-5/10"
+        icon={<AccountBalanceOutlinedIcon sx={{ fontSize: 16 }} />}
       />
     </div>
   );

@@ -231,6 +231,21 @@ export async function deleteUserBank(userId: any, col1: any) {
   }
 }
 
+export async function getOperatorsByCategoryCode(categoryCode: number) {
+  try {
+    const response = await api.post(
+      "/operator/getopbtcategorycode",
+      { categoryCode },
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || "Something went wrong!";
+    throw errorMessage;
+  }
+}
+
 export async function getLogslist(fromDate: any, toDate: any) {
   try {
     const response = await api.post(
@@ -266,29 +281,35 @@ export async function getLogslistById(fromDate: any, toDate: any, id: any) {
 }
 
 export type PendingReportItem = {
-  source_table: "recharge" | "apes";
+  source_table: "recharge" | "aeps" | "apes" | "settlement";
   pending_transaction_count: number;
 };
 
 export type PendingReportCounts = {
   recharge: number;
-  apes: number;
+  aeps: number;
+  settlement: number;
   total: number;
 };
 
 export const mapPendingCounts = (
   data: PendingReportItem[]
-): PendingReportCounts => ({
-  recharge:
-    data.find((d) => d.source_table === "recharge")?.pending_transaction_count ??
-    0,
-  apes:
-    data.find((d) => d.source_table === "apes")?.pending_transaction_count ?? 0,
-  total: data.reduce(
-    (sum, d) => sum + Number(d.pending_transaction_count),
-    0
-  ),
-});
+): PendingReportCounts => {
+  const countFor = (...sources: string[]) =>
+    data.find((d) => sources.includes(d.source_table))
+      ?.pending_transaction_count ?? 0;
+
+  const recharge = Number(countFor("recharge"));
+  const aeps = Number(countFor("aeps", "apes"));
+  const settlement = Number(countFor("settlement"));
+
+  return {
+    recharge,
+    aeps,
+    settlement,
+    total: recharge + aeps + settlement,
+  };
+};
 
 export async function getPendingReportCount(): Promise<PendingReportCounts> {
   try {
@@ -299,7 +320,7 @@ export async function getPendingReportCount(): Promise<PendingReportCounts> {
     if (Array.isArray(data)) {
       return mapPendingCounts(data);
     }
-    return { recharge: 0, apes: 0, total: 0 };
+    return { recharge: 0, aeps: 0, settlement: 0, total: 0 };
   } catch (error) {
     console.error(error);
     throw error;

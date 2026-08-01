@@ -37,6 +37,7 @@ import { BsEye, BsPencil, BsTrash } from "react-icons/bs";
 import { CiEdit } from "react-icons/ci";
 import {
   getInstantPayBank,
+  getOperatorsByCategoryCode,
   verifyInstantPayBank,
 } from "../../../Services/commonService";
 
@@ -83,8 +84,6 @@ const AddVendor = () => {
   const [loading, setLoading] = useState(false);
   const [value1, setValue] = useState(0);
   const [deletId, setDeleteId] = useState("");
-  const [isEditingVendor, setIsEditingVendor] = useState(false);
-  const [editingVendorId, setEditingVendorId] = useState("");
   const [opCode, setOpCode] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -99,6 +98,8 @@ const AddVendor = () => {
   const [lappu, setLappu] = useState([]);
   const [op, setOps] = useState([]);
   const [selectedOp, setSelectedOp] = useState("");
+  const [lappuOps, setLappuOps] = useState<{ showvalue: string; value: string }[]>([]);
+  const [isLappuOpsLoading, setIsLappuOpsLoading] = useState(false);
   const [openLapu, setOpenLapu] = useState(false);
   const [openBankAccount, setOpenBankAccount] = useState(false);
   const [openPayoutAccount, setOpenPayoutAccount] = useState(false);
@@ -110,6 +111,15 @@ const AddVendor = () => {
   const today = new Date().toISOString().split("T")[0];
   const [bankData, setBankData] = useState<any[]>([]);
   const [vendorBankData, setVendorBankData] = useState<any[]>([]);
+
+  // Edit vendor popup
+  const [openEditVendor, setOpenEditVendor] = useState(false);
+  const [editVendorId, setEditVendorId] = useState("");
+  const [editFullName, setEditFullName] = useState("");
+  const [editMobileno, setEditMobileno] = useState("");
+  const [editCommissionType, setEditCommissionType] = useState("");
+  const [editCommissionValue, setEditCommissionValue] = useState("");
+  const [editGstin, setEditGstin] = useState("");
 
   const [createdDate, setCreatedDate] = useState<string>(today);
   //bank
@@ -416,27 +426,37 @@ const AddVendor = () => {
     {
       header: "Action",
       cell: (row: any) => (
-        <div className="flex gap-6">
-          <div>
-            <BsEye
-              fontSize={18}
-              onClick={() => showGstInfo(row.row.original.vendorUniqueId)}
-            />
-          </div>
-          <div className="cursor-pointer">
-            <BsPencil
-              fontSize={18}
-              color="blue"
-              onClick={() => handleEditVendorClick(row.row.original)}
-            />
-          </div>
-          <div className="cursor-pointer" title="Delete Operator">
-            <BsTrash
-              fontSize={18}
-              color="red"
-              onClick={() => openDeleteModal(row.row.original.vendorUniqueId)}
-            />
-          </div>
+        <div className="flex items-center gap-4">
+          <BsEye
+            fontSize={17}
+            className="cursor-pointer text-gray-600 hover:text-gray-900"
+            title="View GST Info"
+            onClick={() => showGstInfo(row.row.original.vendorUniqueId)}
+          />
+          <BsPencil
+            fontSize={15}
+            className="cursor-pointer"
+            color="blue"
+            title="Edit Vendor"
+            onClick={() => openEditVendorModal(row.row.original)}
+          />
+          <IoAdd
+            fontSize={19}
+            className="cursor-pointer"
+            color="green"
+            title="Add Bank Account"
+            onClick={async () => {
+              setSelectedVendors(row.row.original.vendorUniqueId);
+              await fetchDataAndOpenPopup();
+            }}
+          />
+          <BsTrash
+            fontSize={15}
+            className="cursor-pointer"
+            color="red"
+            title="Delete Vendor"
+            onClick={() => openDeleteModal(row.row.original.vendorUniqueId)}
+          />
           {showModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50">
               <div className="bg-white p-6 rounded shadow-lg">
@@ -773,55 +793,6 @@ const AddVendor = () => {
     }
   };
 
-  const handleEditVendorClick = (vendor: any) => {
-    setIsEditingVendor(true);
-    setEditingVendorId(vendor.vendorUniqueId);
-    setFullName(vendor.fullName ?? "");
-    setMobileNo(vendor.mobileno ?? "");
-    setCommissionType(vendor.commissiontype ?? "");
-    setCommissionValue(vendor.commissionvalue ?? "");
-    setAddStockApi(vendor.vendorApi ?? "");
-    setGstin(vendor.gstin ?? "");
-    setValue(2); // Switch to Add Vendor tab (index 2)
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingVendor(false);
-    setEditingVendorId("");
-    reset();
-  };
-
-  const handleUpdateVendor = async () => {
-    const data = {
-      fullName,
-      mobileno,
-      commissiontype: commissionType,
-      commissionvalue: commissionValue,
-      vendorApi: addStockApi,
-      gstin,
-      ...gstRes,
-    };
-
-    if (!data.fullName || !data.mobileno) {
-      toast.error("Please fill required fields.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await updateVendor(editingVendorId, data);
-      setIsEditingVendor(false);
-      setEditingVendorId("");
-      reset();
-      toast.success("Vendor updated successfully.");
-      refetch();
-    } catch (e) {
-      toast.error("Failed to update vendor.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCommChange = (event: any) => {
     setCommissionType(event);
   };
@@ -914,7 +885,10 @@ const AddVendor = () => {
     }
     try {
       const gst = await verifyGst(gstin);
-      setGstRes({ ...gst, address: Object.values(gst.address).join() });
+      setGstRes({ ...gst });
+      if (gst?.fullName || gst?.legal_name) {
+        setFullName(gst.fullName || gst.legal_name);
+      }
       toast.success("GST verified successfully.");
     } catch (error) {
       toast.error("Something went wrong in verification!");
@@ -1233,6 +1207,54 @@ const AddVendor = () => {
     setCreatedDate(event.target.value);
   };
 
+  const fetchLappuOperators = async () => {
+    if (lappuOps.length > 0) return; // already loaded
+    setIsLappuOpsLoading(true);
+    try {
+      const data = await getOperatorsByCategoryCode(317);
+      const formatted = data.map((op: any) => ({
+        showvalue: `${op.name} (${op.id})`,
+        value: String(op.id),
+      }));
+      setLappuOps(formatted);
+    } catch (e) {
+      toast.error("Failed to load operators.");
+    } finally {
+      setIsLappuOpsLoading(false);
+    }
+  };
+
+  const openEditVendorModal = (vendor: any) => {
+    setEditVendorId(vendor.vendorUniqueId);
+    setEditFullName(vendor.fullName || "");
+    setEditMobileno(vendor.mobileno || "");
+    setEditCommissionType(vendor.commissiontype || "");
+    setEditCommissionValue(vendor.commissionvalue || "");
+    setEditGstin(vendor.gstin || "");
+    setOpenEditVendor(true);
+  };
+
+  const handleUpdateVendor = async () => {
+    if (!editFullName || !editMobileno) {
+      toast.error("Please fill required fields.");
+      return;
+    }
+    try {
+      await updateVendor(editVendorId, {
+        fullName: editFullName,
+        mobileno: editMobileno,
+        commissiontype: editCommissionType,
+        commissionvalue: editCommissionValue,
+        gstin: editGstin,
+      });
+      toast.success("Vendor updated successfully.");
+      setOpenEditVendor(false);
+      refetch();
+    } catch (e) {
+      toast.error("Failed to update vendor.");
+    }
+  };
+
   return (
     <DefaultLayout isList={true}>
       <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 py-2">
@@ -1253,11 +1275,6 @@ const AddVendor = () => {
                   {...a11yProps(3)}
                 />
                 <Tab label="Due Ledger" {...a11yProps(4)} />
-                <Tab
-                  label="Add Bank Acc"
-                  onClick={fetchDataAndOpenPopup}
-                  {...a11yProps(5)}
-                />
               </Tabs>
             </div>
           </Box>
@@ -1266,6 +1283,16 @@ const AddVendor = () => {
       {/* add vendor screen  */}
       <CustomTabPanel value={value1} index={2}>
         <div className="p-6 grid gap-6 md:grid-cols-4">
+          <div>
+            <TextInput
+              label="Gst In"
+              onChange={setGstin}
+              value={gstin}
+              name={"gstin"}
+              verificationFn={verifyGstFn}
+              disabledProp={Object.keys(gstRes).length ? true : false}
+            />
+          </div>
           <div className="flex gap-2">
             <div className="w-90">
               <TextInput
@@ -1274,6 +1301,7 @@ const AddVendor = () => {
                 name={"fullName"}
                 onChange={setFullName}
                 required
+                disabledProp={Object.keys(gstRes).length ? true : false}
               />
             </div>
           </div>
@@ -1318,16 +1346,6 @@ const AddVendor = () => {
             />
           </div>
           <div>
-            <TextInput
-              label="Gst In"
-              onChange={setGstin}
-              value={gstin}
-              name={"gstin"}
-              verificationFn={verifyGstFn}
-              disabledProp={Object.keys(gstRes).length ? true : false}
-            />
-          </div>
-          <div>
             <div
               style={{ width: "100%" }}
               className="bg-white text-[#333] flex items-center shadow-[0_2px_10px_-3px_rgba(6,81,237,0.3)] p-1 min-w-[300px] w-max font-[sans-serif] rounded-md overflow-hidden"
@@ -1366,33 +1384,14 @@ const AddVendor = () => {
             </div>
           </div>
 
-          <div className="ml-8 flex gap-4">
-            {isEditingVendor ? (
-              <>
-                <ButtonLabel
-                  type="button"
-                  loader={loading}
-                  disabled={loading}
-                  onClick={() => handleUpdateVendor()}
-                  label="Update Vendor"
-                />
-                <ButtonLabel
-                  type="button"
-                  loader={loading}
-                  disabled={loading}
-                  onClick={() => handleCancelEdit()}
-                  label="Cancel"
-                />
-              </>
-            ) : (
-              <ButtonLabel
-                type="button"
-                loader={loading}
-                disabled={loading}
-                onClick={() => handleAddVendor()}
-                label="Add Vendor"
-              />
-            )}
+          <div className="ml-8">
+            <ButtonLabel
+              type="button"
+              loader={loading}
+              disabled={loading}
+              onClick={() => handleAddVendor()}
+              label="Add Vendor"
+            />
           </div>
         </div>
 
@@ -1401,6 +1400,74 @@ const AddVendor = () => {
         ) : (
           <BasicTable data={vendors} columns={columns} />
         )}
+
+        {/* Edit Vendor Popup */}
+        <Popup
+          isOpen={openEditVendor}
+          onClose={() => setOpenEditVendor(false)}
+          title="Edit Vendor"
+          width="large"
+          styles={{}}
+        >
+          <div className="grid gap-4 md:grid-cols-2 p-2">
+            <div>
+              <TextInput
+                label="Vendor Name"
+                value={editFullName}
+                name="editFullName"
+                onChange={setEditFullName}
+                required
+              />
+            </div>
+            <div>
+              <TextInput
+                label="Vendor Mobile No"
+                value={editMobileno}
+                name="editMobileno"
+                onChange={setEditMobileno}
+                required
+              />
+            </div>
+            <div>
+              <DropSearch
+                value={editCommissionType}
+                onchange={(val) => setEditCommissionType(val || "")}
+                placeholder="Select Commission Type"
+                options={[
+                  { showvalue: "Flat", value: "flat" },
+                  { showvalue: "Variable", value: "variable" },
+                ]}
+                error={""}
+              />
+            </div>
+            <div>
+              <TextInput
+                label="Commission Value"
+                value={editCommissionValue}
+                name="editCommissionValue"
+                onChange={setEditCommissionValue}
+              />
+            </div>
+            <div>
+              <TextInput
+                label="GST In"
+                value={editGstin}
+                name="editGstin"
+                onChange={setEditGstin}
+                disabledProp={true}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4 pr-2">
+            <ButtonLabel
+              type="button"
+              loader={loading}
+              disabled={loading}
+              onClick={handleUpdateVendor}
+              label="Update Vendor"
+            />
+          </div>
+        </Popup>
       </CustomTabPanel>
       {/* add stock screen  */}
       <CustomTabPanel value={value1} index={0}>
@@ -1933,9 +2000,11 @@ const AddVendor = () => {
             <DropSearch
               value={selectedOp}
               onchange={handleOpraterChange}
-              placeholder="Select Opretors"
-              options={[...op]}
+              placeholder="Select Operator"
+              options={lappuOps}
               error={""}
+              isLoading={isLappuOpsLoading}
+              onOpen={fetchLappuOperators}
             />
           </div>
           <div>
@@ -2096,20 +2165,12 @@ const AddVendor = () => {
       </Popup>
 
       {/* Add Bank Account */}
-      {/* add lappu popup */}
       <Popup
         isOpen={openBankAccount}
         onClose={() => setOpenBankAccount(false)}
         title="Add Bank Account"
       >
         <div className="grid gap-3">
-          <DropSearch
-            value={selectedVendors}
-            onchange={handleVendorChange}
-            placeholder="Select Vendor"
-            options={[...vendorData]}
-            error={""}
-          />
           <div className="grid gap-3">
             <DropSearch
               value={selectedAddBank}

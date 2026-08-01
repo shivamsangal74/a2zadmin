@@ -131,6 +131,18 @@ export const deleteVendorId = async (vendorId: any) => {
   }
 };
 
+export const updateVendor = async (vendorId: string, vendorData: any) => {
+  try {
+    const response = await api.put(`${apiUrl}/vendor/${vendorId}`, vendorData, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const getOprators = async () => {
   try {
     const response = await api.get(`${apiUrl}/vendor/getOpratersForAddFund`, {
@@ -237,15 +249,4 @@ export const getDueLedger = async (vendorId?: string, startDate?: string, endDat
   }
 };
 
-export const updateVendor = async (vendorId: string, vendorData: any) => {
-  try {
-    const response = await api.put(`${apiUrl}/vendor/${vendorId}`, vendorData, {
-      withCredentials: true,
-    });
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
 
