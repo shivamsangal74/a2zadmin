@@ -5,12 +5,14 @@ type FileUploadProps = {
   onChange: any;
   error: any;
   name: string;
+  accept?: string;
 };
 const FileUpload: React.FC<FileUploadProps> = ({
   label,
   onChange,
   name,
   error,
+  accept,
 }) => {
   return (
     <>
@@ -25,6 +27,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         id="file_input"
         type="file"
         name={name}
+        accept={accept}
         onChange={onChange}
       />
 

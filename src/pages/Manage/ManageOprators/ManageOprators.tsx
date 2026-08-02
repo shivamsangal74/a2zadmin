@@ -386,6 +386,12 @@ const ManageOperators = () => {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
+      const allowed = ["image/webp", "image/svg+xml"];
+      if (!allowed.includes(file.type)) {
+        toast.error("Only WEBP and SVG files are allowed.");
+        e.target.value = "";
+        return;
+      }
       setImageFile(file);
     }
   }
@@ -561,6 +567,7 @@ const ManageOperators = () => {
                 label={""}
                 error={undefined}
                 name={""}
+                accept="image/webp,image/svg+xml"
               />
             </div>
 
@@ -690,6 +697,7 @@ const ManageOperators = () => {
               label={""}
               error={undefined}
               name={""}
+              accept="image/webp,image/svg+xml"
             />
           </div>
           <div className="flex items-center">

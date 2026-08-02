@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import DefaultLayout from "../../../layout/DefaultLayout";
+import { apiUrl } from "../../../Utills/constantt";
 import { useQuery } from "@tanstack/react-query";
 import { getLappu, getVendors } from "../../../Services/vendorService";
 import { getOperatorsByCategoryCode } from "../../../Services/commonService";
@@ -11,8 +12,7 @@ import TextInput from "../../../components/Input/TextInput";
 import { ButtonLabel } from "../../../components/Button/Button";
 import { IoAdd } from "react-icons/io5";
 import Switch from "@mui/material/Switch";
-import { saveLappuNo, deleteLappuId } from "../../../Services/vendorService";
-// deleteLappuId kept for future action buttons
+import { saveLappuNo } from "../../../Services/vendorService";
 
 // ── operator badge colours ──────────────────────────────────────────────────
 const OP_COLORS: Record<string, { bg: string; text: string; short: string }> = {
@@ -132,7 +132,7 @@ const LapuList = () => {
     try {
       await saveLappuNo({
         lappuId: lapuNumber,
-        lappuName,
+        lappuName: lapuName,
         lappuOperator: selectedOp,
         vendorId: selectedVendor,
       });
@@ -263,14 +263,26 @@ const LapuList = () => {
                         {row._id?.slice(-6)?.toUpperCase() ?? `#${idx + 1}`}
                       </td>
 
-                      {/* OP badge */}
+                      {/* OP badge / image */}
                       <td className="px-4 py-3">
-                        <span
-                          className="inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold"
-                          style={{ background: badge.bg, color: badge.text }}
-                        >
-                          {badge.short}
-                        </span>
+                        {row.image ? (
+                          <img
+                            src={`${apiUrl}/uploads/operatorimages/${row.image}`}
+                            alt={row.operator ?? "op"}
+                            className="w-9 h-9  object-contain bg-gray-100 dark:bg-gray-700"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                              (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("hidden");
+                            }}
+                          />
+                        ) : <span
+                        hidden={!!row.opimage}
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-bold"
+                        style={{ background: badge.bg, color: badge.text }}
+                      >
+                        {badge.short}
+                      </span>}
+                        
                       </td>
 
                       {/* Lapu Number */}
