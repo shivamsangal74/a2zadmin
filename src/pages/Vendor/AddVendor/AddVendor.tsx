@@ -106,6 +106,10 @@ const AddVendor = () => {
   const [openInputLapu, setOpenInputLapu] = useState(false);
   const [openGstInfo, setOpenGstInfo] = useState(false);
   const [selectedGstData, setSelectedGstData] = useState(false);
+  const [openVendorBanks, setOpenVendorBanks] = useState(false);
+  const [vendorBanksData, setVendorBanksData] = useState<any[]>([]);
+  const [vendorBanksLoading, setVendorBanksLoading] = useState(false);
+  const [selectedVendorDetail, setSelectedVendorDetail] = useState<any>(null);
   const [lapuNumber, setLapuNumber] = useState("");
   const [lapuName, setLapuName] = useState("");
   const today = new Date().toISOString().split("T")[0];
@@ -430,8 +434,8 @@ const AddVendor = () => {
           <BsEye
             fontSize={17}
             className="cursor-pointer text-gray-600 hover:text-gray-900"
-            title="View GST Info"
-            onClick={() => showGstInfo(row.row.original.vendorUniqueId)}
+            title="View Bank Accounts"
+            onClick={() => showVendorBanks(row.row.original.vendorUniqueId)}
           />
           <BsPencil
             fontSize={15}
@@ -689,6 +693,23 @@ const AddVendor = () => {
       setSelectedGstData(selectedVendor);
     }
     setOpenGstInfo(true);
+  };
+
+  const showVendorBanks = async (vendorId: string) => {
+    setVendorBanksData([]);
+    setOpenVendorBanks(true);
+    setVendorBanksLoading(true);
+    const detail = (vendors as any[]).find((v) => v?.vendorUniqueId === vendorId);
+    setSelectedVendorDetail(detail ?? null);
+    setSelectedVendors(vendorId);
+    try {
+      const banks = await getVendorBanks(vendorId);
+      setVendorBanksData(Array.isArray(banks) ? banks : []);
+    } catch {
+      toast.error("Failed to load bank accounts.");
+    } finally {
+      setVendorBanksLoading(false);
+    }
   };
 
   const editLappu = (lappuId: any) => {
@@ -1454,7 +1475,6 @@ const AddVendor = () => {
                 value={editGstin}
                 name="editGstin"
                 onChange={setEditGstin}
-                disabledProp={true}
               />
             </div>
           </div>
@@ -2119,6 +2139,59 @@ const AddVendor = () => {
               onClick={handleLappuSubmit}
             />
           </div>
+        </div>
+      </Popup>
+
+      {/* Vendor Details + Bank Accounts */}
+      <Popup
+        isOpen={openVendorBanks}
+        onClose={() => setOpenVendorBanks(false)}
+        title="Vendor Details"
+        width="large"
+        styles={{}}
+      >
+        <div className="grid gap-3">
+          <div className="flex flex-col gap-2">
+            <p><b>Name:</b> {selectedVendorDetail?.fullName}</p>
+            <p><b>Mobile:</b> {selectedVendorDetail?.mobileno}</p>
+            <p><b>GST No:</b> {selectedVendorDetail?.gstin}</p>
+            <p><b>Commission:</b> {selectedVendorDetail?.commissiontype} – {selectedVendorDetail?.commissionvalue}</p>
+            {selectedVendorDetail?.legal_name && <p><b>Legal Name:</b> {selectedVendorDetail.legal_name}</p>}
+            {selectedVendorDetail?.business_type && <p><b>Business Type:</b> {selectedVendorDetail.business_type}</p>}
+            {selectedVendorDetail?.address && <p><b>Address:</b> {selectedVendorDetail.address}</p>}
+          </div>
+
+          <hr />
+
+          <div className="flex items-center justify-between">
+            <b>Bank Accounts</b>
+            <button
+              className="px-3 py-1 text-xs font-medium bg-black hover:bg-gray-800 text-white rounded"
+              onClick={async () => {
+                setOpenVendorBanks(false);
+                await fetchDataAndOpenPopup();
+              }}
+            >
+              + Add Account
+            </button>
+          </div>
+
+          {vendorBanksLoading ? (
+            <Loader />
+          ) : vendorBanksData.length === 0 ? (
+            <p className="text-gray-400 text-sm">No bank accounts found.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {vendorBanksData.map((bank: any, idx: number) => (
+                <div key={bank._id ?? idx} className="flex flex-col gap-1 border-b pb-2">
+                  <p><b>Bank:</b> {bank.bankName}</p>
+                  <p><b>Account No:</b> {bank.accountNo}</p>
+                  <p><b>IFSC:</b> {bank.branchIsc || bank.ifsc}</p>
+                  <p><b>Beneficiary:</b> {bank.beneficaryName || bank.beneficary}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Popup>
 
