@@ -3,7 +3,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { CircularProgress, FormControl } from "@mui/material";
 
-interface SearchDropDownProps<O extends { value: string; showvalue: string }> {
+interface SearchDropDownProps<O extends { value: string; showvalue: string; image?: string }> {
   value?: string | null;
   onchange: (value: string | null) => void;
   options: O[];
@@ -14,9 +14,10 @@ interface SearchDropDownProps<O extends { value: string; showvalue: string }> {
   drop?: number;
   place2?: string;
   onOpen?: () => void;
+  accept?: string;
 }
 
-export const DropSearch = <O extends { value: string; showvalue: string }>(
+export const DropSearch = <O extends { value: string; showvalue: string; image?: string }>(
   props: SearchDropDownProps<O>
 ) => {
   const {
@@ -32,6 +33,8 @@ export const DropSearch = <O extends { value: string; showvalue: string }>(
     onOpen,
   } = props;
 
+  const selectedOption = value ? options.find((o) => o.value === value) ?? null : null;
+
   return (
     <div className="w-full">
       <FormControl fullWidth className="bg-transparent dark:bg-transparent">
@@ -39,22 +42,14 @@ export const DropSearch = <O extends { value: string; showvalue: string }>(
           loading={isLoading}
           disabled={isLoading}
           onOpen={onOpen}
-          value={
-            value
-              ? options.find((option) => {
-                  return value === option.value;
-                }) ?? null
-              : null
-          }
+          value={selectedOption}
           size="small"
           sx={{
             "& .MuiInputBase-root": {
               height: 40,
             },
           }}
-          getOptionLabel={(option) => {
-            return option.showvalue;
-          }}
+          getOptionLabel={(option) => option.showvalue}
           onChange={(event: any, newValue) => {
             isFilter
               ? onchange(
@@ -66,12 +61,33 @@ export const DropSearch = <O extends { value: string; showvalue: string }>(
           }}
           id="controllable-states-demo"
           options={options}
+          renderOption={(props, option) => (
+            <li {...props} key={option.value}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {option.image && (
+                  <img
+                    src={option.image}
+                    alt={option.showvalue}
+                    style={{ width: 22, height: 22, objectFit: "contain", borderRadius: 4, background: "#f3f4f6" }}
+                  />
+                )}
+                <span>{option.showvalue}</span>
+              </div>
+            </li>
+          )}
           renderInput={(params) => (
             <TextField
               {...params}
               label={placeholder}
               InputProps={{
                 ...params.InputProps,
+                startAdornment: selectedOption?.image ? (
+                  <img
+                    src={selectedOption.image}
+                    alt={selectedOption.showvalue}
+                    style={{ width: 20, height: 20, objectFit: "contain", borderRadius: 3, marginRight: 4, background: "#f3f4f6" }}
+                  />
+                ) : undefined,
                 endAdornment: (
                   <React.Fragment>
                     {isLoading ? (

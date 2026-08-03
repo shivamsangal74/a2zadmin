@@ -51,7 +51,7 @@ const LapuList = () => {
   const [lapuName, setLapuName]     = useState("");
   const [selectedOp, setSelectedOp] = useState("");
   const [selectedVendor, setSelectedVendor] = useState("");
-  const [lapuOps, setLapuOps] = useState<{ showvalue: string; value: string }[]>([]);
+  const [lapuOps, setLapuOps] = useState<{ showvalue: string; value: string; image?: string }[]>([]);
   const [isLapuOpsLoading, setIsLapuOpsLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
 
@@ -113,7 +113,11 @@ const LapuList = () => {
     try {
       const data = await getOperatorsByCategoryCode(317);
       setLapuOps(
-        data.map((op: any) => ({ showvalue: `${op.name} (${op.id})`, value: String(op.id) }))
+        data.map((op: any) => ({
+          showvalue: `${op.name} (${op.id})`,
+          value: String(op.id),
+          image: op.operatorImage ? `${apiUrl}/uploads/operatorimages/${op.operatorImage}` : undefined,
+        }))
       );
     } catch {
       toast.error("Failed to load operators.");

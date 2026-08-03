@@ -1,4 +1,4 @@
-import { TextField, FormControl, FormHelperText } from "@mui/material";
+import { TextField, FormControl, FormHelperText, CircularProgress } from "@mui/material";
 import { StyledEngineProvider } from "@mui/material/styles";
 import { useEffect, useRef, useState } from "react";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -22,6 +22,7 @@ type TextInputProps = {
   style?: any;
   multiline?: boolean;
   verificationFn?: any;
+  verifyLoading?: boolean;
 };
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -40,6 +41,7 @@ const TextInput: React.FC<TextInputProps> = ({
   style,
   multiline = false,
   verificationFn,
+  verifyLoading = false,
 }) => {
   const [isFilled, setIsFilled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,12 +103,16 @@ const TextInput: React.FC<TextInputProps> = ({
                   ) : (
                     <>
                       {verificationFn && (
-                        <span
-                          className="text-primary text-sm cursor-pointer"
-                          onClick={() => verificationFn()}
-                        >
-                          Verify
-                        </span>
+                        verifyLoading ? (
+                          <CircularProgress size={16} thickness={5} />
+                        ) : (
+                          <span
+                            className="text-primary text-sm cursor-pointer"
+                            onClick={() => verificationFn()}
+                          >
+                            Verify
+                          </span>
+                        )
                       )}
                     </>
                   )}

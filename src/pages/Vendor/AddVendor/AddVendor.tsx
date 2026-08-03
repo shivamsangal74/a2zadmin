@@ -40,6 +40,7 @@ import {
   getOperatorsByCategoryCode,
   verifyInstantPayBank,
 } from "../../../Services/commonService";
+import { apiUrl } from "../../../Utills/constantt";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -89,6 +90,7 @@ const AddVendor = () => {
   const [fileName, setFileName] = useState("");
   const [gstDoc, setGstDoc] = useState<File | null>(null);
   const [gstRes, setGstRes] = useState({});
+  const [gstLoading, setGstLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [mobileno, setMobileNo] = useState("");
   const [commissionType, setCommissionType] = useState("");
@@ -98,7 +100,7 @@ const AddVendor = () => {
   const [lappu, setLappu] = useState([]);
   const [op, setOps] = useState([]);
   const [selectedOp, setSelectedOp] = useState("");
-  const [lappuOps, setLappuOps] = useState<{ showvalue: string; value: string }[]>([]);
+  const [lappuOps, setLappuOps] = useState<{ showvalue: string; value: string; image?: string }[]>([]);
   const [isLappuOpsLoading, setIsLappuOpsLoading] = useState(false);
   const [openLapu, setOpenLapu] = useState(false);
   const [openBankAccount, setOpenBankAccount] = useState(false);
@@ -124,6 +126,9 @@ const AddVendor = () => {
   const [editCommissionType, setEditCommissionType] = useState("");
   const [editCommissionValue, setEditCommissionValue] = useState("");
   const [editGstin, setEditGstin] = useState("");
+  const [editIsVerified, setEditIsVerified] = useState(false);
+  const [editGstRes, setEditGstRes] = useState<any>({});
+  const [editGstLoading, setEditGstLoading] = useState(false);
 
   const [createdDate, setCreatedDate] = useState<string>(today);
   //bank
@@ -904,6 +909,7 @@ const AddVendor = () => {
       toast.error("Please enter a valid GST number.");
       return;
     }
+    setGstLoading(true);
     try {
       const gst = await verifyGst(gstin);
       setGstRes({ ...gst });
@@ -913,6 +919,8 @@ const AddVendor = () => {
       toast.success("GST verified successfully.");
     } catch (error) {
       toast.error("Something went wrong in verification!");
+    } finally {
+      setGstLoading(false);
     }
   };
 
@@ -1236,6 +1244,7 @@ const AddVendor = () => {
       const formatted = data.map((op: any) => ({
         showvalue: `${op.name} (${op.id})`,
         value: String(op.id),
+        image: op.operatorImage ? `${apiUrl}/uploads/operatorimages/${op.operatorImage}` : undefined,
       }));
       setLappuOps(formatted);
     } catch (e) {
@@ -1252,7 +1261,30 @@ const AddVendor = () => {
     setEditCommissionType(vendor.commissiontype || "");
     setEditCommissionValue(vendor.commissionvalue || "");
     setEditGstin(vendor.gstin || "");
+    setEditIsVerified(!!vendor.isVerified);
+    setEditGstRes({});
     setOpenEditVendor(true);
+  };
+
+  const editVerifyGstFn = async () => {
+    if (!editGstin) {
+      toast.error("Please enter a valid GST number.");
+      return;
+    }
+    setEditGstLoading(true);
+    try {
+      const gst = await verifyGst(editGstin);
+      setEditGstRes(gst);
+      setEditIsVerified(true);
+      if (gst?.fullName || gst?.legal_name) {
+        setEditFullName(gst.fullName || gst.legal_name);
+      }
+      toast.success("GST verified successfully.");
+    } catch {
+      toast.error("Something went wrong in verification!");
+    } finally {
+      setEditGstLoading(false);
+    }
   };
 
   const handleUpdateVendor = async () => {
@@ -1267,6 +1299,8 @@ const AddVendor = () => {
         commissiontype: editCommissionType,
         commissionvalue: editCommissionValue,
         gstin: editGstin,
+        isVerified: editIsVerified,
+        ...(Object.keys(editGstRes).length ? editGstRes : {}),
       });
       toast.success("Vendor updated successfully.");
       setOpenEditVendor(false);
@@ -1311,6 +1345,7 @@ const AddVendor = () => {
               value={gstin}
               name={"gstin"}
               verificationFn={verifyGstFn}
+              verifyLoading={gstLoading}
               disabledProp={Object.keys(gstRes).length ? true : false}
             />
           </div>
@@ -1473,8 +1508,14 @@ const AddVendor = () => {
               <TextInput
                 label="GST In"
                 value={editGstin}
-                name="editGstin"
-                onChange={setEditGstin}
+                name="gstin"
+                onChange={(val) => {
+                  setEditGstin(val);
+                  if (editIsVerified) setEditIsVerified(false);
+                }}
+                disabledProp={editIsVerified}
+                verificationFn={editIsVerified ? undefined : editVerifyGstFn}
+                verifyLoading={editGstLoading}
               />
             </div>
           </div>
