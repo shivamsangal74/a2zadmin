@@ -12,7 +12,8 @@ import TextInput from "../../../components/Input/TextInput";
 import { ButtonLabel } from "../../../components/Button/Button";
 import { IoAdd } from "react-icons/io5";
 import Switch from "@mui/material/Switch";
-import { saveLappuNo } from "../../../Services/vendorService";
+import { saveLappuNo, deleteLapu, updateLapu } from "../../../Services/vendorService";
+import { BsTrash, BsPencil } from "react-icons/bs";
 
 // ── operator badge colours ──────────────────────────────────────────────────
 const OP_COLORS: Record<string, { bg: string; text: string; short: string }> = {
@@ -54,6 +55,20 @@ const LapuList = () => {
   const [lapuOps, setLapuOps] = useState<{ showvalue: string; value: string; image?: string }[]>([]);
   const [isLapuOpsLoading, setIsLapuOpsLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
+
+  // delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<{ lappuId: string; operatorCode: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // edit popup
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editOriginalLappuId, setEditOriginalLappuId] = useState("");
+  const [editOriginalOpCode, setEditOriginalOpCode] = useState("");
+  const [editLappuId, setEditLappuId] = useState("");
+  const [editLappuName, setEditLappuName] = useState("");
+  const [editVendor, setEditVendor] = useState("");
+  const [editOp, setEditOp] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
 
   // ── data fetching ──────────────────────────────────────────────────────────
   const { data: lapus = [], isLoading, refetch } = useQuery({
@@ -97,14 +112,14 @@ const LapuList = () => {
     return (lapus as any[]).filter((l) => {
       if (search && !`${l.lappuId} ${l.lappuName} ${l.vendor}`.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterOp && l.operator !== filterOp) return false;
-      if (filterVendor && l.vendorId !== filterVendor) return false;
+      if (filterVendor && (l.vendorUniqueId || l.vendorId) !== filterVendor) return false;
       return true;
     });
   }, [lapus, search, filterOp, filterVendor]);
 
   const totalOn  = (lapus as any[]).filter((l) => l.status === "ON" || l.status === true || l.active).length;
   const totalOff = (lapus as any[]).length - totalOn;
-  const totalBal = (lapus as any[]).reduce((s, l) => s + (Number(l.balance) || 0), 0);
+  const totalBal = (lapus as any[]).reduce((s, l) => s + (Number(l.l_closingBal) || 0), 0);
 
   // ── operators lazy load ────────────────────────────────────────────────────
   const fetchLapuOps = async () => {
@@ -148,6 +163,55 @@ const LapuList = () => {
       toast.error("Failed to add Lapu.");
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await deleteLapu(deleteTarget.lappuId, deleteTarget.operatorCode);
+      toast.success("Lapu deleted successfully.");
+      setDeleteTarget(null);
+      refetch();
+    } catch {
+      toast.error("Failed to delete Lapu.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const openEditModal = (row: any) => {
+    setEditOriginalLappuId(row.lappuId ?? "");
+    setEditOriginalOpCode(row.operatorCode ?? "");
+    setEditLappuId(row.lappuId ?? "");
+    setEditLappuName(row.lappuName ?? "");
+    setEditVendor(row.vendorUniqueId || row.vendorId || "");
+    setEditOp(String(row.id ?? row.id ?? ""));
+    fetchLapuOps();
+    setOpenEdit(true);
+  };
+
+  const handleEditLapu = async () => {
+    if (!editLappuId) {
+      toast.error("Lapu number is required.");
+      return;
+    }
+    setEditLoading(true);
+    try {
+      await updateLapu(editOriginalLappuId, editOriginalOpCode, {
+        lappuId: editLappuId,
+        lappuName: editLappuName,
+        vendorId: editVendor,
+        lappuOperator: editOp,
+      });
+      toast.success("Lapu updated successfully.");
+      setOpenEdit(false);
+      refetch();
+    } catch {
+      toast.error("Failed to update Lapu.");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -236,7 +300,7 @@ const LapuList = () => {
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                {["ID", "OP", "LAPU NUMBER", "OPERATOR", "OP CODE", "PARTY", "BALANCE", "STATUS"].map((h) => (
+                {["ID", "OP", "LAPU NUMBER", "OPERATOR", "OP CODE", "PARTY", "BALANCE", "STATUS", "ACTION"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 whitespace-nowrap"
@@ -249,7 +313,7 @@ const LapuList = () => {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-400">
+                  <td colSpan={9} className="text-center py-12 text-gray-400">
                     No lapus found.
                   </td>
                 </tr>
@@ -317,7 +381,7 @@ const LapuList = () => {
                       {/* Balance */}
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold">
-                          {row.balance != null ? fmt(Number(row.balance)) : "—"}
+                          {row.l_closingBal != null ? fmt(Number(row.l_closingBal)) : "—"}
                         </span>
                       </td>
 
@@ -332,6 +396,31 @@ const LapuList = () => {
                           }}
                           onChange={() => {}}
                         />
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            title="Edit"
+                            onClick={() => openEditModal(row)}
+                            className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 hover:text-blue-700 transition-colors cursor-pointer"
+                          >
+                            <BsPencil size={14} />
+                          </button>
+                          <button
+                            title="Delete"
+                            onClick={() =>
+                              setDeleteTarget({
+                                lappuId: row.lappuId,
+                                operatorCode: row.operatorCode ?? "",
+                              })
+                            }
+                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                          >
+                            <BsTrash size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -388,6 +477,91 @@ const LapuList = () => {
               disabled={addLoading}
               onClick={handleAddLapu}
               label="Add Lapu"
+            />
+          </div>
+        </div>
+      </Popup>
+      {/* ── Edit Lapu popup ── */}
+      <Popup
+        isOpen={openEdit}
+        onClose={() => setOpenEdit(false)}
+        title="Edit Lapu"
+        width="large"
+        styles={{}}
+      >
+        <div className="grid gap-4 p-2">
+          <TextInput
+            label="Lapu Number"
+            value={editLappuId}
+            name="editLappuId"
+            onChange={setEditLappuId}
+            type="number"
+            required
+          />
+          <TextInput
+            label="Lapu Name"
+            value={editLappuName}
+            name="editLappuName"
+            onChange={setEditLappuName}
+          />
+          <DropSearch
+            value={editVendor}
+            onchange={(v) => setEditVendor(v || "")}
+            placeholder="Select Vendor"
+            options={vendorOptions}
+            error=""
+          />
+          <DropSearch
+            value={editOp}
+            onchange={(v) => setEditOp(v || "")}
+            placeholder="Select Operator"
+            options={lapuOps}
+            error=""
+            isLoading={isLapuOpsLoading}
+            onOpen={fetchLapuOps}
+          />
+          <div className="flex justify-end">
+            <ButtonLabel
+              type="button"
+              loader={editLoading}
+              disabled={editLoading}
+              onClick={handleEditLapu}
+              label="Update Lapu"
+            />
+          </div>
+        </div>
+      </Popup>
+
+      {/* ── Delete confirmation popup ── */}
+      <Popup
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Lapu"
+        width="small"
+        styles={{}}
+      >
+        <div className="p-2 grid gap-5">
+          <p className="text-gray-700 dark:text-gray-300 text-sm">
+            Are you sure you want to delete lapu{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {deleteTarget?.lappuId}
+            </span>
+            ? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteLoading}
+              className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <ButtonLabel
+              type="button"
+              loader={deleteLoading}
+              disabled={deleteLoading}
+              onClick={handleDelete}
+              label="Delete"
             />
           </div>
         </div>

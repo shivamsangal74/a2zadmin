@@ -2,6 +2,35 @@ import api from "./Axios/api";
 import { apiUrl } from "../Utills/constantt";
 import axios from "axios";
 
+export const updateLapu = async (
+  lappuId: string,
+  operatorCode: string,
+  data: { lappuId?: string; lappuName?: string; vendorId?: string; lappuOperator?: string }
+) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.put(
+    `${apiUrl}/vendor/lappu/${lappuId}?opertorCode=${operatorCode}`,
+    data,
+    {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return response.data;
+};
+
+export const deleteLapu = async (lappuId: string, operatorCode: string) => {
+  const token = localStorage.getItem("token");
+  const response = await axios.delete(
+    `${apiUrl}/vendor/lappu/${lappuId}?opertorCode=${operatorCode}`,
+    {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return response.data;
+};
+
 export const saveVendor = async (vendorData: FormData) => {
   try {
     const token = localStorage.getItem("token");
