@@ -606,7 +606,15 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     try {
       let search;
       if (searchCondition) {
-        search = `${searchValue} = '${searchCondition}'`;
+        const searchCol =
+          searchValue ||
+          filterableColumns.find((item: any) =>
+            item.includes("serachCondition")
+          ) ||
+          "";
+        if (searchCol) {
+          search = `${searchCol} = '${searchCondition}'`;
+        }
       }
       const response = await api.post(apiUrl + "/report/getReportData", {
         report_id: report_id,
@@ -1226,13 +1234,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               {/* Action buttons (display only if status is not "Success") */}
               {report_id === "2_4" && info.row.original.status == "Pending" && (
                 <div className="action flex gap-3 items-center">
-                  <button
-                    onClick={() => handleResendRequest(info)}
-                    className="p-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-all duration-300"
-                  >
-                    <Refresh titleAccess="Resend Status" /> {/* Resend Icon */}
-                  </button>
-
                   {info.row.original.status === "Pending" && (
                     <button
                       disabled={isProcessing}
@@ -1277,46 +1278,52 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               )}
             </div>
 
-            {report_id === "2_10" && info.row.original.status == "Pending" && (
-              <div className="action flex gap-3 items-center">
-                {info.row.original.status === "Pending" && (
-                  <button
-                    onClick={() => handleCheckStatusApes(info)}
-                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                  >
-                    <CompareArrows titleAccess="Check Status" />{" "}
-                    {/* Check Status Icon */}
-                  </button>
-                )}
-              </div>
-            )}
+            {
+              report_id === "2_10" && info.row.original.status == "Pending" && (
+                <div className="action flex gap-3 items-center">
+                  {info.row.original.status === "Pending" && (
+                    <button
+                      onClick={() => handleCheckStatusApes(info)}
+                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                    >
+                      <CompareArrows titleAccess="Check Status" />{" "}
+                      {/* Check Status Icon */}
+                    </button>
+                  )}
+                </div>
+              )
+            }
 
-            {report_id === "2_5" && info.row.original.status == "Pending" && (
-              <div className="action flex gap-3 items-center">
-                {info.row.original.status === "Pending" && (
-                  <button
-                    onClick={() => handleCheckStatusMoney(info)}
-                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                  >
-                    <CompareArrows titleAccess="Check Status" />{" "}
-                    {/* Check Status Icon */}
-                  </button>
-                )}
-              </div>
-            )}
-            {report_id === "2_14" && info.row.original.status == "Pending" && (
-              <div className="action flex gap-3 items-center">
-                {info.row.original.status === "Pending" && (
-                  <button
-                    onClick={() => handlecheckStatusSettlement(info)}
-                    className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                  >
-                    <CompareArrows titleAccess="Check Status" />{" "}
-                    {/* Check Status Icon */}
-                  </button>
-                )}
-              </div>
-            )}
+            {
+              report_id === "2_5" && info.row.original.status == "Pending" && (
+                <div className="action flex gap-3 items-center">
+                  {info.row.original.status === "Pending" && (
+                    <button
+                      onClick={() => handleCheckStatusMoney(info)}
+                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                    >
+                      <CompareArrows titleAccess="Check Status" />{" "}
+                      {/* Check Status Icon */}
+                    </button>
+                  )}
+                </div>
+              )
+            }
+            {
+              report_id === "2_14" && info.row.original.status == "Pending" && (
+                <div className="action flex gap-3 items-center">
+                  {info.row.original.status === "Pending" && (
+                    <button
+                      onClick={() => handlecheckStatusSettlement(info)}
+                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                    >
+                      <CompareArrows titleAccess="Check Status" />{" "}
+                      {/* Check Status Icon */}
+                    </button>
+                  )}
+                </div>
+              )
+            }
             {/* <div className="flex gap-2">
             <div className="info">{info.getValue()}</div>
             {info.row.original.status !== "Success" && (
@@ -1326,7 +1333,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               </div>
             )}
           </div> */}
-          </div>
+          </div >
         );
       }
 
@@ -1459,8 +1466,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   function finalValue(index: any) {
     const rawFilter = filters[`dropdown[${index}]`];
-    const value = parseFilterValue(rawFilter);
-    return isNaN(Number(value)) ? value : Number(value);
+    return parseFilterValue(rawFilter);
   }
 
   function finalMultipleValue(index: any) {
@@ -1724,7 +1730,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       drop={index}
                       isLoading={false}
                       isFilter={true}
-                      options={[...dropdownValues[index]]}
+                      options={[...(dropdownValues[index] || [])]}
                       value={finalMultipleValue(index)}
                       onChange={handleMultiFilterChange}
                     />
@@ -1735,7 +1741,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       onchange={handleFilterChange}
                       placeholder={filterableDisplayColumns[index]}
                       drop={index}
-                      options={[...dropdownValues[index]]}
+                      options={[...(dropdownValues[index] || [])]}
                       error={""}
                       isFilter={true}
                     />
