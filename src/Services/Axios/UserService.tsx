@@ -209,3 +209,18 @@ export const getautoFillData = async (userId: any) => {
     throw error;
   }
 };
+
+export const updateLienAmount = async (userId: string, lienAmount: number) => {
+  try {
+    const response = await api.post(
+      "/users/update-lien",
+      { userId, lienAmount },
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
