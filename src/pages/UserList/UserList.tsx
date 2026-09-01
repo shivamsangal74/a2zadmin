@@ -6,6 +6,7 @@ import {
   getUsers,
   getautoFillData,
   saveautoFillData,
+  updateLienAmount,
 } from "../../Services/Axios/UserService";
 import Switch from "@mui/material/Switch";
 import { BsEye, BsPlusLg, BsThunderbolt } from "react-icons/bs";
@@ -16,6 +17,7 @@ import { Alert } from "@material-tailwind/react";
 import EditUser from "../EditPage/EditUser";
 import { ButtonLabel } from "../../components/Button/Button";
 import LockResetIcon from "@mui/icons-material/LockReset";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import Popup from "../../components/Model/Model";
 import TextInput from "../../components/Input/TextInput";
 import api from "../../Services/Axios/api";
@@ -42,6 +44,8 @@ const UserList = () => {
   const [creditLimit, setCreditLimit] = useState("");
   const [status, setStatus] = useState("ON");
   const [newPassword, setNewPass] = useState("");
+  const [openLienModal, setOpenLienModal] = useState(false);
+  const [lienAmount, setLienAmount] = useState<string | number>("");
 
   const columns = [
     {
@@ -59,6 +63,11 @@ const UserList = () => {
     {
       header: "Wallet Balance",
       accessorKey: "wallet",
+    },
+    {
+      header: "Lien Amount",
+      accessorKey: "lienAmount",
+      cell: (row: any) => row.row.original.lienAmount ?? 0,
     },
     {
       header: "Mobile No",
@@ -94,6 +103,19 @@ const UserList = () => {
               <EditCalendarOutlined
                 onClick={() => handleAutoFill(row.row.original.userUniqueId)}
               />{" "}
+            </div>
+          </Tooltip>
+          <Tooltip title="Update Lien Amount">
+            <div>
+              <AccountBalanceWalletOutlinedIcon
+                style={{ cursor: "pointer", fontSize: 20 }}
+                onClick={() =>
+                  handleOpenLienModal(
+                    row.row.original.userUniqueId,
+                    row.row.original.lienAmount ?? 0
+                  )
+                }
+              />
             </div>
           </Tooltip>
         </div>
@@ -203,7 +225,26 @@ const UserList = () => {
     }
   }
 
-  const { isLoading, error } = useQuery({
+  function handleOpenLienModal(userid: string, currentLien: number) {
+    setUserId(userid);
+    setLienAmount(currentLien ?? 0);
+    setOpenLienModal(true);
+  }
+
+  async function handleLienSubmit() {
+    try {
+      await updateLienAmount(userid, Number(lienAmount));
+      toast.success("Lien amount updated successfully.");
+      setOpenLienModal(false);
+      refetch();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to update lien amount."
+      );
+    }
+  }
+
+  const { isLoading, error, refetch } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
       try {
@@ -403,6 +444,39 @@ const UserList = () => {
 
           <div className="flex justify-between mt-10">
             <ButtonLabel onClick={() => createAutoFill()} label="Save" />
+          </div>
+        </Popup>
+      )}
+
+      {openLienModal && (
+        <Popup
+          title={"Update Lien Amount - " + userid}
+          isOpen={openLienModal}
+          onClose={() => setOpenLienModal(false)}
+        >
+          <div>
+            <TextInput
+              name="UserId"
+              label="User ID"
+              disabledProp={true}
+              value={userid}
+            />
+
+            <TextInput
+              name="LienAmount"
+              label="Lien Amount"
+              type="number"
+              value={lienAmount}
+              onChange={setLienAmount}
+              style={{ marginTop: 10 }}
+            />
+          </div>
+
+          <div className="flex justify-between mt-10">
+            <ButtonLabel
+              onClick={() => handleLienSubmit()}
+              label="Update Lien"
+            />
           </div>
         </Popup>
       )}

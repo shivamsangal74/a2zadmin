@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useRef } from "react";
+import React, { useState, ReactNode } from "react";
 import Header from "../components/Header/index";
 import Sidebar from "../components/Sidebar/index";
 import { IdleTimerProvider } from "react-idle-timer";
@@ -18,7 +18,6 @@ const DefaultLayout: React.FC<{ children: ReactNode; isList: Boolean }> = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
-  const idleTimer = useRef(null);
   const navigate = useNavigate();
   const handleOnIdle = () => {
     setIsSessionExpired(true);
@@ -32,7 +31,6 @@ const DefaultLayout: React.FC<{ children: ReactNode; isList: Boolean }> = ({
 
   return (
     <IdleTimerProvider
-      ref={idleTimer}
       timeout={55 * 60 * 1000}
       onIdle={handleOnIdle}
       debounce={500}

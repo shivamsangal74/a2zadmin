@@ -307,8 +307,8 @@ const ManageFundTransfer = () => {
         type === "Received"
           ? Number(wallet?.wallet || 0) - totalAmount
           : type === "CreditReceived"
-          ? Number(wallet?.wallet) || 0
-          : Number(wallet?.wallet || 0) + totalAmount,
+            ? Number(wallet?.wallet) || 0
+            : Number(wallet?.wallet || 0) + totalAmount,
       totalAmount: totalAmount,
       tranxType: tranxType,
       status: type,
