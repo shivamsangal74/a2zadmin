@@ -107,6 +107,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [searchCondition, setSearchCondition] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [isProcessing, setisProcessing] = useState(false);
+  const [processingRowIds, setProcessingRowIds] = useState<{ [key: string]: boolean }>({});
+
+  const getRowKey = (row: any) =>
+    String(
+      row?.refid ??
+      row?.refId ??
+      row?.tranxId ??
+      row?.requestId ??
+      row?.id ??
+      ""
+    );
 
   // UPI Popup State
   const [upiPopupOpen, setUpiPopupOpen] = useState(false);
@@ -380,7 +391,8 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleStatusChange(value: any, params: any) {
-    setisProcessing(true);
+    const rowKey = getRowKey(params?.row?.original);
+    setProcessingRowIds((prev) => ({ ...prev, [rowKey]: true }));
     try {
       let tranxId =
         params?.row?.original?.refid ??
@@ -399,7 +411,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       console.error(error);
       throw error;
     } finally {
-      setisProcessing(false);
+      setProcessingRowIds((prev) => {
+        const next = { ...prev };
+        delete next[rowKey];
+        return next;
+      });
     }
   }
   async function handleResendRequest(params: any) {
@@ -421,21 +437,52 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
   async function handleCheckStatus(params: any) {
     debugger;
-    setisProcessing(true);
+    const rowKey = getRowKey(params?.row?.original);
+    setProcessingRowIds((prev) => ({ ...prev, [rowKey]: true }));
     try {
-      let tranx = params.row.original.refid;
+      let tranx =
+        params?.row?.original?.refid ??
+        params?.row?.original?.refId ??
+        params?.row?.original?.tranxId;
       const response = await api.get(`/common/check-status`, {
         params: { tranx },
         withCredentials: true,
       });
-      toast.warn(response.data.message);
-      handleGetReportData();
+      let resp = response.data;
+      const status = (
+        resp?.status ||
+        resp?.Status ||
+        resp?.result?.status ||
+        ""
+      ).toLowerCase();
+      const message =
+        resp?.message ||
+        resp?.Message ||
+        resp?.result?.message ||
+        "Status updated";
+
+      if (status === "success") {
+        toast.success(message);
+        await handleGetReportData();
+      } else if (status === "pending") {
+        toast.warn(message);
+      } else if (status === "failed" || status === "fail") {
+        toast.error(message);
+        await handleGetReportData();
+      } else {
+        toast.warn(message);
+        await handleGetReportData();
+      }
       return response.data;
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error.message);
       console.error(error);
     } finally {
-      setisProcessing(false);
+      setProcessingRowIds((prev) => {
+        const next = { ...prev };
+        delete next[rowKey];
+        return next;
+      });
     }
   }
 
@@ -537,12 +584,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handlecheckStatusSettlement(params: any) {
-    setLoading(true);
-    debugger;
+    const rowKey = getRowKey(params?.row?.original);
+    setProcessingRowIds((prev) => ({ ...prev, [rowKey]: true }));
     try {
       let tranx = params.row.original.requestId;
       let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD");
-      debugger;
       const response = await api.post(
         `/settelment/check-status`,
         { externalRef: tranx, transactionDate: Date },
@@ -564,7 +610,11 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       toast.error(error.response?.data?.message);
       console.error(error);
     } finally {
-      setLoading(false);
+      setProcessingRowIds((prev) => {
+        const next = { ...prev };
+        delete next[rowKey];
+        return next;
+      });
     }
   }
   async function apesStatusChange(value: any, params: any) {
@@ -863,11 +913,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           const handleCopy = () => {
             if (value === undefined || value === null) return;
             if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+              const str = String(value).trim();
               navigator.clipboard
-                .writeText(String(value))
+                .writeText(str)
                 .then(() => {
                   setCopied(true);
-                  toast.success("Copied to clipboard");
+                  const display = str.length > 80 ? str.slice(0, 80) + "..." : str;
+                  toast.success(`Copied: ${display}`, {
+                    toastId: "copy-toast",
+                    autoClose: 1500,
+                    hideProgressBar: true,
+                  });
                   setTimeout(() => setCopied(false), 1500);
                 })
                 .catch(() => { });
@@ -914,7 +970,16 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           );
         };
       }
-      if (col.prop === "ReqId" || col.prop === "oprId") {
+      if (
+        col.prop === "ReqId" ||
+        col.prop === "oprId" ||
+        col.prop === "lappu" ||
+        col.prop === "lapu" ||
+        col.prop?.toLowerCase().includes("lappu") ||
+        col.prop?.toLowerCase().includes("lapu") ||
+        col.name?.toLowerCase().includes("lappu") ||
+        col.name?.toLowerCase().includes("lapu")
+      ) {
         columnConfig.size = 220;
         columnConfig.cell = (info) => {
           const [copiedPrimary, setCopiedPrimary] = useState(false);
@@ -932,21 +997,27 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               .split(/[\s,/]+/)
               .map((p) => p.trim())
               .filter(Boolean);
-            primary = parts[0] ?? "";
-            secondary = parts[1] ?? "";
+            primary = (parts[0] ?? "").replace(/^:/, "").trim();
+            secondary = (parts.slice(1).join(" ") ?? "").replace(/^:/, "").trim();
           } else if (raw && typeof raw === "object") {
-            primary = raw.primary ?? raw.main ?? "";
-            secondary = raw.secondary ?? raw.alt ?? "";
+            primary = raw.primary ?? raw.main ?? raw.lappuNo ?? "";
+            secondary = raw.secondary ?? raw.alt ?? raw.lappuName ?? "";
           }
 
           const copyValue = (value: string, setCopied: (v: boolean) => void) => {
             if (!value) return;
             if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+              const str = String(value).trim();
               navigator.clipboard
-                .writeText(String(value))
+                .writeText(str)
                 .then(() => {
                   setCopied(true);
-                  toast.success("Copied to clipboard");
+                  const display = str.length > 80 ? str.slice(0, 80) + "..." : str;
+                  toast.success(`Copied: ${display}`, {
+                    toastId: "copy-toast",
+                    autoClose: 1500,
+                    hideProgressBar: true,
+                  });
                   setTimeout(() => setCopied(false), 1500);
                 })
                 .catch(() => { });
@@ -1050,6 +1121,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             );
           }
 
+          const rowKey = getRowKey(info?.row?.original);
+          const isRowProcessing = !!processingRowIds[rowKey];
+
           return (
             <div
               style={{
@@ -1060,7 +1134,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
               }}
             >
               <button
-                disabled={isProcessing}
+                disabled={isRowProcessing}
                 onClick={() => {
                   const tranxId =
                     info?.row?.original?.refid ??
@@ -1075,16 +1149,20 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   }
                 }}
                 title="Manual Success"
-                className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isRowProcessing
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-emerald-500 hover:bg-emerald-600"
                   }`}
               >
-                <CheckCircle sx={{ fontSize: 18 }} />
+                {isRowProcessing ? (
+                  <Spinner className="h-4 w-4" />
+                ) : (
+                  <CheckCircle sx={{ fontSize: 18 }} />
+                )}
               </button>
 
               <button
-                disabled={isProcessing}
+                disabled={isRowProcessing}
                 onClick={() => {
                   const tranxId =
                     info?.row?.original?.refid ??
@@ -1099,12 +1177,16 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                   }
                 }}
                 title="Manual Failed"
-                className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isRowProcessing
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-rose-500 hover:bg-rose-600"
                   }`}
               >
-                <Close sx={{ fontSize: 18 }} />
+                {isRowProcessing ? (
+                  <Spinner className="h-4 w-4" />
+                ) : (
+                  <Close sx={{ fontSize: 18 }} />
+                )}
               </button>
             </div>
           );
@@ -1253,153 +1335,160 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
       }
       if (col.prop == "status") {
         columnConfig.size = report_id === "2_4" ? 220 : 100;
-        columnConfig.cell = (info) => (
-          <div
-            style={{
-              textAlign: "center",
-            }}
-          >
-            <div className="flex gap-2 items-center">
-              {/* Info section */}
-              {/* <div className="info text-base">{info.getValue()}</div> */}
+        columnConfig.cell = (info) => {
+          const rowKey = getRowKey(info?.row?.original);
+          const isRowProcessing = !!processingRowIds[rowKey];
 
-              {/* Status section */}
-              <div className="status" style={{ width: "100px" }}>
-                {renderStatus(info.row.original.status)}
-              </div>
+          return (
+            <div
+              style={{
+                textAlign: "center",
+              }}
+            >
+              <div className="flex gap-2 items-center">
+                {/* Info section */}
+                {/* <div className="info text-base">{info.getValue()}</div> */}
 
-              {/* Action buttons (display only if status is not "Success") */}
-              {report_id === "2_4" && info.row.original.status == "Pending" && (
-                <div className="action flex gap-1.5 items-center">
-                  <button
-                    disabled={isProcessing}
-                    onClick={() => handleCheckStatus(info)}
-                    title="Check Status"
-                    className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600"
-                      }`}
-                  >
-                    {isProcessing ? (
-                      <Spinner className="h-4 w-4" />
-                    ) : (
-                      <CompareArrows sx={{ fontSize: 18 }} />
-                    )}
-                  </button>
-
+                {/* Status section */}
+                <div className="status" style={{ width: "100px" }}>
+                  {renderStatus(info.row.original.status)}
                 </div>
-              )}
 
-              {report_id === "2_4" &&
-                ["Failed", "FAILURE"].includes(info.row.original.status) && (
+                {/* Action buttons (display only if status is not "Success") */}
+                {report_id === "2_4" && info.row.original.status == "Pending" && (
                   <div className="action flex gap-1.5 items-center">
                     <button
-                      disabled={isProcessing}
-                      onClick={() => {
-                        const tranxId =
-                          info?.row?.original?.refid ??
-                          info?.row?.original?.refId ??
-                          info?.row?.original?.tranxId;
-                        if (
-                          window.confirm(
-                            `Are you sure you want to mark recharge ${tranxId || ""} as SUCCESS?`
-                          )
-                        ) {
-                          handleStatusChange("Success", info);
-                        }
-                      }}
-                      title="Manual Success"
-                      className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                      disabled={isRowProcessing}
+                      onClick={() => handleCheckStatus(info)}
+                      title="Check Status"
+                      className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isRowProcessing
                         ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-emerald-500 hover:bg-emerald-600"
+                        : "bg-blue-500 hover:bg-blue-600"
                         }`}
                     >
-                      <CheckCircle sx={{ fontSize: 18 }} />
+                      {isRowProcessing ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : (
+                        <CompareArrows sx={{ fontSize: 18 }} />
+                      )}
                     </button>
+
                   </div>
                 )}
-              {report_id === "2_9" && ["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
-                <div className="action flex gap-3 items-center">
+
+                {report_id === "2_4" &&
+                  ["Failed", "FAILURE"].includes(info.row.original.status) && (
+                    <div className="action flex gap-1.5 items-center">
+                      <button
+                        disabled={isRowProcessing}
+                        onClick={() => {
+                          const tranxId =
+                            info?.row?.original?.refid ??
+                            info?.row?.original?.refId ??
+                            info?.row?.original?.tranxId;
+                          if (
+                            window.confirm(
+                              `Are you sure you want to mark recharge ${tranxId || ""} as SUCCESS?`
+                            )
+                          ) {
+                            handleStatusChange("Success", info);
+                          }
+                        }}
+                        title="Manual Success"
+                        className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isRowProcessing
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-emerald-500 hover:bg-emerald-600"
+                          }`}
+                      >
+                        {isRowProcessing ? (
+                          <Spinner className="h-4 w-4" />
+                        ) : (
+                          <CheckCircle sx={{ fontSize: 18 }} />
+                        )}
+                      </button>
+                    </div>
+                  )}
+                {report_id === "2_9" && ["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
+                  <div className="action flex gap-3 items-center">
 
 
-                  {["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
-                    <button
-                      disabled={isProcessing}
-                      onClick={() => handleCheckUPIStatus(info)}
-                      className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-green-500 hover:bg-green-600"
-                        }`}
-                    >
-                      {isProcessing ? (
-                        <Spinner />
-                      ) : (
-                        <CompareArrows titleAccess="Check Status" />
-                      )}
-                      {/* Check Status Icon */}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {
-              report_id === "2_10" && info.row.original.status == "Pending" && (
-                <div className="action flex gap-3 items-center">
-                  {info.row.original.status === "Pending" && (
-                    <button
-                      onClick={() => handleCheckStatusApes(info)}
-                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                    >
-                      <CompareArrows titleAccess="Check Status" />{" "}
-                      {/* Check Status Icon */}
-                    </button>
-                  )}
-                </div>
-              )
-            }
-
-            {
-              report_id === "2_5" && info.row.original.status == "Pending" && (
-                <div className="action flex gap-3 items-center">
-                  {info.row.original.status === "Pending" && (
-                    <button
-                      onClick={() => handleCheckStatusMoney(info)}
-                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                    >
-                      <CompareArrows titleAccess="Check Status" />{" "}
-                      {/* Check Status Icon */}
-                    </button>
-                  )}
-                </div>
-              )
-            }
-            {
-              report_id === "2_14" && info.row.original.status == "Pending" && (
-                <div className="action flex gap-3 items-center">
-                  {info.row.original.status === "Pending" && (
-                    <button
-                      onClick={() => handlecheckStatusSettlement(info)}
-                      className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
-                    >
-                      <CompareArrows titleAccess="Check Status" />{" "}
-                      {/* Check Status Icon */}
-                    </button>
-                  )}
-                </div>
-              )
-            }
-            {/* <div className="flex gap-2">
-            <div className="info">{info.getValue()}</div>
-            {info.row.original.status !== "Success" && (
-              <div className="action flex gap-3">
-                <SendOutlined onClick={() => handleResendRequest(info)} />
-                <Refresh onClick={() => handleCheckStatus(info)} />
+                    {["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
+                      <button
+                        disabled={isProcessing}
+                        onClick={() => handleCheckUPIStatus(info)}
+                        className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600"
+                          }`}
+                      >
+                        {isProcessing ? (
+                          <Spinner />
+                        ) : (
+                          <CompareArrows titleAccess="Check Status" />
+                        )}
+                        {/* Check Status Icon */}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div> */}
-          </div >
-        );
+
+              {
+                report_id === "2_10" && info.row.original.status == "Pending" && (
+                  <div className="action flex gap-3 items-center">
+                    {info.row.original.status === "Pending" && (
+                      <button
+                        onClick={() => handleCheckStatusApes(info)}
+                        className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                      >
+                        <CompareArrows titleAccess="Check Status" />{" "}
+                        {/* Check Status Icon */}
+                      </button>
+                    )}
+                  </div>
+                )
+              }
+
+              {
+                report_id === "2_5" && info.row.original.status == "Pending" && (
+                  <div className="action flex gap-3 items-center">
+                    {info.row.original.status === "Pending" && (
+                      <button
+                        onClick={() => handleCheckStatusMoney(info)}
+                        className="p-2 bg-green-500 text-white rounded cursor-pointer hover:bg-green-600 transition-all duration-300"
+                      >
+                        <CompareArrows titleAccess="Check Status" />{" "}
+                        {/* Check Status Icon */}
+                      </button>
+                    )}
+                  </div>
+                )
+              }
+              {
+                report_id === "2_14" && info.row.original.status == "Pending" && (
+                  <div className="action flex gap-3 items-center">
+                    {info.row.original.status === "Pending" && (
+                      <button
+                        disabled={isRowProcessing}
+                        onClick={() => handlecheckStatusSettlement(info)}
+                        className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${isRowProcessing
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600"
+                          }`}
+                      >
+                        {isRowProcessing ? (
+                          <Spinner className="h-4 w-4" />
+                        ) : (
+                          <CompareArrows titleAccess="Check Status" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )
+              }
+            </div >
+          );
+        };
       }
 
       if (col.prop == "message") {
