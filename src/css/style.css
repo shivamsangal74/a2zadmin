@@ -239,3 +239,50 @@ span.flatpickr-weekday,
 .dark .MuiMenuItem-root:hover {
   background-color: #313d4a !important;
 }
+
+/* Toastify responsive width - automatically increases according to text */
+:root {
+  --toastify-toast-width: max-content;
+}
+
+.Toastify__toast-container {
+  width: auto !important;
+  max-width: min(92vw, 850px) !important;
+}
+
+.Toastify__toast-container--top-right,
+.Toastify__toast-container--bottom-right {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+}
+
+.Toastify__toast-container--top-left,
+.Toastify__toast-container--bottom-left {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.Toastify__toast-container--top-center,
+.Toastify__toast-container--bottom-center {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.Toastify__toast {
+  width: max-content !important;
+  min-width: 280px !important;
+  max-width: min(92vw, 850px) !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.Toastify__toast-body {
+  width: auto !important;
+  max-width: 100% !important;
+  flex: 1 1 auto !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
