@@ -380,22 +380,26 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }
 
   async function handleStatusChange(value: any, params: any) {
-    setLoading(true);
+    setisProcessing(true);
     try {
-      let tranxId = params.row.original.refid;
+      let tranxId =
+        params?.row?.original?.refid ??
+        params?.row?.original?.refId ??
+        params?.row?.original?.tranxId ??
+        params?.row?.original?.TranxId;
       const response = await api.get(`/common/manual-status`, {
         params: { tranxId, value },
         withCredentials: true,
       });
-      toast.warn("Recharge Status Updated");
+      toast.warn(response?.data?.message || "Recharge Status Updated");
       await handleGetReportData();
       return response.data;
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message || error.message);
       console.error(error);
       throw error;
     } finally {
-      setLoading(false);
+      setisProcessing(false);
     }
   }
   async function handleResendRequest(params: any) {
@@ -1033,45 +1037,78 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
           );
         };
       }
-      if (col.prop == "") {
+      if (col.prop === "recharge_manual") {
         columnConfig.size = 150;
-        columnConfig.cell = (info) => (
-          <div
-            style={{
-              textAlign: "center",
-            }}
-          >
-            <CheckBox
-              titleAccess="Success"
-              onClick={() => {
-                if (info.row.original.status !== "Success") {
-                  handleStatusChange("Success", info);
-                }
-              }}
+        columnConfig.header =
+          col.name === "recharge_manual" ? "Action" : col.name;
+        columnConfig.cell = (info) => {
+          if (info.row.original.status !== "Pending") {
+            return (
+              <div style={{ textAlign: "center", color: "#9ca3af" }}>
+                —
+              </div>
+            );
+          }
+
+          return (
+            <div
               style={{
-                cursor:
-                  info.row.original.status === "Success"
-                    ? "not-allowed"
-                    : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
               }}
-            />
-            <Close
-              titleAccess="Failed"
-              onClick={() => {
-                if (info.row.original.status !== "Failed") {
-                  handleStatusChange("Failed", info);
-                }
-              }}
-              style={{
-                marginLeft: "10px",
-                cursor:
-                  info.row.original.status === "Failed"
-                    ? "not-allowed"
-                    : "pointer",
-              }}
-            />
-          </div>
-        );
+            >
+              <button
+                disabled={isProcessing}
+                onClick={() => {
+                  const tranxId =
+                    info?.row?.original?.refid ??
+                    info?.row?.original?.refId ??
+                    info?.row?.original?.tranxId;
+                  if (
+                    window.confirm(
+                      `Are you sure you want to mark recharge ${tranxId || ""} as SUCCESS?`
+                    )
+                  ) {
+                    handleStatusChange("Success", info);
+                  }
+                }}
+                title="Manual Success"
+                className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-emerald-500 hover:bg-emerald-600"
+                  }`}
+              >
+                <CheckCircle sx={{ fontSize: 18 }} />
+              </button>
+
+              <button
+                disabled={isProcessing}
+                onClick={() => {
+                  const tranxId =
+                    info?.row?.original?.refid ??
+                    info?.row?.original?.refId ??
+                    info?.row?.original?.tranxId;
+                  if (
+                    window.confirm(
+                      `Are you sure you want to mark recharge ${tranxId || ""} as FAILED?`
+                    )
+                  ) {
+                    handleStatusChange("Failed", info);
+                  }
+                }}
+                title="Manual Failed"
+                className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-rose-500 hover:bg-rose-600"
+                  }`}
+              >
+                <Close sx={{ fontSize: 18 }} />
+              </button>
+            </div>
+          );
+        };
       }
       if (col.prop === "settlment_manual") {
         columnConfig.size = 150;
@@ -1215,7 +1252,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
         };
       }
       if (col.prop == "status") {
-        columnConfig.size = 100;
+        columnConfig.size = report_id === "2_4" ? 220 : 100;
         columnConfig.cell = (info) => (
           <div
             style={{
@@ -1233,26 +1270,54 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
 
               {/* Action buttons (display only if status is not "Success") */}
               {report_id === "2_4" && info.row.original.status == "Pending" && (
-                <div className="action flex gap-3 items-center">
-                  {info.row.original.status === "Pending" && (
-                    <button
-                      disabled={isProcessing}
-                      onClick={() => handleCheckStatus(info)}
-                      className={`p-2 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-green-500 hover:bg-green-600"
-                        }`}
-                    >
-                      {isProcessing ? (
-                        <Spinner />
-                      ) : (
-                        <CompareArrows titleAccess="Check Status" />
-                      )}
-                      {/* Check Status Icon */}
-                    </button>
-                  )}
+                <div className="action flex gap-1.5 items-center">
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => handleCheckStatus(info)}
+                    title="Check Status"
+                    className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600"
+                      }`}
+                  >
+                    {isProcessing ? (
+                      <Spinner className="h-4 w-4" />
+                    ) : (
+                      <CompareArrows sx={{ fontSize: 18 }} />
+                    )}
+                  </button>
+
                 </div>
               )}
+
+              {report_id === "2_4" &&
+                ["Failed", "FAILURE"].includes(info.row.original.status) && (
+                  <div className="action flex gap-1.5 items-center">
+                    <button
+                      disabled={isProcessing}
+                      onClick={() => {
+                        const tranxId =
+                          info?.row?.original?.refid ??
+                          info?.row?.original?.refId ??
+                          info?.row?.original?.tranxId;
+                        if (
+                          window.confirm(
+                            `Are you sure you want to mark recharge ${tranxId || ""} as SUCCESS?`
+                          )
+                        ) {
+                          handleStatusChange("Success", info);
+                        }
+                      }}
+                      title="Manual Success"
+                      className={`p-1.5 text-white rounded cursor-pointer transition-all duration-300 ${isProcessing
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-emerald-500 hover:bg-emerald-600"
+                        }`}
+                    >
+                      <CheckCircle sx={{ fontSize: 18 }} />
+                    </button>
+                  </div>
+                )}
               {report_id === "2_9" && ["Pending", "Failed", "FAILURE"].includes(info.row.original.status) && (
                 <div className="action flex gap-3 items-center">
 
