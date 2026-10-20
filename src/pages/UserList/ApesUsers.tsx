@@ -9,6 +9,8 @@ import {
   Chip,
   CircularProgress,
   Dialog,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
   Paper,
@@ -26,6 +28,12 @@ import {
   LocationOn as LocationIcon,
   Sync as SyncIcon,
   Refresh as RefreshIcon,
+  Close as CloseIcon,
+  VerifiedUser as VerifiedUserIcon,
+  GppBad as GppBadIcon,
+  AccountBalance as AccountBalanceIcon,
+  Person as PersonIcon,
+  MyLocation as MyLocationIcon,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../Services/Axios/api";
@@ -436,86 +444,187 @@ export const ApesUsers = () => {
           open={merchantDialogOpen}
           onClose={() => setMerchantDialogOpen(false)}
           maxWidth="md"
-          fullWidth>
-          <Box p={3}>
-            <Typography variant="h6" mb={2}>
-              Merchant Data
-            </Typography>
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Box display="flex" alignItems="center" gap={1}>
+                <PersonIcon color="primary" />
+                <Typography variant="h6" fontWeight={700}>
+                  Merchant Details
+                </Typography>
+                <Chip
+                  label={`${merchantData.length} record${merchantData.length !== 1 ? "s" : ""}`}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              </Box>
+              <IconButton onClick={() => setMerchantDialogOpen(false)} size="small">
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          </DialogTitle>
 
+          <DialogContent dividers sx={{ p: 0 }}>
             {merchantData.map((merchant, idx) => (
-              <Paper key={idx} sx={{ display : "flex" ,  mb: 2, p: 2, borderRadius: 2 }}>
-               <div>
-               <Typography>
-                  <strong>Name:</strong> {merchant.name}
-                </Typography>
-                <Typography>
-                  <strong>Mobile:</strong> {merchant.mobile}
-                </Typography>
-                <Typography>
-                  <strong>Email:</strong> {merchant.email}
-                </Typography>
-                <Typography>
-                  <strong>PAN:</strong> {merchant.pan}
-                </Typography>
-                <Typography>
-                  <strong>Outlet ID:</strong> {merchant.outletId}
-                </Typography>
-                <Typography>
-                  <strong>Last Activity:</strong> {merchant.lastActivityDt}
-                </Typography>
-               </div>
-<div>
-<Typography>
-                  <strong>KYC Status:</strong>{" "}
-                  {merchant.KYCStatus ? "Verified" : "Not Verified"}
-                </Typography>
-                <Typography>
-                  <strong>Active:</strong> {merchant.isActive ? "Yes" : "No"}
-                </Typography>
-                <Typography>
-                  <strong>Latitude
-                  :</strong>{" "}
-                  {merchant?.Latitude}
-                </Typography>
-                <Typography>
-                  <strong>Longitude
-                  :</strong> {merchant?.Longitude}
-                </Typography>
-</div>
-                <Box mt={2}>
-                  <Typography variant="subtitle1">Bank Accounts</Typography>
-                  {merchant.bankAccount.length > 0 ? (
-                    <TableContainer component={Paper} sx={{ mt: 1 }}>
+              <Box key={idx} sx={{ p: 3, ...(idx > 0 && { borderTop: "1px solid #e5e7eb" }) }}>
+
+                {/* ── top row: avatar + name + status chips ── */}
+                <Box display="flex" alignItems="center" gap={2} mb={2.5}>
+                  <Avatar
+                    sx={{ width: 52, height: 52, bgcolor: "primary.main", fontWeight: 700, fontSize: 20 }}
+                  >
+                    {merchant.name?.charAt(0)?.toUpperCase() ?? "M"}
+                  </Avatar>
+                  <Box flex={1}>
+                    <Typography fontWeight={700} fontSize={17} lineHeight={1.2}>
+                      {merchant.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {merchant.email}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" gap={1} flexWrap="wrap" justifyContent="flex-end">
+                    <Chip
+                      icon={merchant.KYCStatus ? <VerifiedUserIcon /> : <GppBadIcon />}
+                      label={merchant.KYCStatus ? "KYC Verified" : "KYC Pending"}
+                      color={merchant.KYCStatus ? "success" : "warning"}
+                      size="small"
+                      variant="filled"
+                    />
+                    <Chip
+                      label={merchant.isActive ? "Active" : "Inactive"}
+                      color={merchant.isActive ? "success" : "error"}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </Box>
+                </Box>
+
+                {/* ── info grid ── */}
+                <Grid container spacing={2} mb={2.5}>
+                  {[
+                    { label: "Mobile", value: merchant.mobile },
+                    { label: "PAN", value: merchant.pan },
+                    { label: "Outlet ID", value: merchant.outletId },
+                    { label: "Last Activity", value: merchant.lastActivityDt },
+                  ].map(({ label, value }) => (
+                    <Grid item xs={6} sm={3} key={label}>
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: "grey.50",
+                          border: "1px solid",
+                          borderColor: "grey.200",
+                          height: "100%",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.secondary" display="block" mb={0.3}>
+                          {label}
+                        </Typography>
+                        <Typography fontWeight={600} fontSize={13} sx={{ wordBreak: "break-all" }}>
+                          {value ?? "—"}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                {/* ── location row ── */}
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  mb={2.5}
+                  sx={{ p: 1.5, borderRadius: 2, bgcolor: "blue.50", border: "1px solid #dbeafe" }}
+                >
+                  <MyLocationIcon sx={{ color: "#3b82f6", fontSize: 18 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Lat:</strong> {merchant?.Latitude ?? "—"}
+                    &nbsp;&nbsp;
+                    <strong>Long:</strong> {merchant?.Longitude ?? "—"}
+                  </Typography>
+                </Box>
+
+                {/* ── bank accounts ── */}
+                <Box>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <AccountBalanceIcon sx={{ fontSize: 17, color: "text.secondary" }} />
+                    <Typography fontWeight={600} fontSize={14}>
+                      Bank Accounts
+                    </Typography>
+                    <Chip
+                      label={merchant.bankAccounts?.length ?? 0}
+                      size="small"
+                      sx={{ height: 18, fontSize: 11 }}
+                    />
+                  </Box>
+
+                  {merchant.bankAccounts?.length > 0 ? (
+                    <TableContainer
+                      component={Paper}
+                      variant="outlined"
+                      sx={{ borderRadius: 2 }}
+                    >
                       <Table size="small">
                         <TableHead>
-                          <TableRow>
-                            <TableCell>Account Number</TableCell>
-                            <TableCell>IFSC</TableCell>
-                            <TableCell>Primary</TableCell>
-                            <TableCell>Added At</TableCell>
+                          <TableRow sx={{ bgcolor: "grey.50" }}>
+                            {["Account Number", "IFSC", "Primary", "Added At"].map((h) => (
+                              <TableCell
+                                key={h}
+                                sx={{ fontWeight: 700, fontSize: 12, color: "text.secondary", py: 1 }}
+                              >
+                                {h}
+                              </TableCell>
+                            ))}
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {merchant.bankAccounts.map((acc: any, i: number) => (
-                            <TableRow key={i}>
-                              <TableCell>{acc.accountNumber}</TableCell>
-                              <TableCell>{acc.ifsc}</TableCell>
-                              <TableCell>
-                                {acc.isPrimary ? "Yes" : "No"}
+                            <TableRow
+                              key={i}
+                              sx={{ "&:last-child td": { border: 0 }, "&:hover": { bgcolor: "grey.50" } }}
+                            >
+                              <TableCell sx={{ fontFamily: "monospace", fontSize: 13 }}>
+                                {acc.accountNumber}
                               </TableCell>
-                              <TableCell>{acc.addedAt}</TableCell>
+                              <TableCell sx={{ fontSize: 13 }}>{acc.ifsc}</TableCell>
+                              <TableCell>
+                                {acc.isPrimary ? (
+                                  <Chip label="Primary" color="primary" size="small" variant="outlined" />
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">—</Typography>
+                                )}
+                              </TableCell>
+                              <TableCell sx={{ fontSize: 12, color: "text.secondary" }}>
+                                {acc.addedAt}
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </TableContainer>
                   ) : (
-                    <Typography>No bank accounts found</Typography>
+                    <Box
+                      sx={{
+                        p: 2,
+                        textAlign: "center",
+                        borderRadius: 2,
+                        border: "1px dashed #d1d5db",
+                        color: "text.secondary",
+                        fontSize: 13,
+                      }}
+                    >
+                      No bank accounts found
+                    </Box>
                   )}
                 </Box>
-              </Paper>
+              </Box>
             ))}
-          </Box>
+          </DialogContent>
         </Dialog>
 
         <Dialog
