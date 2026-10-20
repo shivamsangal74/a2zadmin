@@ -7,22 +7,22 @@ import { apiUrl } from "../../Utills/constantt";
 am4core.useTheme(am4themes_animated.default);
 
 const chartFour: React.FC = () => {
-  const [apiResponse,setApiResponse] = useState([])
+  const [apiResponse, setApiResponse] = useState([])
   useEffect(() => {
     fetch(apiUrl + "/dashboard/virtual-data")
-        .then((response) => response.json())
-        .then((data) => {
-          debugger
-           
-            setApiResponse(data.chartData.map((d)=>{
-                return {...d , total_wallet: d.total_wallet.toFixed(2)}
-            }));
-        })
-        .catch((error) => console.error("Error fetching data:", error));
-}, []);
-  
-  
-    useEffect(() => {
+      .then((response) => response.json())
+      .then((data) => {
+        debugger
+
+        setApiResponse(data.chartData.map((d) => {
+          return { ...d, total_wallet: d.total_wallet.toFixed(2) }
+        }));
+      })
+      .catch((error) => console.error("Error fetching data:", error));
+  }, []);
+
+
+  useEffect(() => {
     let chart = am4core.create("chartdiv2", am4charts.PieChart);
 
     // Ensure the chart has enough padding to prevent clipping
@@ -45,7 +45,7 @@ const chartFour: React.FC = () => {
     // Labels
     pieSeries.labels.template.text = "{category}: {value}";
     pieSeries.labels.template.fontSize = 12;
-    
+
     // Ensure slices are not cut off by adjusting the radius
     pieSeries.slices.template.radius = am4core.percent(90);
 

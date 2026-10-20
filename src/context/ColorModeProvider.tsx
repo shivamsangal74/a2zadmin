@@ -119,6 +119,7 @@ export function ColorModeProvider({ children }: { children: ReactNode }) {
             draggable
             pauseOnHover
             theme={isDark ? "dark" : "light"}
+            style={{ width: "auto" }}
           />
         </ConfigProvider>
       </MuiThemeProvider>

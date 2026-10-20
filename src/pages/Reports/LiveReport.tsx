@@ -356,11 +356,17 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
             const handleCopy = () => {
               if (value === undefined || value === null) return;
               if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                const str = String(value).trim();
                 navigator.clipboard
-                  .writeText(String(value))
+                  .writeText(str)
                   .then(() => {
                     setCopied(true);
-                    toast.success("Copied to clipboard");
+                    const display = str.length > 80 ? str.slice(0, 80) + "..." : str;
+                    toast.success(`Copied: ${display}`, {
+                      toastId: "copy-toast",
+                      autoClose: 1500,
+                      hideProgressBar: true,
+                    });
                     setTimeout(() => setCopied(false), 1500);
                   })
                   .catch(() => {});
@@ -409,7 +415,17 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
         };
       }
 
-      if (col.prop === "ReqId" || col.prop === "oprId") {
+      const isMultiValueWithCopy =
+        col.prop === "ReqId" ||
+        col.prop === "oprId" ||
+        col.prop === "lappu" ||
+        col.prop === "lapu" ||
+        col.prop?.toLowerCase().includes("lappu") ||
+        col.prop?.toLowerCase().includes("lapu") ||
+        col.name?.toLowerCase().includes("lappu") ||
+        col.name?.toLowerCase().includes("lapu");
+
+      if (isMultiValueWithCopy) {
         return {
           ...baseConfig,
           size: 220,
@@ -429,21 +445,27 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
                 .split(/[\s,/]+/)
                 .map((p) => p.trim())
                 .filter(Boolean);
-              primary = parts[0] ?? "";
-              secondary = parts[1] ?? "";
+              primary = (parts[0] ?? "").replace(/^:/, "").trim();
+              secondary = (parts.slice(1).join(" ") ?? "").replace(/^:/, "").trim();
             } else if (raw && typeof raw === "object") {
-              primary = raw.primary ?? raw.main ?? "";
-              secondary = raw.secondary ?? raw.alt ?? "";
+              primary = raw.primary ?? raw.main ?? raw.lappuNo ?? "";
+              secondary = raw.secondary ?? raw.alt ?? raw.lappuName ?? "";
             }
 
             const copyValue = (value: string, setCopied: (v: boolean) => void) => {
               if (!value) return;
               if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                const str = String(value).trim();
                 navigator.clipboard
-                  .writeText(String(value))
+                  .writeText(str)
                   .then(() => {
                     setCopied(true);
-                    toast.success("Copied to clipboard");
+                    const display = str.length > 80 ? str.slice(0, 80) + "..." : str;
+                    toast.success(`Copied: ${display}`, {
+                      toastId: "copy-toast",
+                      autoClose: 1500,
+                      hideProgressBar: true,
+                    });
                     setTimeout(() => setCopied(false), 1500);
                   })
                   .catch(() => {});
