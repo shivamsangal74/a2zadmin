@@ -13,6 +13,7 @@ import api from "../../Services/Axios/api";
 import Breadcrumb from "../../components/Breadcrumbs/Breadcrumb";
 import StatsDisplay from "../../components/DisplatStats";
 import { renderTransactionStatus } from "../../components/StatusBadge/StatusBadge";
+import LogsViewer from "../../components/LogsViewer/LogsViewer";
 
 interface ReportColumn {
   name: string;
@@ -617,56 +618,7 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
   }
 
   const renderEyePopupContent = (data: string) => {
-    if (!data) return null;
-
-    if (!data.includes("<b>") && !data.includes("<br/>")) {
-      try {
-        return (
-          <pre className="whitespace-pre-wrap break-all text-sm font-mono text-gray-800">
-            {JSON.stringify(JSON.parse(data), null, 2)}
-          </pre>
-        );
-      } catch (e) {
-        return (
-          <pre className="whitespace-pre-wrap break-all text-sm font-mono text-gray-800">
-            {data}
-          </pre>
-        );
-      }
-    }
-
-    const parts = data.split(/<br\s*\/?>/i);
-    return (
-      <div className="flex flex-col gap-4">
-        {parts.map((part, index) => {
-          const match = part.match(/<b>(.*?)<\/b>(.*)/i);
-          if (match) {
-            const tag = match[1];
-            let content = match[2].trim();
-            try {
-              content = JSON.stringify(JSON.parse(content), null, 2);
-            } catch (e) {}
-
-            return (
-              <div key={index} className="flex flex-col gap-1">
-                <Typography
-                  variant="subtitle2"
-                  className="font-bold text-blue-600"
-                >
-                  {tag}
-                </Typography>
-                <div className="p-3 bg-gray-100 rounded-md border border-gray-200">
-                  <pre className="whitespace-pre-wrap break-all text-xs font-mono text-gray-700 m-0">
-                    {content}
-                  </pre>
-                </div>
-              </div>
-            );
-          }
-          return <div key={index} dangerouslySetInnerHTML={{ __html: part }} />;
-        })}
-      </div>
-    );
+    return <LogsViewer data={data} />;
   };
 
   const totalAmount =
@@ -721,13 +673,14 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
         <Popup
           title={eyePopupTitle.toUpperCase()}
           isOpen={eyePopupOpen}
+          width="xxl"
           onClose={() => {
             setEyePopupOpen(false);
             setEyePopupData("");
             setEyePopupTitle("");
           }}
         >
-          <div className="max-h-[60vh] overflow-auto rounded-lg bg-gray-50 p-4 dark:bg-form-input dark:text-bodydark1">
+          <div className="max-h-[75vh] overflow-auto rounded-lg bg-gray-50 p-4 dark:bg-form-input dark:text-bodydark1">
             {renderEyePopupContent(eyePopupData)}
           </div>
         </Popup>
