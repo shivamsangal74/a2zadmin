@@ -61,7 +61,11 @@ const BasicTable: React.FC<BasicTableProps> = ({
     const hasMessageCol = Array.isArray(columns)
       ? columns.some((c: any) => c?.accessorKey === "message" || c?.id === "message")
       : false;
-    const isForcedReport = report_id === "2_4" || report_id === "2_10" || report_id === "123";
+    const isForcedReport =
+      report_id === "2_4" ||
+      report_id === "2_10" ||
+      report_id === "2_14" ||
+      report_id === "123";
     return isReport && (hasMessageCol || isForcedReport) ? { message: false } : {};
   });
   const [pageSize, setPageSize] = useState(10); // State for page size
@@ -307,32 +311,78 @@ const BasicTable: React.FC<BasicTableProps> = ({
     const hasCol = extendedColumns.some(
       (c: any) => c?.accessorKey === "message" || c?.id === "message"
     );
-    return hasCol || report_id === "2_4" || report_id === "2_10" || report_id === "123";
-  }, [extendedColumns]);
+    return (
+      hasCol ||
+      report_id === "2_4" ||
+      report_id === "2_10" ||
+      report_id === "2_14" ||
+      report_id === "123"
+    );
+  }, [extendedColumns, report_id]);
 
-  const getRowMessage = (original: any) => {
-    const response = original?.response ?? original?.message;
-    if (!response) return "";
-    if (typeof response !== "string") {
+  const extractApiMessage = (value: any, depth = 0): string => {
+    if (value == null || depth > 5) return "";
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return "";
+      const looksLikeJson =
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"));
+      if (!looksLikeJson) return trimmed;
       try {
-        return JSON.stringify(response);
+        const nested = extractApiMessage(JSON.parse(trimmed), depth + 1);
+        return nested || (trimmed.startsWith("[") ? "" : trimmed);
       } catch {
-        return String(response);
+        return trimmed;
       }
     }
-
-    try {
-      const parsed = JSON.parse(response);
-      return (
-        parsed?.message ||
-        parsed?.status ||
-        parsed?.response_description ||
-        parsed?.error ||
-        response
-      );
-    } catch {
-      return response;
+    if (Array.isArray(value)) {
+      for (let i = value.length - 1; i >= 0; i -= 1) {
+        const entry = value[i];
+        const nested = extractApiMessage(entry?.response ?? entry, depth + 1);
+        if (nested) return nested;
+      }
+      return "";
     }
+    if (typeof value === "object") {
+      const candidates = [
+        value.message,
+        value.response_description,
+        value.error,
+        value.description,
+        value.status,
+      ];
+      for (const candidate of candidates) {
+        if (typeof candidate !== "string") continue;
+        const text = candidate.trim();
+        if (!text) continue;
+        if (
+          ["success", "failed", "failure", "pending", "error"].includes(
+            text.toLowerCase()
+          )
+        ) {
+          continue;
+        }
+        return text;
+      }
+      if (value.response && value.response !== value) {
+        const nested = extractApiMessage(value.response, depth + 1);
+        if (nested) return nested;
+      }
+      if (value.data && typeof value.data === "object") {
+        const nested = extractApiMessage(value.data, depth + 1);
+        if (nested) return nested;
+      }
+    }
+    return "";
+  };
+
+  const getRowMessage = (original: any) => {
+    const fromResponse = extractApiMessage(original?.response);
+    if (fromResponse) return fromResponse;
+    const fromMessage = extractApiMessage(original?.message);
+    if (fromMessage) return fromMessage;
+    return typeof original?.remarks === "string" ? original.remarks.trim() : "";
   };
 
   return (
@@ -701,10 +751,12 @@ const BasicTable: React.FC<BasicTableProps> = ({
                 {table.getRowModel().rows.map((row) => {
                   const rowMessage =
                     hasMessageColumn && isReport ? getRowMessage(row.original) : "";
+                  const rowStatus =
+                    row?.original?.status?.toString()?.toLowerCase() ?? "";
+                  const showSuccessMessage = report_id === "2_14" && rowStatus === "success";
                   const showRowMessage =
                     Boolean(rowMessage) &&
-                    (row?.original?.status?.toString()?.toLowerCase() ?? "") !==
-                      "success";
+                    (showSuccessMessage || rowStatus !== "success");
 
                   return (
                     <React.Fragment key={row.id}>
@@ -736,7 +788,13 @@ const BasicTable: React.FC<BasicTableProps> = ({
                         <tr key={`${row.id}-message`}>
                           <td
                             colSpan={row.getVisibleCells().length}
-                            className="border-b border-[#eee] bg-gradient-to-r from-rose-50/90 to-white py-1.5 px-3 text-rose-950 dark:border-slate-700 dark:from-rose-950/40 dark:to-slate-900 dark:text-rose-100"
+                            className={`border-b border-[#eee] py-1.5 px-3 dark:border-slate-700 ${
+                              rowStatus === "success"
+                                ? "bg-gradient-to-r from-emerald-50/90 to-white text-emerald-950 dark:from-emerald-950/40 dark:to-slate-900 dark:text-emerald-100"
+                                : rowStatus === "pending"
+                                  ? "bg-gradient-to-r from-amber-50/90 to-white text-amber-950 dark:from-amber-950/40 dark:to-slate-900 dark:text-amber-100"
+                                  : "bg-gradient-to-r from-rose-50/90 to-white text-rose-950 dark:from-rose-950/40 dark:to-slate-900 dark:text-rose-100"
+                            }`}
                             style={{
                               textAlign: "left",
                               fontSize: "11px",

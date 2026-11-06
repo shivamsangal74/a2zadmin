@@ -1005,6 +1005,17 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             secondary = raw.secondary ?? raw.alt ?? raw.lappuName ?? "";
           }
 
+          // For ReqId column: show orderId as secondary if present and secondary not already set
+          if (col.prop === "ReqId") {
+            const orderId =
+              info.row.original?.orderId ??
+              info.row.original?.order_id ??
+              "";
+            if (orderId && !secondary) {
+              secondary = String(orderId);
+            }
+          }
+
           const copyValue = (value: string, setCopied: (v: boolean) => void) => {
             if (!value) return;
             if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
