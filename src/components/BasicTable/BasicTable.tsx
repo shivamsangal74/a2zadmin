@@ -753,10 +753,8 @@ const BasicTable: React.FC<BasicTableProps> = ({
                     hasMessageColumn && isReport ? getRowMessage(row.original) : "";
                   const rowStatus =
                     row?.original?.status?.toString()?.toLowerCase() ?? "";
-                  const showSuccessMessage = report_id === "2_14" && rowStatus === "success";
                   const showRowMessage =
-                    Boolean(rowMessage) &&
-                    (showSuccessMessage || rowStatus !== "success");
+                    Boolean(rowMessage) && rowStatus !== "success";
 
                   return (
                     <React.Fragment key={row.id}>
