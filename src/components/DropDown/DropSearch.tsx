@@ -66,25 +66,58 @@ export const DropSearch = <O extends { value: string; showvalue: string; image?:
       ? safeOptions.find((o) => getOptionVal(o) === String(value)) ?? null
       : null;
 
+  const [inputValue, setInputValue] = React.useState("");
+
+  React.useEffect(() => {
+    if (selectedOption) {
+      setInputValue(getOptionDisplay(selectedOption));
+    } else if (value === null || value === undefined || value === "") {
+      setInputValue("");
+    }
+  }, [value, selectedOption]);
+
   return (
     <div className="w-full">
       <FormControl fullWidth className="bg-transparent dark:bg-transparent">
         <Autocomplete
+          autoHighlight
           loading={isLoading}
           disabled={isLoading}
           onOpen={onOpen}
           value={selectedOption}
+          inputValue={inputValue}
+          onInputChange={(event, newInputValue, reason) => {
+            if (reason === "input" || reason === "clear") {
+              setInputValue(newInputValue);
+            } else if (reason === "reset") {
+              setInputValue(selectedOption ? getOptionDisplay(selectedOption) : "");
+            }
+          }}
           isOptionEqualToValue={(option, val) =>
             val ? getOptionVal(option) === getOptionVal(val) : false
           }
           filterOptions={(opts, state) => {
-            const input = (state.inputValue || "").toLowerCase().trim();
+            const input = (state.inputValue || inputValue || "").toLowerCase().trim();
             if (!input) return opts;
 
             const matches = opts.filter((o) => {
               const disp = getOptionDisplay(o).toLowerCase();
               const val = getOptionVal(o).toLowerCase();
-              return disp.includes(input) || val.includes(input);
+              const extra = [
+                (o as any)?.lappuName,
+                (o as any)?.lappuId,
+                (o as any)?.name,
+                (o as any)?.vendor,
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+              return (
+                disp.includes(input) ||
+                val.includes(input) ||
+                extra.includes(input)
+              );
             });
 
             return matches.sort((a, b) => {

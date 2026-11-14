@@ -39,6 +39,7 @@ import StatsDisplay from "../../components/DisplatStats";
 import Popup from "../../components/Model/Model";
 import { renderTransactionStatus } from "../../components/StatusBadge/StatusBadge";
 import LogsViewer from "../../components/LogsViewer/LogsViewer";
+import { getLappu } from "../../Services/vendorService";
 
 interface reportsProps {
   entity: string;
@@ -109,6 +110,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const [searchValue, setSearchValue] = useState("");
   const [isProcessing, setisProcessing] = useState(false);
   const [processingRowIds, setProcessingRowIds] = useState<{ [key: string]: boolean }>({});
+  const [lappuOptions, setLappuOptions] = useState<any[]>([]);
 
   const getRowKey = (row: any) =>
     String(
@@ -255,6 +257,71 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   }, [entity, report_id]);
 
   useEffect(() => {
+    const isLappu =
+      report_id === "3_1" ||
+      report_id === "2_2" ||
+      (Array.isArray(reportData?.Report?.DropDowns) &&
+        reportData.Report.DropDowns.some(
+          (c: string) =>
+            c &&
+            (c.toLowerCase().includes("lappu") ||
+              c.toLowerCase().includes("lapu"))
+        ));
+
+    if (isLappu) {
+      getLappu()
+        .then((data: any) => {
+          const seenIds = new Set<string>();
+          const formatted: any[] = [];
+
+          if (Array.isArray(data) && data.length > 0) {
+            data.forEach((l: any) => {
+              const id = String(l.lappuId || "").trim();
+              if (id) {
+                seenIds.add(id);
+                const nameParts = [
+                  l.lappuName,
+                  l.vendor ? `(${l.vendor})` : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                const show = nameParts
+                  ? `${nameParts}- ${id}`
+                  : id;
+                formatted.push({
+                  showvalue: show,
+                  value: id,
+                  lappuName: l.lappuName,
+                  lappuId: id,
+                  vendor: l.vendor,
+                });
+              }
+            });
+          }
+
+          // Also merge any options from report template DropDowns not already present
+          const reportLappuOpts = reportData?.DropDowns?.[0]?.[0] || [];
+          if (Array.isArray(reportLappuOpts)) {
+            reportLappuOpts.forEach((opt: any) => {
+              const optVal = String(opt.value || "").trim();
+              if (optVal && !seenIds.has(optVal)) {
+                seenIds.add(optVal);
+                formatted.push(opt);
+              }
+            });
+          }
+
+          if (formatted.length > 0) {
+            setLappuOptions(formatted);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching all lappus for dropdown:", err);
+        });
+    }
+  }, [report_id, reportData]);
+
+  useEffect(() => {
     if (!reportData?.Report) return;
 
     const { initialFilters, initialDateRange, initialPickerValue } =
@@ -362,10 +429,15 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     if (filterName.includes("serachCondition")) {
       setSearchValue(filterValue);
     }
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [`dropdown[${drop}]`]: `${filterName} = '${filterValue}'`,
-    }));
+    setFilters((prevFilters) => {
+      const updated = { ...prevFilters };
+      if (filterValue === null || filterValue === undefined || filterValue === "") {
+        delete updated[`dropdown[${drop}]`];
+      } else {
+        updated[`dropdown[${drop}]`] = `${filterName} = '${filterValue}'`;
+      }
+      return updated;
+    });
   };
 
   const handleMultiFilterChange = (
@@ -723,14 +795,31 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     try {
       let search;
       if (searchCondition) {
+        const escaped = searchCondition.replace(/'/g, "''");
         const searchCol =
           searchValue ||
           filterableColumns.find((item: any) =>
             item.includes("serachCondition")
           ) ||
+          (filterableColumns.find((item: any) =>
+            item.toLowerCase().includes("lappu") ||
+            item.toLowerCase().includes("lapu")
+          ) ?? "") ||
           "";
-        if (searchCol) {
-          search = `${searchCol} = '${searchCondition}'`;
+        const isLappuReport =
+          report_id === "3_1" ||
+          report_id === "2_2" ||
+          searchCol.toLowerCase().includes("lappu") ||
+          searchCol.toLowerCase().includes("lapu");
+
+        if (isLappuReport) {
+          const colToUse = searchCol || "lm.lappuId";
+          const parts = colToUse.split(".");
+          const alias = parts.length > 1 ? parts[0] : "lm";
+          const lappuNameCol = alias ? `${alias}.lappuName` : "lappuName";
+          search = `(${colToUse} LIKE '%${escaped}%' OR ${lappuNameCol} LIKE '%${escaped}%')`;
+        } else if (searchCol) {
+          search = `${searchCol} LIKE '%${escaped}%'`;
         }
       }
       const response = await api.post(apiUrl + "/report/getReportData", {
@@ -1681,6 +1770,27 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
   const DateModel = reportData?.Report?.DateModel ?? "";
   const dropdownValues = reportData?.DropDowns?.[0] ?? {};
 
+  const isLappuColumn = (name: string, idx: number) => {
+    if (report_id === "3_1" || report_id === "2_2") {
+      return (
+        idx === 0 ||
+        name.toLowerCase().includes("lappu") ||
+        name.toLowerCase().includes("lapu")
+      );
+    }
+    return (
+      name.toLowerCase().includes("lappu") ||
+      name.toLowerCase().includes("lapu")
+    );
+  };
+
+  const getOptionsForFilter = (filterName: string, index: number) => {
+    if (isLappuColumn(filterName, index) && lappuOptions.length > 0) {
+      return lappuOptions;
+    }
+    return dropdownValues[index] || [];
+  };
+
   function finalValue(index: any) {
     const rawFilter = filters[`dropdown[${index}]`];
     return parseFilterValue(rawFilter);
@@ -1850,7 +1960,7 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
                       onchange={handleFilterChange}
                       placeholder={filterableDisplayColumns[index]}
                       drop={index}
-                      options={[...(dropdownValues[index] || [])]}
+                      options={[...(getOptionsForFilter(filterName, index) || [])]}
                       error={""}
                       isFilter={true}
                     />
