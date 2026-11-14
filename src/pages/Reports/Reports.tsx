@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import DefaultLayout from "../../layout/DefaultLayout";
@@ -291,6 +291,69 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     fetchInitialReportData();
   }, [reportData, entity, report_id, urlStatus, urlPeriod]);
 
+  function calculateStatusAndAmountTotals(dataArray: any) {
+    const totals = {
+      success: { count: 0, amount: 0 },
+      pending: { count: 0, amount: 0 },
+      fail: { count: 0, amount: 0 },
+      others: { count: 0, amount: 0 }, // For unexpected statuses
+    };
+
+    dataArray.forEach((item: any) => {
+      if (report_id == "2_10") {
+        const opName = (item?.OpName || "").trim().toLowerCase();
+        const isMatched =
+          opName.includes("aadhar") ||
+          opName.includes("withdrawal") ||
+          opName === "cw" ||
+          opName.includes("cash");
+        if (isMatched) {
+          const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
+          const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
+
+          if (status === "success") {
+            totals.success.count += 1;
+            totals.success.amount += amount;
+          } else if (status === "pending") {
+            totals.pending.count += 1;
+            totals.pending.amount += amount;
+          } else if (status === "fail" || status === "failed") {
+            totals.fail.count += 1;
+            totals.fail.amount += amount;
+          } else {
+            totals.others.count += 1;
+            totals.others.amount += amount;
+          }
+        }
+      } else {
+        const status = item?.status && item?.status.trim().toLowerCase();
+        const amount = parseFloat(item.amount) || 0;
+
+        if (status === "success") {
+          totals.success.count += 1;
+          totals.success.amount += amount;
+        } else if (status === "pending") {
+          totals.pending.count += 1;
+          totals.pending.amount += amount;
+        } else if (status === "fail" || status === "failed") {
+          totals.fail.count += 1;
+          totals.fail.amount += amount;
+        } else {
+          totals.others.count += 1;
+          totals.others.amount += amount;
+        }
+      }
+    });
+
+    return totals;
+  }
+
+  const totalAmount = useMemo(() => {
+    return tableData && tableData.length > 0
+      ? calculateStatusAndAmountTotals(tableData)
+      : null;
+  }, [tableData, report_id]);
+
   const handleFilterChange = (
     filterName: string,
     filterValue: any,
@@ -521,7 +584,6 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     try {
       let tranx = params.row.original.refId;
       let Date = moment(params.row.original.createdDate).format("YYYY-MM-DD");
-      debugger;
       const response = await api.post(
         `/money/checkinstantpaystatus`,
         { externalRef: tranx, transactionDate: Date },
@@ -1663,68 +1725,9 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
     setDateRange(value);
   };
 
-  function calculateStatusAndAmountTotals(dataArray: any) {
-    const totals = {
-      success: { count: 0, amount: 0 },
-      pending: { count: 0, amount: 0 },
-      fail: { count: 0, amount: 0 },
-      others: { count: 0, amount: 0 }, // For unexpected statuses
-    };
-
-    dataArray.forEach((item: any) => {
-      let opNames = ["AadharPay", "withdrawal"];
-      if (report_id == "2_10") {
-        if (opNames.includes(item?.OpName)) {
-          console.log(item?.OpName);
-
-          const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
-          const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
-
-          if (status === "success") {
-            totals.success.count += 1;
-            totals.success.amount += amount;
-          } else if (status === "pending") {
-            totals.pending.count += 1;
-            totals.pending.amount += amount;
-          } else if (status === "fail" || status === "failed") {
-            totals.fail.count += 1;
-            totals.fail.amount += amount;
-          } else {
-            totals.others.count += 1;
-            totals.others.amount += amount;
-          }
-        }
-      } else {
-        const status = item?.status && item?.status.trim().toLowerCase();
-        const amount = parseFloat(item.amount) || 0;
-
-        if (status === "success") {
-          totals.success.count += 1;
-          totals.success.amount += amount;
-        } else if (status === "pending") {
-          totals.pending.count += 1;
-          totals.pending.amount += amount;
-        } else if (status === "fail" || status === "failed") {
-          totals.fail.count += 1;
-          totals.fail.amount += amount;
-        } else {
-          totals.others.count += 1;
-          totals.others.amount += amount;
-        }
-      }
-    });
-
-    return totals;
-  }
-
   const renderEyePopupContent = (data: string) => {
     return <LogsViewer data={data} />;
   };
-
-  const totalAmount =
-    tableData &&
-    tableData.length > 0 &&
-    calculateStatusAndAmountTotals(tableData);
 
   const timeOptions = [
     {
