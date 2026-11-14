@@ -1156,6 +1156,23 @@ const Reports: React.FC<reportsProps> = ({ entity, report_id }) => {
             secondary = raw.secondary ?? raw.alt ?? raw.lappuName ?? "";
           }
 
+          // Settlement report stores the provider order id in apirefid.
+          // Show it on the line under the request id, same as recharge.
+          if (col.prop === "ReqId" && report_id === "2_14") {
+            const orderId = info.row.original?.apirefid ?? "";
+            if (String(orderId).trim()) {
+              secondary = String(orderId).trim();
+            }
+          } else if (col.prop === "ReqId") {
+            const orderId =
+              info.row.original?.orderId ??
+              info.row.original?.order_id ??
+              "";
+            if (orderId && !secondary) {
+              secondary = String(orderId);
+            }
+          }
+
           const copyValue = (value: string, setCopied: (v: boolean) => void) => {
             if (!value) return;
             if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
