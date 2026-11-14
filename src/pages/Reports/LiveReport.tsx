@@ -572,11 +572,14 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
     };
 
     dataArray.forEach((item: any) => {
-      let opNames = ["AadharPay", "withdrawal"];
-      if ((report_id == "2_10")) {
-        if (opNames.includes(item?.OpName)) {
-          console.log(item?.OpName);
-
+      if (report_id == "2_10") {
+        const opName = (item?.OpName || "").trim().toLowerCase();
+        const isMatched =
+          opName.includes("aadhar") ||
+          opName.includes("withdrawal") ||
+          opName === "cw" ||
+          opName.includes("cash");
+        if (isMatched) {
           const status = item?.status && item?.status.trim().toLowerCase(); // Normalize case (all lowercase)
           const amount = parseFloat(item.amount) || 0; // Ensure valid numeric amount
 
@@ -594,7 +597,7 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
             totals.others.amount += amount;
           }
         }
-      }else {
+      } else {
         const status = item?.status && item?.status.trim().toLowerCase();
           const amount = parseFloat(item.amount) || 0;
 
@@ -621,10 +624,11 @@ const LiveReports: React.FC<LiveReportsProps> = ({ entity, report_id }) => {
     return <LogsViewer data={data} />;
   };
 
-  const totalAmount =
-    tableData &&
-    tableData.length > 0 &&
-    calculateStatusAndAmountTotals(tableData);
+  const totalAmount = useMemo(() => {
+    return tableData && tableData.length > 0
+      ? calculateStatusAndAmountTotals(tableData)
+      : null;
+  }, [tableData, report_id]);
  
 
   
