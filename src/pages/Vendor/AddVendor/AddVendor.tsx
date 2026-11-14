@@ -222,9 +222,16 @@ const AddVendor = () => {
       return;
     }
 
-    const filteredLapus = userLapus.filter(
-      (lappu: any) => lappu?.amount !== undefined && lappu?.amount !== null
-    );
+    const filteredLapus = userLapus
+      .filter((lappu: any) => {
+        const amt = parseFloat(lappu?.amount || 0);
+        return !isNaN(amt) && amt > 0;
+      })
+      .map((lappu: any) => ({
+        ...lappu,
+        amount: parseFloat(lappu.amount),
+        RefrenceNo: (lappu.RefrenceNo || "").trim(),
+      }));
     const addStock = {
       selectedAddBank: selectedAddBank,
       reciverApi: selectedBank,
@@ -931,12 +938,17 @@ const AddVendor = () => {
   async function handleOpenLappu(value: string | null) {
     setSelectedVendors(value);
 
+    if (!value) {
+      setUserLapus([]);
+      setVendorBankData([]);
+      return;
+    }
+
     const vendorDetails = vendorData.find((vendor) => vendor.value === value);
     if (vendorDetails) {
       if (vendorDetails.commissionType) {
         setCommissionType(vendorDetails.commissionType);
       }
-      debugger
       if (vendorDetails.vendorApi) {
         setAddStockApi(Number(vendorDetails.vendorApi));
       }
@@ -946,12 +958,21 @@ const AddVendor = () => {
       }
 
       if (lappu) {
-        const filteredLappus = lappu.filter(
-          (lapuItem) => lapuItem.vendorId === vendorDetails.value
-        );
+        const isSameVendor = selectedVendors === value && userLapus.length > 0;
+        if (!isSameVendor) {
+          const filteredLappus = lappu
+            .filter((lapuItem: any) => lapuItem.vendorId === vendorDetails.value)
+            .map((lapuItem: any) => ({
+              ...lapuItem,
+              amount: "",
+              RefrenceNo: "",
+            }));
 
-        setUserLapus(filteredLappus);
-        if (filteredLappus.length > 0) setOpenInputLapu(true);
+          setUserLapus(filteredLappus);
+          if (filteredLappus.length > 0) setOpenInputLapu(true);
+        } else {
+          setOpenInputLapu(true);
+        }
       }
       const bankResponse = await getVendorBanks(value as string);
       let formattedBank: any = [];
@@ -1097,10 +1118,30 @@ const AddVendor = () => {
     }
   };
 
-  const handleLappuChange = (index, event) => {
-    const values = [...userLapus];
-    values[index][event.target.name] = event.target.value;
-    setUserLapus(values);
+  const handleLappuChange = (index: number, event: any) => {
+    const { name, value } = event.target;
+    setUserLapus((prev: any[]) =>
+      prev.map((lapu: any, i: number) => {
+        if (i !== index) return lapu;
+        return {
+          ...lapu,
+          [name]: value,
+        };
+      })
+    );
+  };
+
+  const handleClearLappuRow = (index: number) => {
+    setUserLapus((prev: any[]) =>
+      prev.map((lapu: any, i: number) => {
+        if (i !== index) return lapu;
+        return {
+          ...lapu,
+          amount: "",
+          RefrenceNo: "",
+        };
+      })
+    );
   };
 
   const addBankAccount = async () => {
@@ -1138,15 +1179,34 @@ const AddVendor = () => {
     }
   };
 
-  const handleLappuSubmit = (e) => {
-    const total = userLapus.reduce(
-      (acc, lapu) => acc + parseFloat(lapu.amount || 0),
+  const handleLappuSubmit = (e?: any) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    // Clean up userLapus: any row without positive amount should have amount and RefrenceNo cleared
+    const cleanedLapus = userLapus.map((lapu: any) => {
+      const amt = parseFloat(lapu?.amount || 0);
+      if (!isNaN(amt) && amt > 0) {
+        return { ...lapu, amount: lapu.amount };
+      }
+      return { ...lapu, amount: "", RefrenceNo: "" };
+    });
+    setUserLapus(cleanedLapus);
+
+    const activeLapus = cleanedLapus.filter((lapu: any) => {
+      const amt = parseFloat(lapu?.amount || 0);
+      return !isNaN(amt) && amt > 0;
+    });
+
+    const total = activeLapus.reduce(
+      (acc: number, lapu: any) => acc + parseFloat(lapu.amount || 0),
       0
     );
-    const ref = userLapus.reduce(
-      (acc, lapu) => acc + ` ${lapu.RefrenceNo || ""}`,
-      ""
-    );
+
+    const ref = activeLapus
+      .map((lapu: any) => String(lapu.RefrenceNo || "").trim())
+      .filter(Boolean)
+      .join(" ");
+
     setAmount(total);
     setOpraterID(ref);
     setOpenInputLapu(false);
@@ -1557,6 +1617,22 @@ const AddVendor = () => {
               options={[...vendorData]}
               error={""}
             />
+            {userLapus.length > 0 && (
+              <div className="mt-1 flex items-center justify-between text-xs px-0.5">
+                <span className="text-gray-500">
+                  {userLapus.filter((l: any) => parseFloat(l.amount || 0) > 0).length > 0
+                    ? `${userLapus.filter((l: any) => parseFloat(l.amount || 0) > 0).length} Lappu configured`
+                    : "No Lappu amount entered"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOpenInputLapu(true)}
+                  className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  Edit Lappu
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <TextInput
@@ -2113,6 +2189,9 @@ const AddVendor = () => {
                     <th className="min-w-[140px] whitespace-nowrap px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                       Reference No
                     </th>
+                    <th className="w-[80px] whitespace-nowrap px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2155,6 +2234,18 @@ const AddVendor = () => {
                           className="w-full min-w-[120px] rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                         />
                       </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-center">
+                        {(lapu.amount || lapu.RefrenceNo) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleClearLappuRow(index)}
+                            className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-800"
+                            title="Clear amount and reference"
+                          >
+                            Clear
+                          </button>
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -2174,11 +2265,20 @@ const AddVendor = () => {
                   .toFixed(2)}
               </span>
             </p>
-            <ButtonLabel
-              type="button"
-              label="Submit"
-              onClick={handleLappuSubmit}
-            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOpenInputLapu(false)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <ButtonLabel
+                type="button"
+                label="Submit"
+                onClick={handleLappuSubmit}
+              />
+            </div>
           </div>
         </div>
       </Popup>
